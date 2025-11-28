@@ -478,11 +478,12 @@
 		<div class="flex-none bg-white border-t border-gray-100 px-4 pt-2 pb-6 safe-pb z-30 w-full select-none">
 			<div id="file-preview-container" class="w-full max-w-3xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-2 mb-2 empty:hidden"></div>
 			
-			<input type="file" id="file-input" accept=".pdf,.docx,.xls,.xlsx,.pptx,.txt,image/*" multiple class="hidden" />
+			<input type="file" id="file-input" accept=".pdf,.docx,.xls,.xlsx,.pptx,.txt,image/*" multiple class="absolute opacity-0 w-0 h-0 overflow-hidden pointer-events-none" />
 			
 			<div class="w-full max-w-3xl mx-auto relative flex items-end bg-gray-100 rounded-[2rem] border border-transparent transition-all">
-				<button onclick="document.getElementById('file-input').click()" class="absolute left-2 bottom-2 w-10 h-10 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-700 hover:bg-gray-200 transition-colors">
-					<i class="fa-solid fa-paperclip text-xl"></i> </button>
+				<button onclick="document.getElementById('file-input').click()" class="absolute left-2 bottom-2 w-10 h-10 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-700 hover:bg-gray-200 transition-colors z-10">
+					<i class="fa-solid fa-paperclip text-xl"></i>
+				</button>
 				
 				<textarea id="user-input" rows="1" placeholder="Ketik pesan..." class="w-full py-4 pl-14 pr-14 bg-transparent text-slate-800 text-base placeholder:text-slate-400 resize-none max-h-32 rounded-[2rem] focus:outline-none focus:ring-0" style="min-height: 56px;" oninput="adjustHeight(this)" onkeydown="handleEnter(event)"></textarea>
 				
@@ -1615,9 +1616,9 @@
 		async function toggleFreeze(userId, isCurrentlyFrozen) {
 			const actionName = isCurrentlyFrozen ? 'unfreeze_user' : 'freeze_user';
 			const title = isCurrentlyFrozen ? "Buka Akun?" : "Bekukan Akun?";
-			const msg = isCurrentlyFrozen ? "User ini akan bisa login kembali." : "User ini tidak akan bisa login aplikasi.";
+			const msg = isCurrentlyFrozen ? "User ini akan bisa login kembali." : "User ini tidak akan bisa login aplikasi sampai akun dibuka kembali.";
 			const btnText = isCurrentlyFrozen ? "BUKA" : "BEKUKAN";
-			const btnColor = isCurrentlyFrozen ? "text-green-600" : "text-yellow-600";
+			const btnColor = isCurrentlyFrozen ? "text-green-600" : "text-red-500";
 			showCustomConfirm(title, msg, async () => {
 				try {
 					await callAdminFunction(actionName, {
