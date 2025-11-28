@@ -3,14 +3,12 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-	
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="default">
-	<meta name="apple-mobile-web-app-title" content="AI Assistant">
-	<link rel="apple-touch-icon" href="./icon.png">
-	<link rel="icon" type="image/png" href="./icon.png">
-	<title>AI Assistant</title>
-	
+	<meta name="apple-mobile-web-app-title" content="AI ASISTEN">
+	<link rel="apple-touch-icon" href="./icon-512.png">
+	<link rel="icon" type="image/png" href="./icon-512.png">
+	<title>AI ASISTEN</title>
 	<script src="https://cdn.tailwindcss.com"></script>
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -19,7 +17,6 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.7.0/mammoth.browser.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-	
 	<script>
 		const converter = new showdown.Converter({
 			tables: true,
@@ -40,7 +37,6 @@
 			}
 		}
 	</script>
-	
 	<style>
 		/* === CORE & IOS RESETS === */
 		*, *::before, *::after {
@@ -327,8 +323,10 @@
 			appearance: none;
 			height: 2.4rem;
 			width: 1rem;
-			background-color: #334155;
-			border: 1px solid #1e293b;
+			background-color: #9ca3af;
+			/* Abu-abu (Gray-400) */
+			border: 1px solid #9ca3af;
+			/* Border Abu Tua (Gray-500) */
 			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 			border-radius: 4px;
 			margin-top: -1px;
@@ -425,9 +423,10 @@
 	</style>
 </head>
 <body class="flex flex-col relative">
-	
+	<div id="initial-loader" class="fixed inset-0 z-[100] bg-white flex items-center justify-center transition-opacity duration-500">
+		<div class="w-8 h-8 border-8 border-gray-200 border-t-gray-400 rounded-full animate-spin"></div>
+	</div>
 	<div id="global-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/20 z-50 hidden transition-opacity opacity-0 backdrop-blur-sm"></div>
-	
 	<div id="sidebar" class="fixed inset-y-0 left-0 z-[60] w-72 bg-white shadow-2xl transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
 		<div class="flex-none safe-pt bg-white z-10 w-full">
 			<div class="h-20 flex items-center px-4 w-full">
@@ -444,8 +443,7 @@
 		</div>
 		<div class="flex-1 overflow-y-auto bg-white" id="sidebar-content"></div>
 	</div>
-	
-	<div id="login-page" class="absolute inset-0 z-[40] flex items-center justify-center bg-gray-100 p-4 transition-all duration-300 transform">
+	<div id="login-page" class="absolute inset-0 z-[40] flex items-center justify-center bg-gray-100 p-4 transition-all duration-300 transform hidden">
 		<div class="bg-white w-full max-w-sm p-8 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-center gap-6">
 			<div class="flex flex-col items-center justify-center text-center">
 				<img src="logo.png" alt="AI Logo" class="w-24 h-24 object-contain -mt-2 mb-0 drop-shadow-sm">
@@ -459,7 +457,6 @@
 			</form>
 		</div>
 	</div>
-	
 	<div id="chat-page" class="flex-1 flex flex-col h-full hidden opacity-0 relative bg-white w-full z-10">
 		<header class="flex-none h-20 safe-pt flex items-center justify-between px-3 border-b border-gray-100 bg-white z-20 select-none box-content">
 			<div class="flex items-center gap-0 h-full -ml-2">
@@ -485,14 +482,10 @@
 				</button>
 			</div>
 		</header>
-		
 		<main id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"></main>
-		
 		<div class="flex-none bg-white border-t border-gray-100 px-4 pt-2 pb-6 safe-pb z-30 w-full select-none">
 			<div id="file-preview-container" class="w-full max-w-3xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-2 mb-2 empty:hidden"></div>
-			
 			<input type="file" id="file-input" accept=".pdf,.docx,.xls,.xlsx,.pptx,.txt,image/*" multiple class="absolute opacity-0 w-0 h-0 overflow-hidden pointer-events-none" />
-			
 			<div class="w-full max-w-3xl mx-auto relative flex items-end bg-gray-100 rounded-[2rem] border border-transparent transition-all">
 				<button onclick="document.getElementById('file-input').click()" class="absolute left-2 bottom-2 w-10 h-10 flex items-center justify-center rounded-full text-slate-400 z-10">
 					<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -500,9 +493,7 @@
 						<line x1="5" y1="12" x2="19" y2="12"></line>
 					</svg>
 				</button>
-				
 				<textarea id="user-input" rows="1" placeholder="Ketik pesan..." class="w-full py-4 pl-14 pr-14 bg-transparent text-slate-800 text-base placeholder:text-slate-400 resize-none max-h-32 rounded-[2rem] focus:outline-none focus:ring-0" style="min-height: 56px;" oninput="adjustHeight(this)" onkeydown="handleEnter(event)"></textarea>
-				
 				<button id="send-btn" class="group absolute right-2 bottom-2 w-10 h-10 flex items-center justify-center transition-transform active:scale-90 disabled:cursor-not-allowed">
 					<svg class="w-6 h-6 ml-1" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
 						<defs>
@@ -511,17 +502,14 @@
 								<stop offset="100%" stop-color="#06b6d4" />
 							</linearGradient>
 						</defs>
-						
 						<path class="hidden group-disabled:block" fill="#cbd5e1" fill-rule="evenodd" d="M2.345 2.245a1 1 0 0 1 1.102-.14l18 9a1 1 0 0 1 0 1.79l-18 9a1 1 0 0 1-1.396-1.211L4.613 13H10a1 1 0 1 0 0-2H4.613L2.05 3.316a1 1 0 0 1 .294-1.071z" clip-rule="evenodd"></path>
-						
 						<path class="block group-disabled:hidden" fill="url(#send-gradient)" fill-rule="evenodd" d="M2.345 2.245a1 1 0 0 1 1.102-.14l18 9a1 1 0 0 1 0 1.79l-18 9a1 1 0 0 1-1.396-1.211L4.613 13H10a1 1 0 1 0 0-2H4.613L2.05 3.316a1 1 0 0 1 .294-1.071z" clip-rule="evenodd"></path>
 					</svg>
 				</button>
 			</div>
 		</div>
 	</div>
-	
-	<div id="settings-page" class="absolute inset-0 z-[50] bg-white flex flex-col transform translate-y-full transition-transform duration-300 ease-in-out">
+	<div id="settings-page" class="absolute inset-0 z-[50] bg-white flex flex-col transition-all duration-300 opacity-0 invisible">
 		<header class="flex-none h-20 safe-pt flex items-center justify-between px-3 border-b border-gray-100 bg-white z-20 select-none box-content relative">
 			<button onclick="closeSettings()" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-full transition-colors relative z-30">
 				<svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -532,14 +520,20 @@
 				<h2 class="font-sans font-bold text-lg text-slate-800 tracking-wide whitespace-nowrap">ADMIN MENU</h2>
 			</div>
 			<button onclick="saveSettings()" class="w-10 h-10 flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-gray-100 rounded-full transition-colors relative z-30">
-				<i class="fa-regular fa-floppy-disk text-xl"></i>
+				<svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<g stroke-width="0"></g>
+					<g stroke-linecap="round" stroke-linejoin="round"></g>
+					<g>
+						<path d="M5.75 3C4.23122 3 3 4.23122 3 5.75V18.25C3 19.7688 4.23122 21 5.75 21H9.99852C9.99129 20.8075 10.011 20.6088 10.0613 20.4075L10.2882 19.5H7.5V14.25C7.5 13.8358 7.83579 13.5 8.25 13.5H14.8531L16.2883 12.0648C16.1158 12.0225 15.9355 12 15.75 12H8.25C7.00736 12 6 13.0074 6 14.25V19.5H5.75C5.05964 19.5 4.5 18.9404 4.5 18.25V5.75C4.5 5.05964 5.05964 4.5 5.75 4.5H7V7.25C7 8.49264 8.00736 9.5 9.25 9.5H13.75C14.9926 9.5 16 8.49264 16 7.25V4.52344C16.3582 4.58269 16.6918 4.75246 16.9519 5.01256L18.9874 7.0481C19.3156 7.37629 19.5 7.8214 19.5 8.28553V10.007C19.5709 10.0024 19.642 10 19.713 10H19.7151C20.1521 10.0002 20.59 10.0874 21 10.2615V8.28553C21 7.42358 20.6576 6.59693 20.0481 5.98744L18.0126 3.9519C17.4031 3.34241 16.5764 3 15.7145 3H5.75ZM8.5 7.25V4.5H14.5V7.25C14.5 7.66421 14.1642 8 13.75 8H9.25C8.83579 8 8.5 7.66421 8.5 7.25Z" fill="currentColor"></path>
+						<path d="M19.7152 11H19.7131C19.1285 11.0003 18.5439 11.2234 18.0979 11.6695L12.1955 17.5719C11.8513 17.916 11.6072 18.3472 11.4892 18.8194L11.0315 20.6501C10.8325 21.4462 11.5536 22.1674 12.3497 21.9683L14.1804 21.5106C14.6526 21.3926 15.0838 21.1485 15.4279 20.8043L21.3303 14.9019C22.223 14.0093 22.223 12.5621 21.3303 11.6695C20.8843 11.2234 20.2998 11.0003 19.7152 11Z" fill="currentColor"></path>
+					</g>
+				</svg>
 			</button>
 		</header>
-		
 		<main id="settings-content" class="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-6">
 			<div class="max-w-3xl mx-auto space-y-6 pb-12 mt-2">
 				<fieldset class="bg-white rounded-2xl border border-gray-300 p-6 shadow-sm mt-6">
-					<legend class="px-2 text-sm md:text-base font-black text-slate-600 uppercase tracking-wide">KONFIGURASI AI</legend>
+					<legend class="px-2 text-sm md:text-base font-black text-slate-500 uppercase tracking-wide">KONFIGURASI AI</legend>
 					<div class="mb-4 relative" id="dropdown-wrapper">
 						<label class="block text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">Model Gemini</label>
 						<button type="button" onclick="toggleDropdown()" id="dropdown-trigger" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl flex justify-between items-center transition-all duration-200 hover:bg-gray-100 active:scale-[0.99]">
@@ -579,7 +573,7 @@
 					</div>
 				</fieldset>
 				<fieldset class="bg-white rounded-2xl border border-gray-300 p-6 shadow-sm mt-6">
-					<legend class="px-2 text-sm md:text-base font-black text-slate-600 uppercase tracking-wide">MANAJEMEN USER</legend>
+					<legend class="px-2 text-sm md:text-base font-black text-slate-500 uppercase tracking-wide">MANAJEMEN USER</legend>
 					<div class="mb-4">
 						<label class="block text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">Email Baru</label>
 						<div class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
@@ -598,7 +592,17 @@
 					<div class="border-t border-gray-200 mb-6"></div>
 					<div class="flex justify-between items-center mb-4 ml-1">
 						<h4 class="text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wide">Daftar Pengguna</h4>
-						<button onclick="loadUsers()" class="text-[10px] md:text-xs font-bold text-blue-600 hover:text-blue-800 uppercase bg-blue-50 px-2 py-1 rounded-md">Refresh</button>
+						<button onclick="loadUsers()" class="w-8 h-8 flex items-center justify-center rounded-lg text-green-600 hover:text-green-800 hover:bg-green-50 transition-colors" title="Refresh Data">
+							<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<g stroke-width="0"></g>
+								<g stroke-linecap="round" stroke-linejoin="round"></g>
+								<g>
+									<path d="M7.37756 11.6296H6.62756H7.37756ZM7.37756 12.5556L6.81609 13.0528C6.95137 13.2056 7.14306 13.2966 7.34695 13.3049C7.55084 13.3133 7.74932 13.2382 7.89662 13.0969L7.37756 12.5556ZM9.51905 11.5414C9.81805 11.2547 9.82804 10.7799 9.54137 10.4809C9.2547 10.182 8.77994 10.172 8.48095 10.4586L9.51905 11.5414ZM6.56148 10.5028C6.28686 10.1927 5.81286 10.1639 5.50277 10.4385C5.19267 10.7131 5.16391 11.1871 5.43852 11.4972L6.56148 10.5028ZM14.9317 9.0093C15.213 9.31337 15.6875 9.33184 15.9915 9.05055C16.2956 8.76927 16.3141 8.29476 16.0328 7.9907L14.9317 9.0093ZM12.0437 6.25C9.05802 6.25 6.62756 8.653 6.62756 11.6296H8.12756C8.12756 9.49251 9.87531 7.75 12.0437 7.75V6.25ZM6.62756 11.6296L6.62756 12.5556H8.12756L8.12756 11.6296H6.62756ZM7.89662 13.0969L9.51905 11.5414L8.48095 10.4586L6.85851 12.0142L7.89662 13.0969ZM7.93904 12.0583L6.56148 10.5028L5.43852 11.4972L6.81609 13.0528L7.93904 12.0583ZM16.0328 7.9907C15.0431 6.9209 13.6212 6.25 12.0437 6.25V7.75C13.1879 7.75 14.2154 8.23504 14.9317 9.0093L16.0328 7.9907Z" fill="currentColor"></path>
+									<path d="M16.6188 11.4443L17.1795 10.9462C17.044 10.7937 16.8523 10.703 16.6485 10.6949C16.4447 10.6868 16.2464 10.7621 16.0993 10.9034L16.6188 11.4443ZM14.4805 12.4581C14.1817 12.745 14.1722 13.2198 14.4591 13.5185C14.746 13.8173 15.2208 13.8269 15.5195 13.54L14.4805 12.4581ZM17.4393 13.4972C17.7144 13.8068 18.1885 13.8348 18.4981 13.5597C18.8078 13.2846 18.8358 12.8106 18.5607 12.5009L17.4393 13.4972ZM9.04688 15.0047C8.76342 14.7027 8.28879 14.6876 7.98675 14.9711C7.68472 15.2545 7.66966 15.7292 7.95312 16.0312L9.04688 15.0047ZM11.9348 17.7499C14.9276 17.7499 17.3688 15.3496 17.3688 12.3703H15.8688C15.8688 14.5047 14.1158 16.2499 11.9348 16.2499V17.7499ZM17.3688 12.3703V11.4443H15.8688V12.3703H17.3688ZM16.0993 10.9034L14.4805 12.4581L15.5195 13.54L17.1383 11.9853L16.0993 10.9034ZM16.0581 11.9425L17.4393 13.4972L18.5607 12.5009L17.1795 10.9462L16.0581 11.9425ZM7.95312 16.0312C8.94543 17.0885 10.3635 17.7499 11.9348 17.7499V16.2499C10.792 16.2499 9.76546 15.7704 9.04688 15.0047L7.95312 16.0312Z" fill="currentColor"></path>
+									<path d="M7 3.33782C8.47087 2.48697 10.1786 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 10.1786 2.48697 8.47087 3.33782 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+								</g>
+							</svg>
+						</button>
 					</div>
 					<div id="user-list-container" class="space-y-3">
 						<p class="text-xs md:text-sm text-slate-400 text-center py-4 italic">Memuat data pengguna...</p>
@@ -607,28 +611,60 @@
 			</div>
 		</main>
 	</div>
-	
 	<div id="confirm-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
 		<div class="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity"></div>
-		
 		<div class="relative bg-gray-50 w-full max-w-[18rem] rounded-2xl shadow-2xl overflow-hidden transform scale-100 transition-all">
-			
 			<div class="p-4 text-center">
 				<h2 id="confirm-title" class="text-lg font-bold text-slate-800 mb-0.5 tracking-wide">KONFIRMASI</h2>
 				<p id="confirm-message" class="text-sm text-slate-500 leading-tight px-1">...</p>
 			</div>
-			
 			<div class="border-t border-gray-200 flex bg-gray-50">
 				<button id="modal-cancel-button" class="w-1/2 py-2.5 text-center text-sm md:text-base font-semibold text-blue-600 hover:bg-gray-200 border-r border-gray-200 transition-colors">BATAL</button>
 				<button id="modal-agree-button" class="w-1/2 py-2.5 text-center text-sm md:text-base font-semibold hover:bg-gray-200 transition-colors">YA</button>
 			</div>
 		</div>
 	</div>
-	
 	<script>
 		const SUPABASE_URL = 'https://xdrqauwxvwooojufzndv.supabase.co';
 		const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkcnFhdXd4dndvb29qdWZ6bmR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1MDQyNDgsImV4cCI6MjA3ODA4MDI0OH0.mH7MEeAggksdAlandZpwuyGPYo08SuuWkXoMXVvwSiI';
 		const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+		// --- AUTO PWA MANIFEST (NATIVE BROWSER INSTALL) ---
+		
+		const pwaManifest = {
+			"name": "AI ASISTEN",
+			"short_name": "AI ASISTEN",
+			"description": "Aplikasi Asisten AI Cerdas",
+			"start_url": window.location.href,
+			"display": "standalone",
+			"background_color": "#ffffff",
+			"theme_color": "#ffffff",
+			"orientation": "portrait-primary",
+			"icons": [{
+					"src": "./icon-192.png", 
+					"sizes": "192x192",
+					"type": "image/png"
+				},
+				{
+					"src": "./icon-512.png",
+					"sizes": "512x512",
+					"type": "image/png"
+				}
+			]
+		};
+		try {
+			const stringManifest = JSON.stringify(pwaManifest);
+			const blob = new Blob([stringManifest], {
+				type: 'application/json'
+			});
+			const manifestURL = URL.createObjectURL(blob);
+			const link = document.createElement('link');
+			link.rel = 'manifest';
+			link.href = manifestURL;
+			document.head.appendChild(link);
+			console.log("PWA Manifest berhasil di-inject (Root Icon).");
+		} catch (e) {
+			console.error("Gagal inject PWA:", e);
+		}
 		let currentUser = null;
 		// --- VARIABEL FILE ---
 		let uploadedFiles = [];
@@ -657,21 +693,21 @@
 				// Card Body: bg-gray-200
 				card.className = "relative flex items-center p-2 bg-gray-100 rounded-xl transition-all select-none h-16 visible";
 				card.innerHTML = `
-            <div class="w-10 h-10 mr-3 shrink-0 rounded-lg overflow-hidden bg-white flex items-center justify-center shadow-sm">
-                ${iconHtml}
-            </div>
-            
-            <div class="overflow-hidden min-w-0 flex-1 flex flex-col justify-center">
-                <div class="text-sm font-medium text-slate-700 truncate leading-tight">${file.name}</div>
-                <div class="text-[11px] font-medium text-slate-500 uppercase leading-none mt-0.5">${formatFileSize(file.size)}</div>
-            </div>
-
-            <button onclick="removeFile(${index})" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-300 text-grey-400 rounded-full flex items-center justify-center shadow-sm transition-transform active:scale-90 z-20 cursor-pointer">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                </svg>
-            </button>
-        `;
+                <div class="w-10 h-10 mr-3 shrink-0 rounded-lg overflow-hidden bg-white flex items-center justify-center shadow-sm">
+                    ${iconHtml}
+                </div>
+                
+                <div class="overflow-hidden min-w-0 flex-1 flex flex-col justify-center">
+                    <div class="text-sm font-medium text-slate-700 truncate leading-tight">${file.name}</div>
+                    <div class="text-[11px] font-medium text-slate-500 uppercase leading-none mt-0.5">${formatFileSize(file.size)}</div>
+                </div>
+      
+                <button onclick="removeFile(${index})" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-300 text-grey-400 rounded-full flex items-center justify-center shadow-sm transition-transform active:scale-90 z-20 cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            `;
 				container.appendChild(card);
 			});
 			const sendBtn = document.getElementById('send-btn');
@@ -847,10 +883,10 @@
 						const originalIcon = copyBtn.innerHTML;
 						copyBtn.dataset.copied = "true";
 						copyBtn.innerHTML = `
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500">
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                        `;
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            `;
 						setTimeout(() => {
 							copyBtn.innerHTML = originalIcon;
 							copyBtn.dataset.copied = "false";
@@ -880,21 +916,48 @@
 			}
 		});
 		async function checkSession() {
-			const {
-				data: {
-					session
+			const loader = document.getElementById('initial-loader');
+			try {
+				const {
+					data: {
+						session
+					}
+				} = await supabase.auth.getSession();
+				if(session) {
+					currentUser = session.user;
+					await initializeSettings();
+					await checkAdminVisibility();
+					// Siapkan UI Chat (tapi jangan tampilkan dulu, tunggu loader selesai)
+					loginPage.classList.add('hidden');
+					chatPage.classList.remove('hidden');
+					chatPage.classList.add('flex');
+					loadChatList();
+					if(!currentChatId) startNewChat(false);
+				} else {
+					// Siapkan UI Login
+					loginPage.classList.remove('hidden');
 				}
-			} = await supabase.auth.getSession();
-			if(session) {
-				currentUser = session.user;
-				await initializeSettings();
-				await checkAdminVisibility();
-				loginPage.classList.add('hidden');
-				chatPage.classList.remove('hidden');
-				chatPage.classList.add('flex');
-				chatPage.style.opacity = '1';
-				loadChatList();
-				if(!currentChatId) startNewChat(false);
+			} catch (err) {
+				console.error("Session check error:", err);
+				loginPage.classList.remove('hidden');
+			} finally {
+				// === UPDATE: JEDA 2 DETIK ===
+				if(loader) {
+					// Tunggu 2 detik (2000ms) dulu
+					setTimeout(() => {
+						// 1. Mulai efek menghilang (fade out)
+						loader.style.opacity = '0';
+						// 2. Hapus elemen dari HTML setelah animasi fade-out selesai (0.5 detik)
+						setTimeout(() => {
+							loader.classList.add('hidden');
+							loader.remove();
+							// Efek halus: Munculkan chat page perlahan setelah loader hilang
+							if(document.getElementById('chat-page').classList.contains('flex')) {
+								document.getElementById('chat-page').style.opacity = '1';
+							}
+						}, 500);
+					}, 1000); // <--- Angka 2000 ini adalah durasi jeda 2 detik
+				}
 			}
 		}
 		// --- EVENT LISTENER UNTUK INPUT FILE ---
@@ -1065,7 +1128,8 @@
 			}
 		}
 		async function openSettings() {
-			settingsPage.classList.remove('translate-y-full');
+			// Hapus class invisible/opacity-0 agar muncul perlahan
+			settingsPage.classList.remove('opacity-0', 'invisible');
 			try {
 				const {
 					data
@@ -1079,9 +1143,11 @@
 					promptInput.value = data.custom_prompt || '';
 					tempInput.value = data.temperature;
 					updateTempLabel(data.temperature);
-					if(data.model === 'gemini-2.5-flash') modelText.innerText = 'Gemini 2.5 Flash (Cepat)';
-					else if(data.model === 'gemini-2.5-pro') modelText.innerText = 'Gemini 2.5 Pro (Pintar)';
-					else modelText.innerText = 'Gemini 3 Pro (Preview)';
+					if(modelText) {
+						if(data.model === 'gemini-2.5-flash') modelText.innerText = 'Gemini 2.5 Flash (Cepat)';
+						else if(data.model === 'gemini-2.5-pro') modelText.innerText = 'Gemini 2.5 Pro (Pintar)';
+						else modelText.innerText = 'Gemini 3 Pro (Preview)';
+					}
 				}
 			} catch (err) {
 				console.error(err);
@@ -1108,7 +1174,8 @@
 		}
 		
 		function closeSettings() {
-			settingsPage.classList.add('translate-y-full');
+			// Tambahkan class agar menghilang perlahan
+			settingsPage.classList.add('opacity-0', 'invisible');
 		}
 		const dropdownMenu = document.getElementById('dropdown-menu');
 		const dropdownArrow = document.getElementById('dropdown-arrow');
@@ -1155,9 +1222,9 @@
 			const welcomeDiv = document.createElement('div');
 			welcomeDiv.className = 'flex flex-col items-center justify-center h-full pb-20 text-center p-8 select-none animate-[fadeIn_0.5s_ease-out]';
 			welcomeDiv.innerHTML = `
-                <h2 class="text-xl md:text-2xl font-sans font-bold mb-1 bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent tracking-wide leading-tight">Halo, Selamat Datang</h2>
-		        <p class="text-sm md:text-base text-slate-400 font-medium font-sans">Ada yang bisa saya bantu hari ini?</p>
-		    `;
+                    <h2 class="text-xl md:text-2xl font-sans font-bold mb-1 bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent tracking-wide leading-tight">Halo, Selamat Datang</h2>
+              <p class="text-sm md:text-base text-slate-400 font-medium font-sans">Ada yang bisa saya bantu hari ini?</p>
+          `;
 			chatContainer.appendChild(welcomeDiv);
 			forceCloseSidebar();
 			if(shouldReloadList) loadChatList();
@@ -1198,11 +1265,11 @@
 			uploadedFiles = [];
 			const actionText = isEdit ? "Mengedit gambar" : "Membuat gambar";
 			const loadingHtml = `
-        <div class="flex items-center gap-2.5 text-slate-500">
-            <i class="fa-solid fa-paintbrush fa-bounce text-xs"></i>
-            <span class="text-sm font-medium typing-dots">${actionText}</span>
-        </div>
-    `;
+            <div class="flex items-center gap-2.5 text-slate-500">
+                <i class="fa-solid fa-paintbrush fa-bounce text-xs"></i>
+                <span class="text-sm font-medium typing-dots">${actionText}</span>
+            </div>
+        `;
 			const loadingBubble = appendMessage('model', loadingHtml, false, true);
 			try {
 				const {
@@ -1230,25 +1297,25 @@
 					const timestamp = Date.now();
 					// --- PERBAIKAN ICON (WARNA & POSISI) ---
 					const imgHtml = `
-                <div class="relative group rounded-xl overflow-hidden border border-gray-200 shadow-sm mt-1 inline-block w-full">
-                    <img src="data:${mime};base64,${data.image}" class="w-full h-auto bg-gray-50" alt="${cleanPrompt}">
-                    
-                    <a href="data:${mime};base64,${data.image}" 
-                       download="AI-${timestamp}.png"
-                       class="absolute top-2 right-2 p-2 !text-slate-300 hover:!text-white transition-colors duration-200 drop-shadow-md z-10 active:scale-95"
-                       title="Simpan Gambar">
-                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6">
-                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-                            <g id="SVGRepo_iconCarrier"> 
-                                <g id="Interface / Download"> 
-                                    <path id="Vector" d="M6 21H18M12 3V17M12 17L17 12M12 17L7 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> 
-                                </g> 
-                            </g>
-                        </svg>
-                    </a>
-                </div>
-            `;
+      			    <div tabindex="0" class="relative group rounded-xl overflow-hidden border border-gray-200 shadow-sm mt-1 inline-block w-full outline-none cursor-pointer">
+      			        <img src="data:${mime};base64,${data.image}" class="w-full h-auto bg-gray-50" alt="${cleanPrompt}">
+      			        
+      			        <a href="data:${mime};base64,${data.image}" 
+      			           onclick="handleImageDownload(event, this.href, 'AI-${timestamp}.png')"
+      			           class="absolute top-1 right-1 p-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] active:scale-90 z-10 opacity-0 invisible group-focus:opacity-100 group-focus:visible transition-all duration-300"
+      			           title="Simpan Gambar">
+      			            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5">
+      			                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+      			                <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+      			                <g id="SVGRepo_iconCarrier"> 
+      			                    <g id="Interface / Download"> 
+      			                        <path id="Vector" d="M6 21H18M12 3V17M12 17L17 12M12 17L7 12" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path> 
+      			                    </g> 
+      			                </g>
+      			            </svg>
+      			        </a>
+      			    </div>
+      			`;
 					// ---------------------------------------
 					appendMessage('model', imgHtml, false, true);
 					if(!currentChatId) {
@@ -1353,11 +1420,11 @@
 			});
 			// Indikator Loading
 			const loadingHtml = `
-        <div class="flex items-center gap-2.5 text-slate-500">
-            <i class="fa-brands fa-youtube fa-fade text-red-600 text-sm"></i>
-            <span class="text-sm font-medium typing-dots">Mencari video YouTube</span>
-        </div>
-    `;
+            <div class="flex items-center gap-2.5 text-slate-500">
+                <i class="fa-brands fa-youtube fa-fade text-red-600 text-sm"></i>
+                <span class="text-sm font-medium typing-dots">Mencari video YouTube</span>
+            </div>
+        `;
 			const loadingBubble = appendMessage('model', loadingHtml, false, true);
 			try {
 				const {
@@ -1384,17 +1451,17 @@
 					let videoHtml = `<div class="yt-embed-grid">`;
 					data.videos.forEach(video => {
 						videoHtml += `
-                    <div class="yt-container">
-                        <iframe 
-                            src="https://www.youtube.com/embed/${video.id}" 
-                            title="YouTube video player" 
-                            frameborder="0" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                            allowfullscreen
-                            loading="lazy">
-                        </iframe>
-                    </div>
-                `;
+                        <div class="yt-container">
+                            <iframe 
+                                src="https://www.youtube.com/embed/${video.id}" 
+                                title="YouTube video player" 
+                                frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                allowfullscreen
+                                loading="lazy">
+                            </iframe>
+                        </div>
+                    `;
 					});
 					videoHtml += `</div>`;
 					appendMessage('model', videoHtml, false, true);
@@ -1465,15 +1532,15 @@
 					const iconHtml = getFileIcon(f);
 					// PERUBAHAN: bg-gray-200 (Agar kontras di atas bubble bg-gray-100)
 					fileDisplayHtml += `
-                <div class="relative flex items-center p-2 bg-gray-200 rounded-xl select-none overflow-hidden h-16">
-                    <div class="w-10 h-10 mr-3 shrink-0 rounded-lg overflow-hidden bg-white flex items-center justify-center shadow-sm">
-                        ${iconHtml}
-                    </div>
-                    <div class="overflow-hidden min-w-0 flex-1 flex flex-col justify-center">
-                        <div class="text-sm font-medium text-slate-700 truncate leading-tight">${f.name}</div>
-                        <div class="text-[11px] font-medium text-slate-500 uppercase leading-none mt-0.5">${formatFileSize(f.size)}</div>
-                    </div>
-                </div>`;
+                    <div class="relative flex items-center p-2 bg-gray-200 rounded-xl select-none overflow-hidden h-16">
+                        <div class="w-10 h-10 mr-3 shrink-0 rounded-lg overflow-hidden bg-white flex items-center justify-center shadow-sm">
+                            ${iconHtml}
+                        </div>
+                        <div class="overflow-hidden min-w-0 flex-1 flex flex-col justify-center">
+                            <div class="text-sm font-medium text-slate-700 truncate leading-tight">${f.name}</div>
+                            <div class="text-[11px] font-medium text-slate-500 uppercase leading-none mt-0.5">${formatFileSize(f.size)}</div>
+                        </div>
+                    </div>`;
 				});
 				fileDisplayHtml += '</div>';
 			}
@@ -1634,25 +1701,25 @@
 			// -------------------------------
 			// Tombol Copy (Sama seperti sebelumnya)
 			const copyButtonHtml = role === 'model' && !isLoading && !isRawHtml ? `
-    <div class="copy-container hidden absolute bottom-1.5 left-4 select-none">
-        <button class="copy-btn text-slate-400 p-0 flex items-center transition-colors hover:text-slate-600" title="Salin">
-            <svg viewBox="0 0 1024 1024" width="14" height="14" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-                <path d="M768 832a128 128 0 0 1-128 128H192A128 128 0 0 1 64 832V384a128 128 0 0 1 128-128v64a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64h64z"></path>
-                <path d="M384 128a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64V192a64 64 0 0 0-64-64H384zm0-64h448a128 128 0 0 1 128 128v448a128 128 0 0 1-128 128H384a128 128 0 0 1-128-128V192A128 128 0 0 1 384 64z"></path>
-            </svg>
-        </button>
-    </div>` : '';
+        <div class="copy-container hidden absolute bottom-1.5 left-4 select-none">
+            <button class="copy-btn text-slate-400 p-0 flex items-center transition-colors hover:text-slate-600" title="Salin">
+                <svg viewBox="0 0 1024 1024" width="14" height="14" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                    <path d="M768 832a128 128 0 0 1-128 128H192A128 128 0 0 1 64 832V384a128 128 0 0 1 128-128v64a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64h64z"></path>
+                    <path d="M384 128a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64V192a64 64 0 0 0-64-64H384zm0-64h448a128 128 0 0 1 128 128v448a128 128 0 0 1-128 128H384a128 128 0 0 1-128-128V192A128 128 0 0 1 384 64z"></path>
+                </svg>
+            </button>
+        </div>` : '';
 			div.innerHTML = `
-    <div class="${bubbleClass} relative flex flex-col bg-gray-100 px-4 pt-3 pb-6 rounded-2xl shadow-sm mb-4">
-        <div class="flex justify-between items-center mb-1 border-b-[0.5px] border-gray-300 pb-1">
-            <span class="text-xs font-bold uppercase tracking-wide ${nameColorClass}">${name}</span>
-            <span class="text-[10px] text-slate-400 font-sans">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-        </div>
-        
-        <div class="text-sm md:text-base text-slate-700 font-medium leading-relaxed markdown-body mt-1 chat-content">${htmlContent}</div>
-        
-        ${copyButtonHtml}
-    </div>`;
+        <div class="${bubbleClass} relative flex flex-col bg-gray-100 px-4 pt-3 pb-6 rounded-2xl shadow-sm mb-4">
+            <div class="flex justify-between items-center mb-1 border-b-[0.5px] border-gray-300 pb-1">
+                <span class="text-xs font-bold uppercase tracking-wide ${nameColorClass}">${name}</span>
+                <span class="text-[10px] text-slate-400 font-sans">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+            
+            <div class="text-sm md:text-base text-slate-700 font-medium leading-relaxed markdown-body mt-1 chat-content">${htmlContent}</div>
+            
+            ${copyButtonHtml}
+        </div>`;
 			const contentBody = div.querySelector('.markdown-body');
 			if(contentBody && contentBody.lastElementChild) {
 				contentBody.lastElementChild.style.marginBottom = '0px';
@@ -1709,15 +1776,15 @@
 					div.className = `relative flex items-center justify-between py-2 px-3 rounded-xl cursor-pointer transition-all duration-200 group ${containerStyle}`;
 					div.onclick = () => loadMessages(chat.id);
 					div.innerHTML = `
-			            <span class="${textClass} text-sm md:text-base truncate flex-1 mr-2 select-none transition-colors">${chat.title}</span>
-			            <button onclick="confirmDeleteChat(event, '${chat.id}')" class="text-slate-400 hover:text-red-500 transition-all p-1 rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible">
-			                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-			                    <path d="M4 7.00005L10.2 11.65C11.2667 12.45 12.7333 12.45 13.8 11.65L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-			                    <path d="M13 19H5C3.89543 19 3 18.1046 3 17V7C3 5.89543 3.89543 5 5 5H19C20.1046 5 21 5.89543 21 7V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-			                    <path d="M17 16L19 18M21 20L19 18M19 18L21 16M19 18L17 20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-			                </svg>
-			            </button>
-			        `;
+      	            <span class="${textClass} text-sm md:text-base truncate flex-1 mr-2 select-none transition-colors">${chat.title}</span>
+      	            <button onclick="confirmDeleteChat(event, '${chat.id}')" class="text-slate-400 hover:text-red-500 transition-all p-1 rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible">
+      	                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      	                    <path d="M4 7.00005L10.2 11.65C11.2667 12.45 12.7333 12.45 13.8 11.65L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+      	                    <path d="M13 19H5C3.89543 19 3 18.1046 3 17V7C3 5.89543 3.89543 5 5 5H19C20.1046 5 21 5.89543 21 7V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+      	                    <path d="M17 16L19 18M21 20L19 18M19 18L21 16M19 18L17 20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+      	                </svg>
+      	            </button>
+      	        `;
 					listDiv.appendChild(div);
 				});
 			} catch (error) {
@@ -1776,29 +1843,26 @@
 							const imgTag = tempDiv.querySelector('img');
 							if(imgTag && imgTag.src) {
 								const timestamp = new Date(msg.created_at).getTime();
-								// --- UPDATE CLASS ICON DI SINI ---
-								// !text-slate-300 = Paksa warna abu
-								// top-2 right-2 = Lebih ke pojok
 								displayContent = `
-                            <div class="relative group rounded-xl overflow-hidden border border-gray-200 shadow-sm mt-1 inline-block w-full">
-                                <img src="${imgTag.src}" class="w-full h-auto bg-gray-50">
-                                
-                                <a href="${imgTag.src}" 
-                                   download="AI-${timestamp}.png"
-                                   class="absolute top-2 right-2 p-2 !text-slate-300 hover:!text-white transition-colors duration-200 drop-shadow-md z-10 active:scale-95"
-                                   title="Simpan Gambar">
-                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6">
-                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-                                        <g id="SVGRepo_iconCarrier"> 
-                                            <g id="Interface / Download"> 
-                                                <path id="Vector" d="M6 21H18M12 3V17M12 17L17 12M12 17L7 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> 
-                                            </g> 
-                                        </g>
-                                    </svg>
-                                </a>
-                            </div>
-                        `;
+        <div tabindex="0" class="relative group rounded-xl overflow-hidden border border-gray-200 shadow-sm mt-1 inline-block w-full outline-none cursor-pointer">
+            <img src="${imgTag.src}" class="w-full h-auto bg-gray-50">
+            
+            <a href="${imgTag.src}" 
+               onclick="handleImageDownload(event, this.href, 'AI-${timestamp}.png')"
+               class="absolute top-1 right-1 p-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] active:scale-90 z-10 opacity-0 invisible group-focus:opacity-100 group-focus:visible transition-all duration-300"
+               title="Simpan Gambar">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5">
+                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                    <g id="SVGRepo_iconCarrier"> 
+                        <g id="Interface / Download"> 
+                            <path id="Vector" d="M6 21H18M12 3V17M12 17L17 12M12 17L7 12" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path> 
+                        </g> 
+                    </g>
+                </svg>
+            </a>
+        </div>
+      `;
 							} else {
 								displayContent = foundHtml;
 							}
@@ -1855,6 +1919,43 @@
 			}
 			return response.json();
 		}
+		// === FUNGSI DOWNLOAD KHUSUS iOS PWA (ANTI ERROR LOG) ===
+		async function handleImageDownload(e, dataUrl, fileName) {
+			e.preventDefault();
+			e.stopPropagation();
+			try {
+				const response = await fetch(dataUrl);
+				const blob = await response.blob();
+				const file = new File([blob], fileName, {
+					type: blob.type
+				});
+				if(navigator.canShare && navigator.canShare({
+						files: [file]
+					})) {
+					await navigator.share({
+						files: [file],
+						title: 'Simpan Gambar AI',
+					});
+				} else {
+					// Fallback Desktop
+					const blobUrl = window.URL.createObjectURL(blob);
+					const link = document.createElement('a');
+					link.href = blobUrl;
+					link.download = fileName;
+					document.body.appendChild(link);
+					link.click();
+					document.body.removeChild(link);
+					window.URL.revokeObjectURL(blobUrl);
+				}
+			} catch (err) {
+				// === PERBAIKAN DI SINI ===
+				// Jika user menekan tombol 'Batal' atau 'X', jangan dianggap error
+				if(err.name === 'AbortError') {
+					return; // Keluar diam-diam (Silent exit)
+				}
+				console.error('Download error:', err);
+			}
+		}
 		async function handleAddUser() {
 			const email = document.getElementById('create-email').value;
 			const password = document.getElementById('create-password').value;
@@ -1902,19 +2003,46 @@
 					const div = document.createElement('div');
 					div.className = `flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-xl ${isFrozen ? 'opacity-60' : ''}`;
 					div.innerHTML = `
-                <div class="overflow-hidden mr-2">
-                    <p class="text-xs md:text-sm font-bold text-slate-700 truncate">${user.email}</p>
-                    <p class="text-[10px] md:text-xs text-slate-400 uppercase font-bold tracking-wider mt-0.5">${isFrozen ? '<span class="text-red-500">DIBEKUKAN</span>' : 'AKTIF'} ${isSelf ? '(ANDA)' : ''}</p>
-                </div>
-                <div class="flex items-center gap-2 shrink-0">
-                    <button onclick="toggleFreeze('${user.id}', ${isFrozen})" ${isSelf ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg text-[10px] md:text-xs font-bold uppercase transition-colors ${isFrozen ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'} disabled:opacity-30">
-                        ${isFrozen ? 'Buka' : 'Freeze'}
-                    </button>
-                    <button onclick="deleteUser('${user.id}', '${user.email}')" ${isSelf ? 'disabled' : ''} class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors disabled:opacity-30">
-                        <i class="fa-solid fa-trash text-xs md:text-sm"></i>
-                    </button>
-                </div>
-            `;
+    <div class="overflow-hidden mr-2">
+        <p class="text-xs md:text-sm font-bold text-slate-700 truncate">${user.email}</p>
+        <p class="text-[10px] md:text-xs text-slate-400 uppercase font-bold tracking-wider mt-0.5">${isFrozen ? '<span class="text-red-500">DIBEKUKAN</span>' : 'AKTIF'} ${isSelf ? '(ANDA)' : ''}</p>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+        <button onclick="toggleFreeze('${user.id}', ${isFrozen})" ${isSelf ? 'disabled' : ''} 
+    class="w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${isFrozen ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'} disabled:opacity-30" 
+    title="${isFrozen ? 'Buka Akun' : 'Bekukan Akun'}">
+            <svg class="w-5 h-5" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                <g stroke-width="0"></g>
+                <g stroke-linecap="round" stroke-linejoin="round"></g>
+                <g>
+                    <defs><style>.a{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;}</style></defs>
+                    <path class="a" d="M29.535,33.5623l-5.5344-1.8331-5.5345,1.8331L17.29,27.8649l-4.3588-3.8643L17.29,20.1363l1.1757-5.6973,5.5345,1.833,5.5344-1.833,1.1757,5.6973L35.07,24.0006l-4.3588,3.8643Z"></path>
+                    <path class="a" d="M24.0006,31.7292l0-29.2292"></path>
+                    <path class="a" d="M17.6613,7.151l6.3392,3.0277"></path>
+                    <path class="a" d="M30.34,7.151l-6.3392,3.0277"></path>
+                    <path class="a" d="M24.0006,31.7292V45.5013"></path>
+                    <path class="a" d="M30.34,40.85l-6.3392-3.0277"></path>
+                    <path class="a" d="M17.6613,40.85l6.3392-3.0277"></path>
+                    <path class="a" d="M17.29,27.8649,42.668,13.25"></path>
+                    <path class="a" d="M35.46,10.1l.5409,6.99"></path>
+                    <path class="a" d="M41.8,21.0519,36.0011,17.09"></path>
+                    <path class="a" d="M17.29,27.8649,5.3331,34.751"></path>
+                    <path class="a" d="M12.5409,37.9015,12,30.9116"></path>
+                    <path class="a" d="M6.2016,26.9494,12,30.9116"></path>
+                    <path class="a" d="M30.7107,27.8649,42.668,34.751"></path>
+                    <path class="a" d="M41.8,26.9494l-5.7984,3.9622"></path>
+                    <path class="a" d="M35.46,37.9015l.5409-6.99"></path>
+                    <path class="a" d="M30.7107,27.8649,5.3331,13.25"></path>
+                    <path class="a" d="M6.2016,21.0519,12,17.09"></path>
+                    <path class="a" d="M12.5409,10.1,12,17.09"></path>
+                </g>
+            </svg>
+        </button>
+        <button onclick="deleteUser('${user.id}', '${user.email}')" ${isSelf ? 'disabled' : ''} class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors disabled:opacity-30">
+            <i class="fa-solid fa-trash text-sm"></i>
+        </button>
+    </div>
+`;
 					container.appendChild(div);
 				});
 			} catch (error) {
