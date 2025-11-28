@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+	
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="default">
+	<meta name="apple-mobile-web-app-title" content="AI Assistant">
+	<link rel="apple-touch-icon" href="Icon.png">
+	<link rel="icon" type="image/png" href="Icon.png">
+	<title>AI Assistant</title>
+	
+	<script src="https://cdn.tailwindcss.com"></script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+	<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.7.0/mammoth.browser.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+	
+	<script>
+		const converter = new showdown.Converter({
+			tables: true,
+			strikethrough: true,
+			tasklists: true,
+			ghCodeBlocks: true,
+			openLinksInNewWindow: true,
+			emoji: true
+		});
+		tailwind.config = {
+			theme: {
+				extend: {
+					fontFamily: {
+						sans: ['Inter', 'sans-serif'],
+						orbitron: ['Orbitron', 'sans-serif']
+					}
+				}
+			}
+		}
+	</script>
+	
+	<style>
+		/* === CORE & IOS RESETS === */
+		*, *::before, *::after {
+			touch-action: manipulation;
+		}
+		html, body {
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+			background-color: #ffffff;
+			overscroll-behavior: none;
+			-webkit-overflow-scrolling: touch;
+			-webkit-user-select: none;
+			user-select: none;
+			-webkit-tap-highlight-color: transparent;
+		}
+		#chat-container, #settings-content, input, textarea, select {
+			-webkit-user-select: text;
+			user-select: text;
+		}
+		*:focus {
+			outline: none;
+			box-shadow: none;
+		}
+		#chat-container, #settings-content {
+			-webkit-overflow-scrolling: touch;
+			overscroll-behavior-y: contain;
+		}
+		.no-scrollbar::-webkit-scrollbar, #user-input::-webkit-scrollbar, #settings-content::-webkit-scrollbar {
+			display: none;
+		}
+		.no-scrollbar {
+			-ms-overflow-style: none;
+			scrollbar-width: none;
+		}
+		.safe-pt {
+			padding-top: env(safe-area-inset-top);
+		}
+		.safe-pb {
+			padding-bottom: env(safe-area-inset-bottom);
+		}
+		/* === TYPOGRAPHY & SPACING (PEMBAIKAN JARAK) === */
+		/* 1. Pengaturan Dasar Teks */
+		.markdown-body {
+			font-size: 0.95rem;
+			/* Ukuran font ideal */
+			line-height: 1.6;
+			/* Jarak antar baris dalam 1 paragraf (keterbacaan) */
+			color: #334155;
+			/* Warna teks Slate-700 */
+		}
+		/* 2. Paragraf */
+		.markdown-body p {
+			margin-bottom: 0.75rem;
+			/* Jarak standar antar paragraf */
+			margin-top: 0;
+		}
+		/* 3. Heading (Judul H1, H2, dll) */
+		.markdown-body h1,
+		.markdown-body h2,
+		.markdown-body h3,
+		.markdown-body h4 {
+			color: #0f172a;
+			/* Lebih gelap (Slate-900) */
+			font-weight: 700;
+			margin-top: 1.25rem;
+			/* Jarak sedikit jauh dari konten atasnya */
+			margin-bottom: 0.5rem;
+			/* Jarak dekat ke konten bawahnya */
+			line-height: 1.3;
+		}
+		/* Hapus margin top jika heading ada di paling atas */
+		.markdown-body>*:first-child {
+			margin-top: 0 !important;
+		}
+		/* 4. List (Bullet & Numbering) - PERBAIKAN */
+		.markdown-body ul {
+			list-style-type: disc;
+			/* Munculkan titik bullet */
+			margin-top: 0.25rem;
+			margin-bottom: 0.75rem;
+			padding-left: 1.6rem;
+			/* Ruang untuk bullet */
+		}
+		.markdown-body ol {
+			list-style-type: decimal;
+			/* Munculkan angka 1. 2. 3. */
+			margin-top: 0.25rem;
+			margin-bottom: 0.75rem;
+			padding-left: 1.6rem;
+			/* Ruang untuk angka */
+		}
+		/* Jarak antar item */
+		.markdown-body li {
+			margin-bottom: 0.25rem;
+			padding-left: 0.25rem;
+			/* Sedikit jarak antara bullet/angka dengan teks */
+		}
+		/* Reset margin jika ada paragraf di dalam list agar tidak terlalu jauh */
+		.markdown-body li>p {
+			margin-bottom: 0.25rem;
+		}
+		/* 5. Garis Pemisah (HR) */
+		/* 5. Garis Pemisah (HR) - DIKURANGI JARAKNYA */
+		.markdown-body hr {
+			border: 0;
+			border-top: 1px solid #e2e8f0;
+			/* Garis halus */
+			margin-top: 0.75rem;
+			/* Sebelumnya 1rem, sekarang lebih rapat */
+			margin-bottom: 0.75rem;
+			/* Sebelumnya 1rem, sekarang lebih rapat */
+		}
+		/* 6. Blockquote (Kutipan) */
+		.markdown-body blockquote {
+			border-left: 3px solid #cbd5e1;
+			padding-left: 1rem;
+			color: #64748b;
+			margin-left: 0;
+			margin-bottom: 0.75rem;
+			font-style: italic;
+		}
+		/* 7. Code Block (Pre) */
+		.markdown-body pre {
+			background-color: #f8fafc;
+			color: #334155;
+			padding: 1rem;
+			border-radius: 0.75rem;
+			margin-bottom: 0.75rem;
+			/* Jarak bawah konsisten */
+			overflow-x: auto;
+			border: 1px solid #e2e8f0;
+			font-family: 'Menlo', 'Monaco', monospace;
+			font-size: 0.85rem;
+			line-height: 1.5;
+		}
+		/* 8. Inline Code */
+		.markdown-body :not(pre)>code {
+			background-color: #f1f5f9;
+			color: #ef4444;
+			padding: 0.1rem 0.3rem;
+			border-radius: 0.25rem;
+			font-family: monospace;
+			font-size: 0.9em;
+			font-weight: 500;
+		}
+		/* === STYLE TABEL FINAL (NOMOR RAMPING) === */
+		.markdown-body table {
+			display: table;
+			width: 100%;
+			border-collapse: collapse;
+			border-spacing: 0;
+			margin-top: 0.5rem;
+			margin-bottom: 0.5rem;
+			font-size: 0.9em;
+			background-color: transparent;
+			table-layout: auto;
+		}
+		/* --- SETTING UMUM SEMUA KOLOM --- */
+		.markdown-body th,
+		.markdown-body td {
+			border: 1px solid #cbd5e1;
+			padding: 10px 14px;
+			vertical-align: top;
+			/* Rata atas */
+			white-space: normal;
+			/* Teks boleh turun baris */
+			word-wrap: break-word;
+			/* Default: Lebar minimal 120px untuk kolom isi (Nama, Uraian, dll) */
+			min-width: 120px;
+			max-width: 300px;
+		}
+		/* Header Abu Gelap */
+		.markdown-body th {
+			background-color: #e2e8f0;
+			color: #0f172a;
+			font-weight: 700;
+			text-align: left;
+			letter-spacing: 0.02em;
+		}
+		/* Isi Transparan */
+		.markdown-body td {
+			background-color: transparent;
+			color: #334155;
+			line-height: 1.5;
+		}
+		/* --- PERBAIKAN KHUSUS KOLOM PERTAMA (BIASANYA NOMOR) --- */
+		.markdown-body th:first-child,
+		.markdown-body td:first-child {
+			width: 1%;
+			/* Trik agar kolom menyusut pas sesuai isi */
+			white-space: nowrap;
+			/* Angka tidak boleh turun baris */
+			min-width: 40px;
+			/* Lebar minimal kecil saja (40px) */
+			max-width: 60px;
+			/* Batasi jangan sampai lebar */
+			text-align: center;
+			/* Rata tengah agar angka terlihat rapi */
+		}
+		/* --- PERBAIKAN KHUSUS KOLOM TERAKHIR (BIASANYA NOMINAL/AKSI) --- */
+		/* Opsional: Agar kolom terakhir tidak terlalu mepet kanan */
+		.markdown-body th:last-child,
+		.markdown-body td:last-child {
+			border-right: 1px solid #cbd5e1;
+			/* Pastikan garis kanan ada */
+		}
+		/* 10. Link */
+		.markdown-body a {
+			color: #2563eb;
+			text-decoration: none;
+			font-weight: 500;
+		}
+		.markdown-body a:hover {
+			text-decoration: underline;
+		}
+		/* PENTING: Elemen Terakhir tidak boleh punya margin bawah 
+		   agar jarak dikontrol penuh oleh padding gelembung (pb-6) */
+		.markdown-body>*:last-child {
+			margin-bottom: 0 !important;
+		}
+		/* === STYLING CODE BLOCK (Tema Terang / Light Mode) === */
+		/* Wadah utama blok kode */
+		.markdown-body pre {
+			background-color: #f8fafc;
+			/* Abu sangat muda (Slate 50) - Serasi dengan tema */
+			color: #334155;
+			/* Teks warna abu gelap (Slate 700) agar kontras dan mudah dibaca */
+			padding: 1rem;
+			border-radius: 0.75rem;
+			margin: 0.75rem 0;
+			/* Scrollbar & Layout */
+			overflow-x: auto;
+			width: 100%;
+			max-width: 100%;
+			white-space: pre;
+			-webkit-overflow-scrolling: touch;
+			border: 1px solid #e2e8f0;
+			/* Garis tepi abu tipis untuk batas yang halus */
+			font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+			font-size: 0.85rem;
+			line-height: 1.6;
+		}
+		/* Styling teks di dalam blok */
+		.markdown-body pre code {
+			background-color: transparent;
+			color: inherit;
+			/* Mengikuti warna parent (abu gelap) */
+			padding: 0;
+			border-radius: 0;
+			font-family: inherit;
+		}
+		/* Styling Inline Code (Kode pendek di tengah kalimat) */
+		.markdown-body :not(pre)>code {
+			background-color: #f1f5f9;
+			/* Abu sedikit lebih gelap dari pre */
+			color: #ef4444;
+			/* Merah agar kode pendek menonjol */
+			padding: 0.2rem 0.4rem;
+			border-radius: 0.375rem;
+			font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+			font-size: 0.875em;
+			font-weight: 500;
+			border: 1px solid #e2e8f0;
+			word-break: break-word;
+		}
+		/* Styling Tambahan untuk Bold & Heading agar lebih jelas */
+		.markdown-body strong {
+			font-weight: 700;
+			color: #1e293b;
+		}
+		.markdown-body h1, .markdown-body h2, .markdown-body h3 {
+			margin-top: 1.5rem;
+			margin-bottom: 0.5rem;
+			font-weight: 700;
+			color: #0f172a;
+			line-height: 1.3;
+		}
+		/* Loading Animation */
+		.dot-flashing {
+			position: relative;
+			width: 6px;
+			height: 6px;
+			border-radius: 50%;
+			background-color: #94a3b8;
+			animation: dot-flashing 1s infinite linear alternate;
+			animation-delay: 0.5s;
+		}
+		.dot-flashing::before, .dot-flashing::after {
+			content: '';
+			display: inline-block;
+			position: absolute;
+			top: 0;
+			width: 6px;
+			height: 6px;
+			border-radius: 50%;
+			background-color: #94a3b8;
+			animation: dot-flashing 1s infinite alternate;
+		}
+		.dot-flashing::before {
+			left: -10px;
+			animation-delay: 0s;
+		}
+		.dot-flashing::after {
+			left: 10px;
+			animation-delay: 1s;
+		}
+		@keyframes dot-flashing {
+			0% {
+				background-color: #94a3b8;
+			}
+			50%, 100% {
+				background-color: #cbd5e1;
+			}
+		}
+		@keyframes fadeIn {
+			from {
+				opacity: 0;
+				transform: translateY(10px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+		/* Custom Slider */
+		.custom-range {
+			-webkit-appearance: none;
+			appearance: none;
+			width: 100%;
+			height: 2.5rem;
+			background-color: transparent;
+			cursor: pointer;
+			position: relative;
+			z-index: 20;
+		}
+		.custom-range::-webkit-slider-runnable-track {
+			width: 100%;
+			height: 2.5rem;
+			background-color: #f3f4f6;
+			border-radius: 4px;
+			border: 1px solid #e5e7eb;
+		}
+		.custom-range::-webkit-slider-thumb {
+			-webkit-appearance: none;
+			appearance: none;
+			height: 2.4rem;
+			width: 1rem;
+			background-color: #334155;
+			border: 1px solid #1e293b;
+			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+			border-radius: 4px;
+			margin-top: -1px;
+		}
+		/* Dropdown Animations */
+		.dropdown-open {
+			opacity: 1;
+			transform: scale(100%);
+			pointer-events: auto;
+		}
+		.dropdown-closed {
+			opacity: 0;
+			transform: scale(95%);
+			pointer-events: none;
+		}
+		.rotate-180 {
+			transform: rotate(180deg);
+		}
+	</style>
+</head>
+<body class="flex flex-col relative">
+	
+	<div id="global-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/20 z-50 hidden transition-opacity opacity-0 backdrop-blur-sm"></div>
+	
+	<div id="sidebar" class="fixed inset-y-0 left-0 z-[60] w-72 bg-white shadow-2xl transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+		<div class="flex-none safe-pt bg-white z-10 w-full">
+			<div class="h-20 flex items-center px-4 w-full">
+				<button onclick="startNewChat()" class="w-full py-3.5 bg-slate-100 hover:bg-slate-300 text-slate-500 font-bold text-sm md:text-base rounded-xl transition-all active:scale-95 shadow-sm flex items-center justify-center gap-2 group">
+					<svg class="w-5 h-5 text-slate-500 group-hover:text-slate-800 transition-colors" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"></path>
+						<path d="M8 12h8"></path>
+						<path d="M12 8v8"></path>
+					</svg>
+					<span>Percakapan Baru</span>
+				</button>
+			</div>
+			<div class="mx-4 border-b border-gray-100 mb-2 -mt-1 relative z-10"></div>
+		</div>
+		<div class="flex-1 overflow-y-auto bg-white" id="sidebar-content"></div>
+	</div>
+	
+	<div id="login-page" class="absolute inset-0 z-[40] flex items-center justify-center bg-gray-100 p-4 transition-all duration-300 transform">
+		<div class="bg-white w-full max-w-sm p-8 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-center gap-6">
+			<div class="flex flex-col items-center justify-center text-center">
+				<img src="logo.png" alt="AI Logo" class="w-24 h-24 object-contain -mt-2 mb-0 drop-shadow-sm">
+				<h1 class="font-orbitron text-xl font-extrabold text-slate-800 tracking-wide">AI ASISTEN</h1>
+			</div>
+			<form id="login-form" class="w-full space-y-3" onsubmit="handleLogin(event)">
+				<input type="email" id="email-input" placeholder="Email" required class="login-input w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-slate-300 transition-all">
+				<input type="password" id="password-input" placeholder="Password" required class="login-input w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-slate-300 transition-all">
+				<p id="login-error" class="text-red-500 text-xs text-center hidden"></p>
+				<button type="submit" id="login-btn" class="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm tracking-wide rounded-xl shadow-sm transition-transform active:scale-95 uppercase mt-2">Masuk</button>
+			</form>
+		</div>
+	</div>
+	
+	<div id="chat-page" class="flex-1 flex flex-col h-full hidden opacity-0 relative bg-white w-full z-10">
+		<header class="flex-none h-20 safe-pt flex items-center justify-between px-3 border-b border-gray-100 bg-white z-20 select-none box-content">
+			<div class="flex items-center gap-0 h-full -ml-2">
+				<img src="logo.png" alt="AI Icon" class="w-16 h-16 object-contain drop-shadow-sm">
+				<div>
+					<h2 class="font-orbitron font-extrabold text-xl text-slate-800 tracking-wide leading-tight">AI ASISTEN</h2>
+					<p class="text-[11px] text-slate-500 font-medium font-sans leading-tight">Artificial Intelligence</p>
+				</div>
+			</div>
+			<div class="flex items-center gap-1">
+				<button id="settings-btn" onclick="openSettings()" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-full transition-colors hidden">
+					<svg class="w-6 h-6" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+						<path fill="none" d="M0 0h24v24H0z"></path>
+						<path d="M12 14v2a6 6 0 0 0-6 6H4a8 8 0 0 1 8-8zm0-1c-3.315 0-6-2.685-6-6s2.685-6 6-6 6 2.685 6 6-2.685 6-6 6zm0-2c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm9 6h1v5h-8v-5h1v-1a3 3 0 0 1 6 0v1zm-2 0v-1a1 1 0 0 0-2 0v1h2z"></path>
+					</svg>
+				</button>
+				<button onclick="toggleSidebar()" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-full transition-colors">
+					<svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M5 7H19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
+						<path d="M5 12L19 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
+						<path d="M5 17L19 17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
+					</svg>
+				</button>
+			</div>
+		</header>
+		
+		<main id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"></main>
+		
+		<div class="flex-none bg-white border-t border-gray-100 px-4 pt-2 pb-6 safe-pb z-30 w-full select-none">
+			<div id="file-preview-container" class="w-full max-w-3xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-2 mb-2 empty:hidden"></div>
+			
+			<input type="file" id="file-input" accept=".pdf,.docx,.xls,.xlsx,.pptx,.txt,image/*" multiple class="hidden" />
+			
+			<div class="w-full max-w-3xl mx-auto relative flex items-end bg-gray-100 rounded-[2rem] border border-transparent transition-all">
+				<button onclick="document.getElementById('file-input').click()" class="absolute left-2 bottom-2 w-10 h-10 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-700 hover:bg-gray-200 transition-colors">
+					<i class="fa-solid fa-paperclip text-xl"></i> </button>
+				
+				<textarea id="user-input" rows="1" placeholder="Ketik pesan..." class="w-full py-4 pl-14 pr-14 bg-transparent text-slate-800 text-base placeholder:text-slate-400 resize-none max-h-32 rounded-[2rem] focus:outline-none focus:ring-0" style="min-height: 56px;" oninput="adjustHeight(this)" onkeydown="handleEnter(event)"></textarea>
+				
+				<button id="send-btn" class="absolute right-2 bottom-2 w-10 h-10 flex items-center justify-center rounded-full bg-slate-400 text-white hover:bg-slate-800 shadow-sm transition-transform active:scale-90 disabled:opacity-50 disabled:cursor-not-allowed">
+					<svg class="w-5 h-5 translate-x-0.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none">
+						<path fill="#ffffff" fill-rule="evenodd" d="M2.345 2.245a1 1 0 0 1 1.102-.14l18 9a1 1 0 0 1 0 1.79l-18 9a1 1 0 0 1-1.396-1.211L4.613 13H10a1 1 0 1 0 0-2H4.613L2.05 3.316a1 1 0 0 1 .294-1.071z" clip-rule="evenodd"></path>
+					</svg>
+				</button>
+			</div>
+		</div>
+	</div>
+	
+	<div id="settings-page" class="absolute inset-0 z-[50] bg-white flex flex-col transform translate-y-full transition-transform duration-300 ease-in-out">
+		<header class="flex-none h-20 safe-pt flex items-center justify-between px-3 border-b border-gray-100 bg-white z-20 select-none box-content relative">
+			<button onclick="closeSettings()" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-full transition-colors relative z-30">
+				<svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path d="M15 19l-7-7 7-7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
+				</svg>
+			</button>
+			<div class="absolute inset-0 safe-pt flex items-center justify-center pointer-events-none z-20">
+				<h2 class="font-sans font-bold text-lg text-slate-800 tracking-wide whitespace-nowrap">ADMIN MENU</h2>
+			</div>
+			<button onclick="saveSettings()" class="w-10 h-10 flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-gray-100 rounded-full transition-colors relative z-30">
+				<i class="fa-regular fa-floppy-disk text-xl"></i>
+			</button>
+		</header>
+		
+		<main id="settings-content" class="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-6">
+			<div class="max-w-3xl mx-auto space-y-6 pb-12 mt-2">
+				<fieldset class="bg-white rounded-2xl border border-gray-300 p-6 shadow-sm mt-6">
+					<legend class="px-2 text-sm md:text-base font-black text-slate-600 uppercase tracking-wide">KONFIGURASI AI</legend>
+					<div class="mb-4 relative" id="dropdown-wrapper">
+						<label class="block text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">Model Gemini</label>
+						<button type="button" onclick="toggleDropdown()" id="dropdown-trigger" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl flex justify-between items-center transition-all duration-200 hover:bg-gray-100 active:scale-[0.99]">
+							<span id="selected-model-text" class="text-sm md:text-base font-medium text-slate-700">Gemini 2.5 Flash (Cepat)</span>
+							<i id="dropdown-arrow" class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-300"></i>
+						</button>
+						<div id="dropdown-menu" class="dropdown-closed absolute left-0 right-0 top-full mt-2 bg-white border border-gray-100 rounded-xl shadow-[0_10px_30px_-10px_rgba(0,0,0,0.1)] z-30 overflow-hidden transition-all duration-200 origin-top">
+							<div onclick="selectOption('gemini-2.5-flash', 'Gemini 2.5 Flash (Cepat)')" class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center justify-between group border-b border-gray-50 last:border-0">
+								<span class="text-sm md:text-base text-slate-600 group-hover:text-blue-700 font-medium">Gemini 2.5 Flash (Cepat)</span>
+							</div>
+							<div onclick="selectOption('gemini-2.5-pro', 'Gemini 2.5 Pro (Pintar)')" class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center justify-between group border-b border-gray-50 last:border-0">
+								<span class="text-sm md:text-base text-slate-600 group-hover:text-blue-700 font-medium">Gemini 2.5 Pro (Pintar)</span>
+							</div>
+							<div onclick="selectOption('gemini-3-pro-preview', 'Gemini 3 Pro (Preview)')" class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center justify-between group border-b border-gray-50 last:border-0">
+								<span class="text-sm md:text-base text-slate-600 group-hover:text-blue-700 font-medium">Gemini 3 Pro (Preview)</span>
+							</div>
+						</div>
+						<select id="setting-model" class="hidden">
+							<option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (Cepat)</option>
+							<option value="gemini-2.5-pro">Gemini 2.5 Pro (Pintar)</option>
+							<option value="gemini-3-pro-preview">Gemini 3 Pro (Preview)</option>
+						</select>
+					</div>
+					<div class="mb-4">
+						<label class="block text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">System Instruction</label>
+						<div class="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
+							<textarea id="setting-prompt" rows="3" class="w-full bg-transparent border-none focus:ring-0 p-0 text-sm md:text-base text-slate-700 resize-none placeholder:text-slate-400" placeholder="Contoh: Kamu adalah asisten yang ramah..."></textarea>
+						</div>
+					</div>
+					<div class="mb-2">
+						<div class="flex justify-between mb-1 ml-1"><label class="text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wide">Kreativitas</label></div>
+						<div class="relative w-full h-10 flex items-center mt-1">
+							<span id="temp-label" class="absolute left-1/2 -translate-x-1/2 text-xs md:text-sm font-mono font-bold text-slate-500 z-30 pointer-events-none select-none">0.7</span>
+							<input type="range" id="setting-temp" min="0" max="1" step="0.1" value="0.7" class="custom-range w-full" oninput="updateTempLabel(this.value)">
+						</div>
+						<div class="flex justify-between text-[10px] md:text-xs text-slate-400 mt-2 px-1 font-medium"><span>Fokus (0.0)</span><span>Kreatif (1.0)</span></div>
+					</div>
+				</fieldset>
+				<fieldset class="bg-white rounded-2xl border border-gray-300 p-6 shadow-sm mt-6">
+					<legend class="px-2 text-sm md:text-base font-black text-slate-600 uppercase tracking-wide">MANAJEMEN USER</legend>
+					<div class="mb-4">
+						<label class="block text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">Email Baru</label>
+						<div class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
+							<input type="email" id="create-email" placeholder="user@email.com" class="w-full bg-transparent border-none focus:ring-0 p-0 text-sm md:text-base text-slate-700 placeholder:text-slate-400 h-5">
+						</div>
+					</div>
+					<div class="mb-6">
+						<label class="block text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">Password</label>
+						<div class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
+							<input type="password" id="create-password" placeholder="Minimal 6 karakter" class="w-full bg-transparent border-none focus:ring-0 p-0 text-sm md:text-base text-slate-700 placeholder:text-slate-400 h-5">
+						</div>
+					</div>
+					<button onclick="handleAddUser()" id="btn-add-user" class="w-full py-3.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm md:text-base rounded-xl transition-all active:scale-95 shadow-md flex items-center justify-center gap-2 group mb-8">
+						<i class="fa-solid fa-user-plus text-slate-300 group-hover:text-white transition-colors"></i><span>TAMBAH USER</span>
+					</button>
+					<div class="border-t border-gray-200 mb-6"></div>
+					<div class="flex justify-between items-center mb-4 ml-1">
+						<h4 class="text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wide">Daftar Pengguna</h4>
+						<button onclick="loadUsers()" class="text-[10px] md:text-xs font-bold text-blue-600 hover:text-blue-800 uppercase bg-blue-50 px-2 py-1 rounded-md">Refresh</button>
+					</div>
+					<div id="user-list-container" class="space-y-3">
+						<p class="text-xs md:text-sm text-slate-400 text-center py-4 italic">Memuat data pengguna...</p>
+					</div>
+				</fieldset>
+			</div>
+		</main>
+	</div>
+	
+	<div id="confirm-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+		<div class="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity"></div>
+		
+		<div class="relative bg-gray-50 w-full max-w-[18rem] rounded-2xl shadow-2xl overflow-hidden transform scale-100 transition-all">
+			
+			<div class="p-4 text-center">
+				<h2 id="confirm-title" class="text-lg font-bold text-slate-800 mb-0.5 tracking-wide">KONFIRMASI</h2>
+				<p id="confirm-message" class="text-sm text-slate-500 leading-tight px-1">...</p>
+			</div>
+			
+			<div class="border-t border-gray-200 flex bg-gray-50">
+				<button id="modal-cancel-button" class="w-1/2 py-2.5 text-center text-sm md:text-base font-semibold text-blue-600 hover:bg-gray-200 border-r border-gray-200 transition-colors">BATAL</button>
+				<button id="modal-agree-button" class="w-1/2 py-2.5 text-center text-sm md:text-base font-semibold hover:bg-gray-200 transition-colors">YA</button>
+			</div>
+		</div>
+	</div>
+	
+	<script>
+		const SUPABASE_URL = 'https://xdrqauwxvwooojufzndv.supabase.co';
+		const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkcnFhdXd4dndvb29qdWZ6bmR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1MDQyNDgsImV4cCI6MjA3ODA4MDI0OH0.mH7MEeAggksdAlandZpwuyGPYo08SuuWkXoMXVvwSiI';
+		const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+		let currentUser = null;
+		// --- VARIABEL FILE ---
+		let uploadedFiles = [];
+		// --- HELPER FUNCTIONS ---
+		const formatFileSize = (bytes) => {
+			if(bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+			return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+		};
+		const extractTextFromSlideXML = (xmlString) => {
+			try {
+				const parser = new DOMParser();
+				const xmlDoc = parser.parseFromString(xmlString, "application/xml");
+				const textNodes = xmlDoc.getElementsByTagName("a:t");
+				return Array.from(textNodes).map(node => node.textContent).join(' ');
+			} catch (e) {
+				console.error(e);
+				return '';
+			}
+		};
+		const renderFilePreviews = () => {
+			const container = document.getElementById('file-preview-container');
+			container.innerHTML = '';
+			uploadedFiles.forEach((file, index) => {
+				const iconHtml = getFileIcon(file);
+				const card = document.createElement('div');
+				// Card Body: bg-gray-200
+				card.className = "relative flex items-center p-2 bg-gray-100 rounded-xl transition-all select-none h-16 visible";
+				card.innerHTML = `
+            <div class="w-10 h-10 mr-3 shrink-0 rounded-lg overflow-hidden bg-white flex items-center justify-center shadow-sm">
+                ${iconHtml}
+            </div>
+            
+            <div class="overflow-hidden min-w-0 flex-1 flex flex-col justify-center">
+                <div class="text-sm font-medium text-slate-700 truncate leading-tight">${file.name}</div>
+                <div class="text-[11px] font-medium text-slate-500 uppercase leading-none mt-0.5">${formatFileSize(file.size)}</div>
+            </div>
+
+            <button onclick="removeFile(${index})" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-100 text-red-600 rounded-full flex items-center justify-center shadow-sm hover:bg-gray-100 transition-transform active:scale-90 z-20 cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        `;
+				container.appendChild(card);
+			});
+			const sendBtn = document.getElementById('send-btn');
+			const userInput = document.getElementById('user-input');
+			sendBtn.disabled = (uploadedFiles.length === 0 && userInput.value.trim() === '');
+		};
+		const removeFile = (index) => {
+			uploadedFiles.splice(index, 1);
+			renderFilePreviews();
+		};
+		// --- HELPER IKON PROFESIONAL (SVG) ---
+		const getFileIcon = (file) => {
+			const mime = file.mimeType;
+			const type = file.type;
+			// 1. Image Preview
+			if(mime.startsWith('image/')) {
+				return `<img src="data:${mime};base64,${file.data}" class="w-full h-full object-cover rounded-md" alt="preview" />`;
+			}
+			// 2. PDF Icon (Merah)
+			if(mime.includes('pdf') || type === 'pdf') {
+				return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#EF4444" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2 -2V4a2 2 0 012-2h8l6 6z"/><path fill="#DC2626" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="7" font-family="sans-serif" font-weight="bold">PDF</text></svg>`;
+			}
+			// 3. Word Icon (Biru)
+			if(mime.includes('word') || type === 'doc' || type === 'docx') {
+				return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#3B82F6" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#2563EB" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-family="sans-serif" font-weight="bold">W</text></svg>`;
+			}
+			// 4. Excel Icon (Hijau)
+			if(mime.includes('excel') || mime.includes('spreadsheet') || type === 'xls' || type === 'xlsx') {
+				return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#22C55E" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#16A34A" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-family="sans-serif" font-weight="bold">X</text></svg>`;
+			}
+			// 5. PowerPoint Icon (Oranye)
+			if(mime.includes('powerpoint') || mime.includes('presentation') || type === 'ppt' || type === 'pptx') {
+				return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#F97316" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#EA580C" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-family="sans-serif" font-weight="bold">P</text></svg>`;
+			}
+			// 6. Text/Lainnya (Abu-abu)
+			return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#94a3b8" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#64748b" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="7" font-family="sans-serif" font-weight="bold">FILE</text></svg>`;
+		};
+		let chatHistory = [];
+		let currentChatId = null;
+		let currentConfirmAction = null;
+		const loginPage = document.getElementById('login-page');
+		const chatPage = document.getElementById('chat-page');
+		const sidebar = document.getElementById('sidebar');
+		const overlay = document.getElementById('global-overlay');
+		const chatContainer = document.getElementById('chat-container');
+		const userInput = document.getElementById('user-input');
+		const sendBtn = document.getElementById('send-btn');
+		const settingsPage = document.getElementById('settings-page');
+		const confirmModal = document.getElementById('confirm-modal');
+		async function handleLogin(e) {
+			e.preventDefault();
+			const email = document.getElementById('email-input').value;
+			const password = document.getElementById('password-input').value;
+			const btn = document.getElementById('login-btn');
+			const errorMsg = document.getElementById('login-error');
+			btn.disabled = true;
+			btn.textContent = "MEMPROSES...";
+			errorMsg.classList.add('hidden');
+			try {
+				const {
+					data,
+					error
+				} = await supabase.auth.signInWithPassword({
+					email,
+					password
+				});
+				if(error) throw error;
+				currentUser = data.user;
+				await initializeSettings();
+				await checkAdminVisibility();
+				enterApp();
+			} catch (error) {
+				console.error("Login Error:", error);
+				errorMsg.textContent = "Email atau Password salah!";
+				errorMsg.classList.remove('hidden');
+			} finally {
+				btn.disabled = false;
+				btn.textContent = "MASUK";
+			}
+		}
+		// Listener Global untuk Klik (Smart Copy Fix Word Layout & Toggle Tampilan)
+		document.addEventListener('click', async (e) => {
+			// --- 1. JIKA TOMBOL COPY DIKLIK ---
+			const copyBtn = e.target.closest('.copy-btn');
+			if(copyBtn) {
+				e.stopPropagation();
+				const card = copyBtn.closest('.ai-bubble');
+				const contentDiv = card.querySelector('.chat-content');
+				if(contentDiv) {
+					try {
+						// --- LOGIKA SMART COPY ---
+						const tempDiv = document.createElement('div');
+						tempDiv.innerHTML = contentDiv.innerHTML;
+						// 1. Styling Dasar Dokumen
+						tempDiv.style.fontFamily = 'Arial, sans-serif';
+						tempDiv.style.fontSize = '12pt';
+						tempDiv.style.lineHeight = '1.15';
+						tempDiv.style.textAlign = 'justify';
+						tempDiv.style.color = '#000000';
+						// 2. Styling Elemen Anak
+						const allElements = tempDiv.querySelectorAll('*');
+						allElements.forEach(el => {
+							el.style.fontFamily = 'Arial, sans-serif';
+							el.style.fontSize = '12pt';
+							if(el.tagName === 'P' || el.tagName === 'LI' || el.tagName === 'DIV') {
+								el.style.marginBottom = '6px';
+								el.style.textAlign = 'justify';
+								el.style.lineHeight = '1.5';
+							}
+							if(el.tagName.startsWith('H')) {
+								el.style.fontWeight = 'bold';
+								el.style.textAlign = 'left';
+								el.style.marginTop = '12px';
+								el.style.marginBottom = '6px';
+								el.style.fontSize = '14pt';
+							}
+						});
+						// 3. PERBAIKAN TABEL (Agar Fit to Page di Word)
+						const tables = tempDiv.querySelectorAll('table');
+						tables.forEach(table => {
+							// PENTING: Gunakan width 100% tapi biarkan layout auto agar ngikut margin
+							table.style.width = '100%';
+							table.setAttribute('width', '100%');
+							table.style.borderCollapse = 'collapse';
+							table.style.marginTop = '8px';
+							table.style.marginBottom = '8px';
+							table.style.tableLayout = 'auto'; // Biarkan Word atur lebar kolom
+							// Atribut wajib untuk Word
+							table.setAttribute('border', '1');
+							table.setAttribute('cellspacing', '0');
+							table.setAttribute('cellpadding', '5');
+							const cells = table.querySelectorAll('th, td');
+							cells.forEach(cell => {
+								cell.style.border = '1px solid #000000';
+								cell.style.padding = '6px';
+								cell.style.verticalAlign = 'top';
+								cell.style.textAlign = 'left';
+								// KUNCI PERBAIKAN:
+								// Paksa teks turun baris agar tabel tidak melebar keluar kertas
+								cell.style.whiteSpace = 'normal';
+								cell.style.wordWrap = 'break-word';
+							});
+							const headers = table.querySelectorAll('th');
+							headers.forEach(th => {
+								th.style.backgroundColor = '#f2f2f2';
+								th.style.fontWeight = 'bold';
+								th.style.textAlign = 'center';
+							});
+						});
+						// 4. BUNGKUS HTML FINAL
+						const finalHtml = `<div style="font-family: Arial, sans-serif; font-size: 12pt;">${tempDiv.innerHTML}</div>`;
+						const plainText = contentDiv.innerText;
+						// 5. PROSES SALIN
+						const htmlBlob = new Blob([finalHtml], {
+							type: 'text/html'
+						});
+						const textBlob = new Blob([plainText], {
+							type: 'text/plain'
+						});
+						const item = new ClipboardItem({
+							'text/html': htmlBlob,
+							'text/plain': textBlob
+						});
+						await navigator.clipboard.write([item]);
+						// --- VISUAL FEEDBACK (Checklist) ---
+						if(copyBtn.dataset.copied === "true") return;
+						const originalIcon = copyBtn.innerHTML;
+						copyBtn.dataset.copied = "true";
+						// Ikon Centang (14px)
+						copyBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                `;
+						setTimeout(() => {
+							copyBtn.innerHTML = originalIcon;
+							copyBtn.dataset.copied = "false";
+						}, 2000);
+					} catch (err) {
+						console.error("Gagal copy Smart Text:", err);
+						try {
+							await navigator.clipboard.writeText(contentDiv.innerText);
+						} catch (e) {}
+					}
+				}
+				return;
+			}
+			// --- 2. RESET TAMPILAN ---
+			document.querySelectorAll('.copy-container').forEach(el => {
+				const btn = el.querySelector('.copy-btn');
+				if(btn && btn.dataset.copied === "true") return;
+				el.classList.add('hidden');
+			});
+			// --- 3. KLIK GELEMBUNG ---
+			const clickedBubble = e.target.closest('.ai-bubble');
+			if(clickedBubble) {
+				const btn = clickedBubble.querySelector('.copy-container');
+				if(btn) {
+					btn.classList.remove('hidden');
+				}
+			}
+		});
+		async function checkSession() {
+			const {
+				data: {
+					session
+				}
+			} = await supabase.auth.getSession();
+			if(session) {
+				currentUser = session.user;
+				await initializeSettings();
+				await checkAdminVisibility();
+				loginPage.classList.add('hidden');
+				chatPage.classList.remove('hidden');
+				chatPage.classList.add('flex');
+				chatPage.style.opacity = '1';
+				loadChatList();
+				if(!currentChatId) startNewChat(false);
+			}
+		}
+		// --- EVENT LISTENER UNTUK INPUT FILE ---
+		document.getElementById('file-input').addEventListener('change', async (e) => {
+			const files = e.target.files;
+			if(!files.length) return;
+			for(const file of files) {
+				// Cek duplikasi
+				if(uploadedFiles.find(f => f.name === file.name)) continue;
+				const fileType = file.name.split('.').pop().toLowerCase();
+				const reader = new FileReader();
+				const processFile = new Promise((resolve, reject) => {
+					reader.onload = async (event) => {
+						try {
+							let content, mimeType, isTextContent = false;
+							// Logika Ekstraksi (Mammoth, XLSX, JSZip)
+							if(['doc', 'docx'].includes(fileType)) {
+								const result = await mammoth.extractRawText({
+									arrayBuffer: event.target.result
+								});
+								content = result.value;
+								mimeType = 'text/plain';
+								isTextContent = true;
+							} else if(['xls', 'xlsx'].includes(fileType)) {
+								const workbook = XLSX.read(event.target.result, {
+									type: 'buffer'
+								});
+								content = workbook.SheetNames.map(name => XLSX.utils.sheet_to_txt(workbook.Sheets[name])).join('\n\n');
+								mimeType = 'text/plain';
+								isTextContent = true;
+							} else if(fileType === 'pptx') {
+								const zip = await JSZip.loadAsync(event.target.result);
+								const slidePromises = [];
+								zip.folder("ppt/slides").forEach((path, f) => {
+									if(path.startsWith("slide") && path.endsWith(".xml")) {
+										slidePromises.push(f.async("string").then(extractTextFromSlideXML));
+									}
+								});
+								content = (await Promise.all(slidePromises)).join('\n\n');
+								mimeType = 'text/plain';
+								isTextContent = true;
+							} else if(fileType === 'txt') {
+								content = event.target.result;
+								mimeType = 'text/plain';
+								isTextContent = true;
+							} else if(fileType === 'pdf') {
+								// PDF dikirim sebagai Base64 (Inline Data) untuk Gemini
+								content = event.target.result.split(',')[1];
+								mimeType = 'application/pdf';
+								isTextContent = false;
+							} else if(file.type.startsWith('image/')) {
+								content = event.target.result.split(',')[1];
+								mimeType = file.type;
+								isTextContent = false;
+							} else {
+								reject(new Error("Format tidak didukung"));
+								return;
+							}
+							resolve({
+								name: file.name,
+								size: file.size,
+								type: fileType,
+								data: content, // Teks mentah (dokumen) atau Base64 (gambar/pdf)
+								mimeType: mimeType,
+								isTextContent: isTextContent
+							});
+						} catch (err) {
+							reject(err);
+						}
+					};
+					// Cara membaca file
+					if(['doc', 'docx', 'xls', 'xlsx', 'pptx'].includes(fileType)) reader.readAsArrayBuffer(file);
+					else if(fileType === 'txt') reader.readAsText(file);
+					else reader.readAsDataURL(file); // PDF & Image
+				});
+				try {
+					const processed = await processFile;
+					uploadedFiles.push(processed);
+				} catch (err) {
+					console.error("Gagal baca file:", err);
+					alert("Gagal membaca file: " + file.name);
+				}
+			}
+			renderFilePreviews();
+			e.target.value = ''; // Reset input
+		});
+		async function checkAdminVisibility() {
+			const settingsBtn = document.getElementById('settings-btn');
+			if(!currentUser || !settingsBtn) return;
+			const isAppAdmin = currentUser.app_metadata?.role === 'admin';
+			const isUserAdmin = currentUser.user_metadata?.role === 'admin';
+			if(isAppAdmin || isUserAdmin) {
+				settingsBtn.classList.remove('hidden');
+				return;
+			}
+			try {
+				const {
+					data
+				} = await supabase.from('profiles').select('role').eq('id', currentUser.id).single();
+				if(data && data.role === 'admin') {
+					settingsBtn.classList.remove('hidden');
+				} else {
+					settingsBtn.classList.add('hidden');
+				}
+			} catch (err) {
+				console.error("Gagal cek role admin:", err);
+				settingsBtn.classList.add('hidden');
+			}
+		}
+		
+		function enterApp() {
+			loginPage.style.pointerEvents = 'none';
+			loginPage.style.opacity = '0';
+			setTimeout(() => {
+				loginPage.classList.add('hidden');
+				chatPage.classList.remove('hidden');
+				chatPage.classList.add('flex');
+				void chatPage.offsetWidth;
+				chatPage.style.opacity = '1';
+				userInput.focus();
+				startNewChat();
+			}, 300);
+		}
+		
+		function toggleSidebar() {
+			const isClosed = sidebar.classList.contains('-translate-x-full');
+			if(isClosed) {
+				sidebar.classList.remove('-translate-x-full');
+				overlay.classList.remove('hidden');
+				setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+			} else {
+				sidebar.classList.add('-translate-x-full');
+				overlay.classList.add('opacity-0');
+				setTimeout(() => overlay.classList.add('hidden'), 300);
+			}
+		}
+		
+		function forceCloseSidebar() {
+			sidebar.classList.add('-translate-x-full');
+			overlay.classList.add('opacity-0');
+			setTimeout(() => overlay.classList.add('hidden'), 300);
+		}
+		async function initializeSettings() {
+			try {
+				const {
+					data
+				} = await supabase.from('global_settings').select('*').eq('id', 1).single();
+				if(data) {
+					const modelSelect = document.getElementById('setting-model');
+					const modelText = document.getElementById('selected-model-text');
+					const promptInput = document.getElementById('setting-prompt');
+					const tempInput = document.getElementById('setting-temp');
+					if(modelSelect) modelSelect.value = data.model;
+					if(promptInput) promptInput.value = data.custom_prompt || '';
+					if(tempInput) {
+						tempInput.value = data.temperature;
+						updateTempLabel(data.temperature);
+					}
+					// Update tampilan teks dropdown
+					if(modelText) {
+						if(data.model === 'gemini-2.5-flash') modelText.innerText = 'Gemini 2.5 Flash (Cepat)';
+						else if(data.model === 'gemini-2.5-pro') modelText.innerText = 'Gemini 2.5 Pro (Pintar)';
+						else modelText.innerText = 'Gemini 3 Pro (Preview)';
+					}
+				}
+			} catch (err) {
+				console.error("Gagal memuat konfigurasi awal:", err);
+			}
+		}
+		async function openSettings() {
+			settingsPage.classList.remove('translate-y-full');
+			try {
+				const {
+					data
+				} = await supabase.from('global_settings').select('*').eq('id', 1).single();
+				if(data) {
+					const modelSelect = document.getElementById('setting-model');
+					const modelText = document.getElementById('selected-model-text');
+					const promptInput = document.getElementById('setting-prompt');
+					const tempInput = document.getElementById('setting-temp');
+					modelSelect.value = data.model;
+					promptInput.value = data.custom_prompt || '';
+					tempInput.value = data.temperature;
+					updateTempLabel(data.temperature);
+					if(data.model === 'gemini-2.5-flash') modelText.innerText = 'Gemini 2.5 Flash (Cepat)';
+					else if(data.model === 'gemini-2.5-pro') modelText.innerText = 'Gemini 2.5 Pro (Pintar)';
+					else modelText.innerText = 'Gemini 3 Pro (Preview)';
+				}
+			} catch (err) {
+				console.error(err);
+			}
+			loadUsers();
+		}
+		async function saveSettings() {
+			const model = document.getElementById('setting-model').value;
+			const prompt = document.getElementById('setting-prompt').value;
+			const temp = document.getElementById('setting-temp').value;
+			try {
+				const {
+					error
+				} = await supabase.from('global_settings').update({
+					model: model,
+					custom_prompt: prompt,
+					temperature: parseFloat(temp)
+				}).eq('id', 1);
+				if(error) throw error;
+				closeSettings();
+			} catch (error) {
+				alert("Gagal menyimpan: " + error.message);
+			}
+		}
+		
+		function closeSettings() {
+			settingsPage.classList.add('translate-y-full');
+		}
+		const dropdownMenu = document.getElementById('dropdown-menu');
+		const dropdownArrow = document.getElementById('dropdown-arrow');
+		const selectedText = document.getElementById('selected-model-text');
+		const hiddenSelect = document.getElementById('setting-model');
+		const dropdownWrapper = document.getElementById('dropdown-wrapper');
+		
+		function toggleDropdown() {
+			if(dropdownMenu.classList.contains('dropdown-open')) closeDropdown();
+			else openDropdown();
+		}
+		
+		function openDropdown() {
+			dropdownMenu.classList.remove('dropdown-closed');
+			dropdownMenu.classList.add('dropdown-open');
+			dropdownArrow.classList.add('rotate-180');
+		}
+		
+		function closeDropdown() {
+			dropdownMenu.classList.remove('dropdown-open');
+			dropdownMenu.classList.add('dropdown-closed');
+			dropdownArrow.classList.remove('rotate-180');
+		}
+		
+		function selectOption(value, text) {
+			selectedText.textContent = text;
+			hiddenSelect.value = value;
+			closeDropdown();
+		}
+		document.addEventListener('click', function(e) {
+			if(!dropdownWrapper.contains(e.target)) closeDropdown();
+		});
+		
+		function updateTempLabel(val) {
+			document.getElementById('temp-label').innerText = val;
+		}
+		
+		function startNewChat(shouldReloadList = true) {
+			currentChatId = null;
+			chatHistory = [];
+			chatContainer.innerHTML = '';
+			userInput.value = '';
+			sendBtn.disabled = true;
+			const welcomeDiv = document.createElement('div');
+			welcomeDiv.className = 'flex flex-col items-center justify-center h-full pb-20 text-center p-8 select-none animate-[fadeIn_0.5s_ease-out]';
+			welcomeDiv.innerHTML = `
+                <h2 class="text-xl md:text-2xl font-sans font-bold mb-1 bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent tracking-wide leading-tight">Halo, Selamat Datang</h2>
+		        <p class="text-sm md:text-base text-slate-400 font-medium font-sans">Ada yang bisa saya bantu hari ini?</p>
+		    `;
+			chatContainer.appendChild(welcomeDiv);
+			forceCloseSidebar();
+			if(shouldReloadList) loadChatList();
+		}
+		async function sendMessage() {
+			const text = userInput.value.trim();
+			if((!text && uploadedFiles.length === 0) || !currentUser) return;
+			userInput.value = '';
+			userInput.blur();
+			adjustHeight(userInput);
+			sendBtn.disabled = true;
+			document.getElementById('file-preview-container').innerHTML = '';
+			if(chatHistory.length === 0) chatContainer.innerHTML = '';
+			let fileDisplayHtml = '';
+			if(uploadedFiles.length > 0) {
+				fileDisplayHtml = '<div class="w-full grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">';
+				uploadedFiles.forEach(f => {
+					const iconHtml = getFileIcon(f);
+					// PERUBAHAN: bg-gray-200 (Agar kontras di atas bubble bg-gray-100)
+					fileDisplayHtml += `
+                <div class="relative flex items-center p-2 bg-gray-200 rounded-xl select-none overflow-hidden h-16">
+                    <div class="w-10 h-10 mr-3 shrink-0 rounded-lg overflow-hidden bg-white flex items-center justify-center shadow-sm">
+                        ${iconHtml}
+                    </div>
+                    <div class="overflow-hidden min-w-0 flex-1 flex flex-col justify-center">
+                        <div class="text-sm font-medium text-slate-700 truncate leading-tight">${f.name}</div>
+                        <div class="text-[11px] font-medium text-slate-500 uppercase leading-none mt-0.5">${formatFileSize(f.size)}</div>
+                    </div>
+                </div>`;
+				});
+				fileDisplayHtml += '</div>';
+			}
+			const textHtml = text ? `<p class="text-slate-700 whitespace-pre-wrap leading-relaxed">${text.replace(/\n/g, '<br>')}</p>` : '';
+			const fullUserDisplay = fileDisplayHtml + textHtml;
+			appendMessage('user', fullUserDisplay, false, true);
+			// ... (SISA KODE KE BAWAH TIDAK BERUBAH/SAMA SEPERTI SEBELUMNYA) ...
+			// Pastikan Anda menyalin sisa logika pengiriman database & API dari kode sebelumnya
+			const userParts = [];
+			const dbParts = [];
+			const currentPayloadFiles = [...uploadedFiles];
+			uploadedFiles = [];
+			let documentContext = "";
+			currentPayloadFiles.forEach(file => {
+				if(file.isTextContent) {
+					documentContext += `\n\n[DOKUMEN: ${file.name}]\nISI:\n${file.data}\n----------------\n`;
+				} else {
+					userParts.push({
+						inlineData: {
+							mimeType: file.mimeType,
+							data: file.data
+						}
+					});
+				}
+			});
+			const finalPrompt = text + documentContext;
+			if(finalPrompt.trim() !== "") userParts.push({
+				text: finalPrompt
+			});
+			chatHistory.push({
+				role: "user",
+				parts: userParts
+			});
+			if(text) dbParts.push({
+				text: text
+			});
+			if(fileDisplayHtml) dbParts.push({
+				fileHtml: fileDisplayHtml
+			});
+			if(dbParts.length === 0) dbParts.push({
+				text: "..."
+			});
+			const loadingMsg = appendMessage('model', '', true);
+			try {
+				if(!currentChatId) {
+					const title = (text ? text.substring(0, 30) : "Lampiran File") + "...";
+					const {
+						data: newConv
+					} = await supabase.from('conversations').insert({
+						user_id: currentUser.id,
+						title: title
+					}).select().single();
+					currentChatId = newConv.id;
+					loadChatList();
+				}
+				await supabase.from('messages').insert({
+					conversation_id: currentChatId,
+					role: 'user',
+					parts: dbParts
+				});
+				const model = document.getElementById('setting-model').value || 'gemini-2.5-flash';
+				const customPrompt = document.getElementById('setting-prompt')?.value || '';
+				const temperature = document.getElementById('setting-temp')?.value || 0.7;
+				const functionUrl = `${SUPABASE_URL}/functions/v1/call-gemini`;
+				const {
+					data: {
+						session
+					}
+				} = await supabase.auth.getSession();
+				const requestPayload = {
+					contents: chatHistory,
+					tools: [{
+						googleSearch: {}
+					}],
+					generationConfig: {
+						temperature: parseFloat(temperature),
+						maxOutputTokens: 2048
+					},
+					systemInstruction: {
+						role: "system",
+						parts: [{
+							text: customPrompt || "You are a helpful AI."
+						}]
+					}
+				};
+				const response = await fetch(functionUrl, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': `Bearer ${session.access_token}`
+					},
+					body: JSON.stringify({
+						model: model,
+						payload: requestPayload
+					}),
+				});
+				if(!response.ok) throw new Error("AI Server Error");
+				const data = await response.json();
+				const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, saya tidak bisa menjawab.";
+				loadingMsg.remove();
+				appendMessage('model', aiText);
+				chatHistory.push({
+					role: "model",
+					parts: [{
+						text: aiText
+					}]
+				});
+				await supabase.from('messages').insert({
+					conversation_id: currentChatId,
+					role: 'model',
+					parts: [{
+						text: aiText
+					}]
+				});
+			} catch (error) {
+				loadingMsg.remove();
+				appendMessage('model', "Error: " + error.message);
+			} finally {
+				sendBtn.disabled = false;
+			}
+		}
+		
+		function appendMessage(role, content, isLoading = false, isRawHtml = false) {
+			const div = document.createElement('div');
+			div.className = 'w-full max-w-3xl mx-auto';
+			const isUser = role === 'user';
+			const name = isUser ? 'ANDA' : 'ASISTEN';
+			const nameColorClass = isUser ?
+				'text-slate-500' :
+				'bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent';
+			const bubbleClass = isUser ? 'user-bubble' : 'ai-bubble cursor-pointer';
+			let htmlContent;
+			if(isLoading) {
+				htmlContent = `<div class="flex items-center h-6 pl-3 gap-1"><div class="dot-flashing"></div></div>`;
+			} else if(role === 'model') {
+				let rawHtml = converter.makeHtml(content);
+				// --- PEMBUNGKUS TABEL ---
+				const tempDiv = document.createElement('div');
+				tempDiv.innerHTML = rawHtml;
+				const tables = tempDiv.querySelectorAll('table');
+				tables.forEach(tbl => {
+					const wrapper = document.createElement('div');
+					// PERBAIKAN DISINI: 
+					// Tambahkan 'mb-6' (Margin Bottom 1.5rem / 24px) pada wrapper
+					// Agar ada jarak yang cukup lega antara tabel dan teks di bawahnya.
+					wrapper.className = 'overflow-x-auto w-full block mb-2';
+					tbl.parentNode.insertBefore(wrapper, tbl);
+					wrapper.appendChild(tbl);
+					// Reset style tabel (karena jarak sudah diurus wrapper)
+					tbl.style.marginTop = '0';
+					tbl.style.marginBottom = '0';
+				});
+				htmlContent = tempDiv.innerHTML;
+			} else {
+				htmlContent = isRawHtml ? content : content.replace(/\n/g, '<br>');
+			}
+			// TOMBOL COPY (Statis, 14px, Bottom-1.5)
+			const copyButtonHtml = role === 'model' && !isLoading ? `
+        <div class="copy-container hidden absolute bottom-1.5 left-4 select-none">
+            <button class="copy-btn text-slate-400 p-0 flex items-center transition-colors hover:text-slate-600" title="Salin">
+                <svg viewBox="0 0 1024 1024" width="14" height="14" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                    <path d="M768 832a128 128 0 0 1-128 128H192A128 128 0 0 1 64 832V384a128 128 0 0 1 128-128v64a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64h64z"></path>
+                    <path d="M384 128a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64V192a64 64 0 0 0-64-64H384zm0-64h448a128 128 0 0 1 128 128v448a128 128 0 0 1-128 128H384a128 128 0 0 1-128-128V192A128 128 0 0 1 384 64z"></path>
+                </svg>
+            </button>
+        </div>
+    ` : '';
+			// STRUKTUR UTAMA
+			div.innerHTML = `
+        <div class="${bubbleClass} relative flex flex-col bg-gray-100 px-4 pt-3 pb-6 rounded-2xl shadow-sm mb-4">
+            <div class="flex justify-between items-center mb-1 border-b-[0.5px] border-gray-300 pb-1">
+                <span class="text-xs font-bold uppercase tracking-wide ${nameColorClass}">${name}</span>
+                <span class="text-[10px] text-slate-400 font-sans">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+            
+            <div class="text-sm md:text-base text-slate-700 font-medium leading-relaxed markdown-body mt-1 chat-content">${htmlContent}</div>
+            
+            ${copyButtonHtml}
+        </div>
+    `;
+			// SOLUSI JARAK NUMBERING (Konsistensi Margin Akhir)
+			// Logika ini tetap diperlukan agar elemen TERAKHIR (apapun itu) tidak punya margin bawah,
+			// sehingga jarak ke tombol copy tetap rapi.
+			const contentBody = div.querySelector('.markdown-body');
+			if(contentBody && contentBody.lastElementChild) {
+				contentBody.lastElementChild.style.marginBottom = '0px';
+				// Hapus margin wrapper jika wrapper adalah elemen terakhir
+				if(contentBody.lastElementChild.classList.contains('overflow-x-auto')) {
+					contentBody.lastElementChild.classList.remove('mb-6');
+				}
+			}
+			chatContainer.appendChild(div);
+			chatContainer.scrollTo({
+				top: chatContainer.scrollHeight,
+				behavior: 'auto'
+			});
+			return div;
+		}
+		
+		function adjustHeight(el) {
+			el.style.height = 'auto';
+			el.style.height = Math.min(Math.max(el.scrollHeight, 56), 128) + 'px';
+		}
+		
+		function handleEnter(e) {
+			if(e.key === 'Enter' && !e.shiftKey) {
+				e.preventDefault();
+				sendMessage();
+			}
+		}
+		async function loadChatList() {
+			const listContainer = document.getElementById('sidebar-content');
+			let listDiv = document.getElementById('chat-history-list');
+			if(!listDiv) {
+				listDiv = document.createElement('div');
+				listDiv.id = 'chat-history-list';
+				listDiv.className = 'flex flex-col mt-0 px-4 space-y-1 pb-4';
+				listContainer.appendChild(listDiv);
+			}
+			listDiv.innerHTML = '';
+			try {
+				const {
+					data: chats,
+					error
+				} = await supabase.from('conversations').select('id, title').eq('user_id', currentUser.id).order('created_at', {
+					ascending: false
+				});
+				if(error) throw error;
+				if(!chats || chats.length === 0) {
+					listDiv.innerHTML = '<p class="text-xs text-slate-400 text-center mt-4">Belum ada riwayat.</p>';
+					return;
+				}
+				chats.forEach(chat => {
+					const isActive = chat.id === currentChatId;
+					const containerStyle = isActive ? 'bg-blue-50' : 'bg-gray-50';
+					const textClass = isActive ? 'text-blue-700 font-bold' : 'text-slate-600 font-medium';
+					const div = document.createElement('div');
+					div.className = `relative flex items-center justify-between py-2 px-3 rounded-xl cursor-pointer transition-all duration-200 group ${containerStyle}`;
+					div.onclick = () => loadMessages(chat.id);
+					div.innerHTML = `
+			            <span class="${textClass} text-sm md:text-base truncate flex-1 mr-2 select-none transition-colors">${chat.title}</span>
+			            <button onclick="confirmDeleteChat(event, '${chat.id}')" class="text-slate-400 hover:text-red-500 transition-all p-1 rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible">
+			                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+			                    <path d="M4 7.00005L10.2 11.65C11.2667 12.45 12.7333 12.45 13.8 11.65L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+			                    <path d="M13 19H5C3.89543 19 3 18.1046 3 17V7C3 5.89543 3.89543 5 5 5H19C20.1046 5 21 5.89543 21 7V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+			                    <path d="M17 16L19 18M21 20L19 18M19 18L21 16M19 18L17 20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+			                </svg>
+			            </button>
+			        `;
+					listDiv.appendChild(div);
+				});
+			} catch (error) {
+				console.error(error);
+			}
+		}
+		async function loadMessages(chatId) {
+			currentChatId = chatId;
+			loadChatList();
+			forceCloseSidebar();
+			chatContainer.innerHTML = '';
+			const loading = appendMessage('model', '', true);
+			chatHistory = [];
+			try {
+				const {
+					data: messages,
+					error
+				} = await supabase.from('messages')
+					.select('*')
+					.eq('conversation_id', chatId)
+					.order('created_at', {
+						ascending: true
+					});
+				if(error) throw error;
+				loading.remove();
+				messages.forEach(msg => {
+					let displayContent = "";
+					const parts = msg.parts || [];
+					if(msg.role === 'user') {
+						// AMBIL DATA DARI DB: Text DAN File HTML
+						const fileHtml = parts.find(p => p.fileHtml)?.fileHtml || "";
+						const textContent = parts.find(p => p.text)?.text || "";
+						// Format teks user agar rapi
+						const formattedText = textContent ? `<p class="text-slate-700 whitespace-pre-wrap leading-relaxed">${textContent.replace(/\n/g, '<br>')}</p>` : "";
+						// Gabungkan File + Teks untuk ditampilkan
+						displayContent = fileHtml + formattedText;
+						// Kembalikan ke history chat (tanpa visual HTML untuk AI context, cukup teks)
+						chatHistory.push({
+							role: "user",
+							parts: [{
+								text: textContent + (fileHtml ? " [File]" : "")
+							}]
+						});
+					} else {
+						// Pesan Model/AI
+						displayContent = parts[0]?.text || "";
+						chatHistory.push({
+							role: "model",
+							parts: [{
+								text: displayContent
+							}]
+						});
+					}
+					// Tampilkan dengan mode Raw HTML = true
+					appendMessage(msg.role === 'user' ? 'user' : 'model', displayContent, false, true);
+				});
+				// Scroll ke bawah
+				setTimeout(() => {
+					chatContainer.scrollTo({
+						top: chatContainer.scrollHeight,
+						behavior: 'auto'
+					});
+				}, 100);
+			} catch (error) {
+				loading.remove();
+				appendMessage('model', "Gagal memuat pesan: " + error.message);
+			}
+		}
+		async function callAdminFunction(action, payload = {}) {
+			const {
+				data: {
+					session
+				}
+			} = await supabase.auth.getSession();
+			if(!session) {
+				alert("Akses ditolak.");
+				return null;
+			}
+			const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-user-manager`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${session.access_token}`
+				},
+				body: JSON.stringify({
+					action,
+					payload
+				}),
+			});
+			if(!response.ok) {
+				const err = await response.json();
+				throw new Error(err.error || "Gagal memproses permintaan admin.");
+			}
+			return response.json();
+		}
+		async function handleAddUser() {
+			const email = document.getElementById('create-email').value;
+			const password = document.getElementById('create-password').value;
+			const btn = document.getElementById('btn-add-user');
+			if(!email || password.length < 6) {
+				alert("Data tidak valid.");
+				return;
+			}
+			btn.textContent = "Menambahkan...";
+			btn.disabled = true;
+			try {
+				await callAdminFunction('create_user', {
+					email,
+					password
+				});
+				alert(`User ${email} berhasil dibuat!`);
+				document.getElementById('create-email').value = '';
+				document.getElementById('create-password').value = '';
+				loadUsers();
+			} catch (error) {
+				alert("Gagal: " + error.message);
+			} finally {
+				btn.innerHTML = `<i class="fa-solid fa-user-plus text-slate-300 group-hover:text-white transition-colors"></i><span>TAMBAH USER</span>`;
+				btn.disabled = false;
+			}
+		}
+		async function loadUsers() {
+			const container = document.getElementById('user-list-container');
+			container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4"><i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Memuat data...</p>';
+			try {
+				const users = await callAdminFunction('list_users');
+				const {
+					data: {
+						user: currentUser
+					}
+				} = await supabase.auth.getUser();
+				container.innerHTML = '';
+				if(!users || users.length === 0) {
+					container.innerHTML = '<p class="text-xs text-slate-400 text-center">Tidak ada pengguna lain.</p>';
+					return;
+				}
+				users.forEach(user => {
+					const isSelf = user.id === currentUser?.id;
+					const isFrozen = user.banned_until && (new Date(user.banned_until) > new Date());
+					const div = document.createElement('div');
+					div.className = `flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-xl ${isFrozen ? 'opacity-60' : ''}`;
+					div.innerHTML = `
+                <div class="overflow-hidden mr-2">
+                    <p class="text-xs md:text-sm font-bold text-slate-700 truncate">${user.email}</p>
+                    <p class="text-[10px] md:text-xs text-slate-400 uppercase font-bold tracking-wider mt-0.5">${isFrozen ? '<span class="text-red-500">DIBEKUKAN</span>' : 'AKTIF'} ${isSelf ? '(ANDA)' : ''}</p>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button onclick="toggleFreeze('${user.id}', ${isFrozen})" ${isSelf ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg text-[10px] md:text-xs font-bold uppercase transition-colors ${isFrozen ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'} disabled:opacity-30">
+                        ${isFrozen ? 'Buka' : 'Freeze'}
+                    </button>
+                    <button onclick="deleteUser('${user.id}', '${user.email}')" ${isSelf ? 'disabled' : ''} class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors disabled:opacity-30">
+                        <i class="fa-solid fa-trash text-xs md:text-sm"></i>
+                    </button>
+                </div>
+            `;
+					container.appendChild(div);
+				});
+			} catch (error) {
+				container.innerHTML = `<p class="text-xs text-red-400 text-center">Error: ${error.message}</p>`;
+			}
+		}
+		
+		function showCustomConfirm(title, message, actionCallback, btnText = "HAPUS", btnColorClass = "text-red-500") {
+			document.getElementById('confirm-title').textContent = title;
+			document.getElementById('confirm-message').textContent = message;
+			const agreeBtn = document.getElementById('modal-agree-button');
+			agreeBtn.textContent = btnText;
+			agreeBtn.className = `w-1/2 py-2.5 text-center text-sm md:text-base font-semibold hover:bg-gray-200 transition-colors ${btnColorClass}`;
+			currentConfirmAction = actionCallback;
+			confirmModal.classList.remove('hidden');
+		}
+		
+		function hideConfirmModal() {
+			confirmModal.classList.add('hidden');
+			currentConfirmAction = null;
+		}
+		document.getElementById('modal-cancel-button').addEventListener('click', hideConfirmModal);
+		document.getElementById('modal-agree-button').addEventListener('click', async () => {
+			if(currentConfirmAction) await currentConfirmAction();
+			hideConfirmModal();
+		});
+		
+		function confirmDeleteChat(e, chatId) {
+			e.stopPropagation();
+			forceCloseSidebar();
+			showCustomConfirm("Hapus Percakapan?", "Tindakan ini tidak dapat dibatalkan. Anda yakin ingin menghapus percakapan ini?", async () => {
+				try {
+					await supabase.from('conversations').delete().eq('id', chatId);
+					if(currentChatId === chatId) startNewChat();
+					else loadChatList();
+				} catch (err) {
+					alert("Gagal menghapus: " + err.message);
+				}
+			}, "HAPUS", "text-red-500");
+		}
+		async function deleteUser(userId, userEmail) {
+			showCustomConfirm("Hapus User?", `Hapus permanen akun ${userEmail}?`, async () => {
+				try {
+					await callAdminFunction('delete_user', {
+						id: userId
+					});
+					loadUsers();
+				} catch (err) {
+					alert(err.message);
+				}
+			}, "HAPUS", "text-red-500");
+		}
+		async function toggleFreeze(userId, isCurrentlyFrozen) {
+			const actionName = isCurrentlyFrozen ? 'unfreeze_user' : 'freeze_user';
+			const title = isCurrentlyFrozen ? "Buka Akun?" : "Bekukan Akun?";
+			const msg = isCurrentlyFrozen ? "User ini akan bisa login kembali." : "User ini tidak akan bisa login aplikasi.";
+			const btnText = isCurrentlyFrozen ? "BUKA" : "BEKUKAN";
+			const btnColor = isCurrentlyFrozen ? "text-green-600" : "text-yellow-600";
+			showCustomConfirm(title, msg, async () => {
+				try {
+					await callAdminFunction(actionName, {
+						id: userId
+					});
+					loadUsers();
+				} catch (err) {
+					alert(err.message);
+				}
+			}, btnText, btnColor);
+		}
+		const resetScroll = () => {
+			window.scrollTo(0, 0);
+			setTimeout(() => document.body.scrollTop = 0, 50);
+		};
+		document.querySelectorAll('input, textarea').forEach(el => {
+			el.addEventListener('blur', resetScroll);
+		});
+		userInput.addEventListener('input', function() {
+			adjustHeight(this);
+			sendBtn.disabled = this.value.trim() === '';
+		});
+		
+		function handleSend(e) {
+			e.preventDefault();
+			if(!sendBtn.disabled) {
+				sendMessage();
+			}
+		}
+		sendBtn.addEventListener('click', handleSend);
+		sendBtn.addEventListener('touchend', handleSend);
+		let lastTouchEnd = 0;
+		document.addEventListener('touchend', (e) => {
+			const now = (new Date()).getTime();
+			if(now - lastTouchEnd <= 300) e.preventDefault();
+			lastTouchEnd = now;
+		}, false);
+		sendBtn.disabled = true;
+		checkSession();
+	</script>
+</body>
+</html>
