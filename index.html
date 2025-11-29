@@ -2504,81 +2504,124 @@
 			// 1. Deteksi iOS 15
 			const isIOS15 = /iPhone/.test(navigator.userAgent) && /OS 15_/.test(navigator.userAgent);
 			if(isIOS15) {
-				console.log("⚠️ iOS 15 Detected: Mengaktifkan Parser Tampilan Rapi");
-				// 2. TIMPA FUNGSI KONVERSI (High Precision Manual Parser)
+				console.log("🛡️ iOS 15 Detected: Mengaktifkan Parser V3 (Tabel + List Rapi)");
+				// 2. TIMPA FUNGSI KONVERSI (Full Manual Parser)
 				if(typeof converter !== 'undefined') {
 					converter.makeHtml = function(text) {
 						if(!text) return "";
 						try {
-							// --- TAHAP 1: AMANKAN KODE & FORMAT DASAR ---
+							// --- TAHAP 1: PRE-PROCESSING ---
 							let html = text
 								.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-								// Bold & Italic
+								// Formatting Dasar (Bold, Italic, Code)
 								.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
 								.replace(/\*(.*?)\*/g, '<i>$1</i>')
 								.replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-1 rounded text-red-600 font-mono text-sm border border-gray-200">$1</code>')
-								// Header
-								.replace(/^### (.*$)/gm, '<h3 class="text-base font-bold text-gray-900 mt-4 mb-1">$1</h3>')
-								.replace(/^## (.*$)/gm, '<h2 class="text-lg font-bold text-gray-900 mt-5 mb-2 border-b border-gray-300 pb-1">$1</h2>');
-							// --- TAHAP 2: PARSING LIST (NUMBERING & BULLET) ---
-							// Kita proses per baris untuk menghitung spasi (indentasi)
+								// Header (H2 & H3)
+								.replace(/^### (.*$)/gm, '<h3 class="text-base font-bold text-gray-900 mt-5 mb-2">$1</h3>')
+								.replace(/^## (.*$)/gm, '<h2 class="text-lg font-bold text-gray-900 mt-6 mb-3 border-b border-gray-300 pb-1">$1</h2>');
+							// --- TAHAP 2: PARSING BARIS DEMI BARIS ---
 							const lines = html.split('\n');
 							let output = [];
 							let inCodeBlock = false;
-							lines.forEach(line => {
-								// Handle Code Block (agar isi code tidak rusak)
+							let inTable = false;
+							let tableHeaderProcessed = false;
+							for(let i = 0; i < lines.length; i++) {
+								let line = lines[i];
+								// A. HANDLE CODE BLOCK
 								if(line.trim().startsWith('```')) {
 									inCodeBlock = !inCodeBlock;
-									output.push(inCodeBlock ? '<pre class="bg-gray-100 p-2 rounded-lg text-xs my-2 overflow-x-auto border border-gray-200"><code>' : '</code></pre>');
-									return;
+									output.push(inCodeBlock ? '<pre class="bg-gray-100 p-3 rounded-lg text-xs my-2 overflow-x-auto border border-gray-200"><code>' : '</code></pre>');
+									continue;
 								}
 								if(inCodeBlock) {
 									output.push(line + '\n');
-									return;
+									continue;
 								}
-								// DETEKSI LIST (Bullet atau Number)
-								// Regex: Menangkap (Spasi Awal), (Simbol), dan (Isi Teks)
+								// B. HANDLE TABEL (LOGIKA BARU)
+								// Ciri baris tabel: Dimulai dan diakhiri dengan | (atau setidaknya mengandung |)
+								if(line.trim().startsWith('|')) {
+									// Jika belum masuk mode tabel, buka tag tabel
+									if(!inTable) {
+										inTable = true;
+										tableHeaderProcessed = false; // Reset status header
+										output.push('<div class="overflow-x-auto my-3 rounded-lg border border-gray-300"><table class="w-full text-sm text-left border-collapse">');
+									}
+									// Pecah baris menjadi sel
+									// Filter(Boolean) membuang string kosong akibat split di ujung |
+									const cells = line.split('|').filter(cell => cell.trim() !== '');
+									// Cek apakah ini baris pemisah (misal: |---|---|)
+									const isSeparator = cells.every(c => c.trim().match(/^[-: ]+$/));
+									if(isSeparator) {
+										tableHeaderProcessed = true; // Baris setelah ini adalah Body
+										continue; // Jangan render baris pemisah
+									}
+									// Render Baris (Header atau Body)
+									output.push('<tr>');
+									const isHeaderRow = !tableHeaderProcessed; // Baris pertama dianggap header
+									cells.forEach(cell => {
+										const content = cell.trim();
+										if(isHeaderRow) {
+											// Style Header: Abu muda, Teks Hitam Tebal
+											output.push(`<th class="bg-gray-100 px-4 py-2 border-b border-r border-gray-300 font-bold text-black last:border-r-0 whitespace-nowrap">${content}</th>`);
+										} else {
+											// Style Body: Putih, Teks Hitam
+											output.push(`<td class="px-4 py-2 border-b border-r border-gray-200 text-gray-900 last:border-r-0 min-w-[100px]">${content}</td>`);
+										}
+									});
+									output.push('</tr>');
+									// Jika ini baris pertama, tandai bahwa header sudah lewat (untuk kasus tabel tanpa separator jelas)
+									if(isHeaderRow && !isSeparator) {
+										// Kita tunggu baris berikutnya untuk memastikan separator, tapi untuk aman
+										// biasanya markdown punya separator. Kita biarkan logika isSeparator menghandle transisi.
+									}
+									continue;
+								} else {
+									// Jika ketemu baris BUKAN tabel tapi status masih inTable, tutup tabel
+									if(inTable) {
+										output.push('</table></div>');
+										inTable = false;
+									}
+								}
+								// C. HANDLE LIST (NUMBER & BULLET) - RAPI & HIERARKI
 								const listMatch = line.match(/^(\s*)([-*]|\d+\.)\s+(.*)$/);
 								if(listMatch) {
-									const indent = listMatch[1].length; // Jumlah spasi di awal
-									const symbol = listMatch[2]; // Tanda * atau 1.
-									const content = listMatch[3]; // Isi teks
-									// Hitung Padding Kiri berdasarkan jumlah spasi (Hierarki)
-									// Setiap 1-2 spasi nambah kedalaman
+									const indent = listMatch[1].length;
+									const symbol = listMatch[2];
+									const content = listMatch[3];
+									// Hitung Padding (Hierarki)
 									let paddingClass = 'pl-0';
 									if(indent >= 2) paddingClass = 'pl-4';
 									if(indent >= 4) paddingClass = 'pl-8';
-									if(indent >= 6) paddingClass = 'pl-12';
-									// Tentukan Tampilan Bullet/Number
+									// Render Bullet/Number
 									let markerHtml = '';
 									if(symbol.includes('.') || !isNaN(parseInt(symbol))) {
-										// NUMBERING (1., 2., dst) - Warna Hitam
 										markerHtml = `<span class="mr-2 font-bold text-black min-w-[1.2rem] text-right">${symbol}</span>`;
 									} else {
-										// BULLET (Titik Hitam Solid)
 										markerHtml = `<span class="mr-2 text-black text-lg leading-none mt-[-2px]">&bull;</span>`;
 									}
-									// RENDER BARIS LIST (Rapi, Hitam, Rapat)
-									// 'leading-snug' agar jarak antar baris teks tidak terlalu jauh
-									// 'mb-0.5' agar jarak antar item list rapat
-									const itemHtml = `
+									output.push(`
                                 <div class="flex items-start ${paddingClass} mb-1 leading-snug text-gray-900">
                                     ${markerHtml}
                                     <span class="flex-1">${content}</span>
-                                </div>`;
-									output.push(itemHtml);
-								} else {
-									// Baris Biasa (Bukan List)
+                                </div>`);
+								}
+								// D. PARAGRAF BIASA
+								else {
 									if(line.trim() === '') {
-										output.push('<div class="h-2"></div>'); // Jarak antar paragraf (dikecilkan)
+										output.push('<div class="h-2"></div>');
 									} else {
 										output.push(`<div class="mb-1 leading-relaxed text-gray-900">${line}</div>`);
 									}
 								}
-							});
+							}
+							// Penutup pengaman: Jika file berakhir saat tabel masih terbuka
+							if(inTable) {
+								output.push('</table></div>');
+							}
 							return output.join('');
 						} catch (e) {
-							console.error("Manual Render Error:", e);
+							console.error("V3 Parser Error:", e);
 							return text;
 						}
 					};
