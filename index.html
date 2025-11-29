@@ -2351,14 +2351,14 @@
 		
 		// ==========================================
     // ==========================================
-    // SOLUSI FINAL IOS 15: PAKU BETON + FIX POSISI HAMBURGER
+    // SOLUSI FINAL IOS 15: PAKU BETON + BOX MODEL FIX (PERMANEN)
     // ==========================================
     (function() {
         const ua = navigator.userAgent;
         const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
 
         if (isIOS15) {
-            console.log("🛠️ iOS 15: Mode Paku Beton + Fix Layout Kanan...");
+            console.log("📐 iOS 15: Mode Presisi + Box Model Fix...");
 
             const viewport = window.visualViewport;
             const chatPage = document.getElementById('chat-page');
@@ -2376,9 +2376,10 @@
                 }
             };
 
-            // 1. INJEKSI CSS KHUSUS IOS 15
+            // 1. INJEKSI CSS PERMANEN
             const style = document.createElement('style');
             style.innerHTML = `
+                /* KUNCI LAYAR TOTAL */
                 html, body {
                     position: fixed !important;
                     overflow: hidden !important;
@@ -2386,6 +2387,8 @@
                     height: 100% !important;
                     touch-action: none; 
                 }
+                
+                /* WRAPPER CHAT */
                 #chat-page {
                     position: absolute !important;
                     left: 0;
@@ -2395,32 +2398,40 @@
                     overflow: hidden !important;
                     z-index: 10;
                 }
+                
+                /* AREA SCROLL CHAT */
                 #chat-container {
                     overflow-y: scroll !important;
                     -webkit-overflow-scrolling: touch;
                     height: 100%;
                     touch-action: pan-y;
-                    
-                    /* JARAK PRESISI FOOTER: 15px */
-                    padding-bottom: 15px !important; 
+                    padding-bottom: 15px !important; /* Jarak aman footer */
                 }
-                /* HEADER FIX */
+
+                /* --- PERBAIKAN HEADER (ROOT CAUSE FIX) --- */
                 header {
                     will-change: margin-top;
                     
-                    /* FIX POSISI HAMBURGER MEPET KANAN: */
-                    /* Kita paksa padding kanan lebih besar agar icon geser ke kiri */
-                    padding-right: 25px !important; 
+                    /* INI KUNCINYA: Memaksa padding dihitung di DALAM lebar layar */
+                    /* Mengalahkan class 'box-content' bawaan Tailwind */
+                    box-sizing: border-box !important; 
+                    
+                    /* Pastikan lebar tidak bablas */
+                    width: 100% !important;
+                    max-width: 100vw !important;
+                    
+                    /* Reset Padding Kanan agar konsisten */
+                    padding-right: 16px !important; 
                 }
             `;
             document.head.appendChild(style);
 
-            // 2. LOGIKA INTERAKSI (HEADER INSTANT SNAP)
+            // 2. LOGIKA INTERAKSI (SNAP TANPA ANIMASI - SOLID)
             if (inputField && header) {
                 const headerHeight = header.offsetHeight || 80;
 
                 inputField.addEventListener('focus', () => {
-                    // Header Naik Instan
+                    // Header Naik Instan (Solid)
                     header.style.marginTop = `-${headerHeight}px`; 
                     
                     if (viewport) chatPage.style.height = `${viewport.height}px`;
@@ -2428,7 +2439,7 @@
                 });
 
                 inputField.addEventListener('blur', () => {
-                    // Header Turun Instan
+                    // Header Turun Instan (Solid)
                     header.style.marginTop = '0px';
 
                     if (viewport) chatPage.style.height = `${viewport.height}px`;
