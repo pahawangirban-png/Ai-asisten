@@ -2507,50 +2507,63 @@
 	        }
 	    })();
 		// ==========================================
-	    // PATCH FINAL IOS 15: SHOWDOWN.JS SANITIZER (ANTI-CRASH)
-	    // ==========================================
-	    (function() {
-	        // 1. Deteksi iOS 15
-	        const ua = navigator.userAgent;
-	        const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
-	
-	        // Pastikan converter ada (agar tidak error)
-	        if (isIOS15 && typeof converter !== 'undefined') {
-	            console.log("🚑 iOS 15 Detected: Menyuntikkan Anti-Crash Markdown...");
-	
-	            // 2. SIMPAN FUNGSI ASLI (BACKUP)
-	            // Kita simpan logika asli Showdown agar tidak hilang
-	            const originalMakeHtml = converter.makeHtml;
-	
-	            // 3. TIMPA (OVERRIDE) FUNGSI DENGAN VERSI KITA
-	            converter.makeHtml = function(text) {
-	                // Cek apakah ada teks input
-	                if (text && typeof text === 'string') {
-	                    
-	                    // --- LOGIKA PERBAIKAN (Hanya merapikan teks sebelum diproses) ---
-	                    
-	                    // A. Normalisasi Enter (Windows/Unix)
-	                    let cleanText = text.replace(/\r\n/g, '\n');
-	
-	                    // B. FIX LIST (Bullet/Numbering)
-	                    // Cari baris baru (\n) yang diikuti tanda list (*, -, +, 1.), paksa tambah Enter lagi (\n\n)
-	                    cleanText = cleanText.replace(/\n([*+-]|\d+\.) /g, '\n\n$1 ');
-	
-	                    // C. FIX TABEL
-	                    // Cari baris baru (\n) yang diikuti garis tabel (|), paksa tambah Enter lagi (\n\n)
-	                    cleanText = cleanText.replace(/\n(\|)/g, '\n\n$1');
-	
-	                    // --- SELESAI PERBAIKAN ---
-	
-	                    // 4. JALANKAN FUNGSI ASLI DENGAN TEKS YANG SUDAH BERSIH
-	                    return originalMakeHtml.call(this, cleanText);
-	                }
-	
-	                // Jika input bukan string, kembalikan apa adanya (ke fungsi asli)
-	                return originalMakeHtml.call(this, text);
-	            };
-	        }
-	    })();
+    // SOLUSI FINAL IOS 15: "LITE MODE" CONVERTER (ANTI-CRASH)
+    // ==========================================
+    (function() {
+        const ua = navigator.userAgent;
+        const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
+
+        if (isIOS15 && typeof converter !== 'undefined') {
+            console.log("🚀 iOS 15: Mengaktifkan Konverter Ringan (Lite Mode)...");
+
+            // TIMPA TOTAL fungsi Showdown dengan Konverter Manual Sederhana
+            // Ini menjamin tidak akan ada error regex yang rumit
+            converter.makeHtml = function(text) {
+                if (!text) return '';
+
+                let html = text;
+
+                // 1. Amankan HTML (XSS Protection sederhana)
+                html = html.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+                // 2. Code Blocks (```...```) -> Tampilkan di kotak abu
+                html = html.replace(/```([\s\S]*?)```/g, function(match, code) {
+                    return '<pre class="bg-slate-200 p-2 rounded-lg text-xs my-2 overflow-x-auto font-mono">' + code + '</pre>';
+                });
+
+                // 3. Bold (**teks**) -> <b>teks</b>
+                html = html.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                
+                // 4. Italic (*teks*) -> <i>teks</i>
+                html = html.replace(/\*(.*?)\*/g, '<i>$1</i>');
+
+                // 5. Handling Header Markdown (### Judul)
+                html = html.replace(/^### (.*$)/gm, '<h3 class="font-bold text-lg mt-2">$1</h3>');
+                html = html.replace(/^## (.*$)/gm, '<h2 class="font-bold text-xl mt-2">$1</h2>');
+
+                // 6. Handling LIST (Bullet & Number) - Penyebab Utama Error di Showdown
+                // Ubah "- Item" atau "* Item" jadi bullet point manual
+                html = html.replace(/^\s*[\-\*]\s+(.*)$/gm, '<div class="flex items-start gap-2 ml-1"><span class="mr-1">•</span> <span>$1</span></div>');
+                
+                // Ubah "1. Item" jadi nomor manual
+                html = html.replace(/^\s*(\d+)\.\s+(.*)$/gm, '<div class="flex items-start gap-2 ml-1"><span class="font-bold text-xs mt-1">$1.</span> <span>$2</span></div>');
+
+                // 7. Handling TABEL (Versi Aman)
+                // Alih-alih merender tabel HTML rumit, kita ubah jadi tampilan Code Block agar terbaca & tidak crash
+                if (html.includes('|')) {
+                    // Cek jika terlihat seperti tabel
+                    html = html.replace(/((?:\|.*\|(?:\r?\n|$))+)/g, function(match) {
+                        return '<div class="overflow-x-auto my-2 border border-gray-200 rounded-lg"><pre class="text-xs p-2 min-w-max font-mono leading-relaxed">' + match + '</pre></div>';
+                    });
+                }
+
+                // 8. Ganti Enter (\n) dengan <br>
+                html = html.replace(/\n/g, '<br>');
+
+                return html;
+            };
+        }
+    })();
         // ============================
         // EVENT LISTENERS
         // ============================
