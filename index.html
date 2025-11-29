@@ -2309,14 +2309,14 @@
 	</script>
 	<script>
 		// ============
-		// PATCH IOS 15 (FIX: PUSH UP SEBESAR KEYBOARD)
+		// PATCH IOS 15 (FINAL: SMOOTH KEYBOARD PUSH)
 		// ============
 		(function() {
 			const ua = navigator.userAgent;
 			const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
 			
 			if(isIOS15) {
-				console.log("🚀 iOS 15: Mode True Push Up (Keyboard Height Calculation)...");
+				console.log("🚀 iOS 15: Mode Smooth Push Up...");
 				
 				const viewport = window.visualViewport;
 				const chatPage = document.getElementById('chat-page');
@@ -2325,22 +2325,20 @@
 				const header = document.querySelector('header');
 				const inputField = document.getElementById('user-input');
 				
-				// Simpan tinggi layar asli saat pertama load (sebagai patokan)
+				// Simpan tinggi layar asli
 				const originalScreenHeight = window.innerHeight;
 
-				// FUNGSI SCROLL INSTAN
+				// FUNGSI SCROLL
 				const jumpToBottom = () => {
 					if(chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
 				};
-				
-				// FUNGSI SCROLL HALUS
 				const smoothScrollToBottom = () => {
 					if(chatContainer) {
 						chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
 					}
 				};
 				
-				// 1. INJEKSI CSS PERMANEN
+				// 1. INJEKSI CSS DENGAN TRANSISI HALUS
 				const style = document.createElement('style');
 				style.innerHTML = `
 	                html, body {
@@ -2356,13 +2354,13 @@
 	                    right: 0;
 	                    top: 0;
 	                    bottom: 0;
-	                    /* Kunci tinggi agar tidak berubah-ubah */
 	                    height: ${originalScreenHeight}px !important; 
 	                    overflow: hidden !important;
 	                    z-index: 10;
 	                    
-	                    /* Animasi TOP yang Anda minta (Smooth) */
-	                    transition: top 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+	                    /* --- TRANSISI HALUS (Sesuai Request) --- */
+	                    /* 0.25s adalah kecepatan standar animasi iOS */
+	                    transition: top 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
                         will-change: top;
 	                }
 	                #chat-container {
@@ -2387,54 +2385,40 @@
 	            `;
 				document.head.appendChild(style);
 				
-				// 2. LOGIKA INTENSIF: HITUNG KEYBOARD REAL-TIME
+				// 2. LOGIKA HITUNG TINGGI (TETAP SAMA KARENA SUDAH SEMPURNA)
 				const handleResize = () => {
 					if(!viewport || !chatPage) return;
 
-					// Hitung tinggi Keyboard saat ini
-					// (Layar Asli - Layar Terlihat = Tinggi Keyboard)
-					// Kita tambahkan Math.max(0) agar tidak negatif
 					const currentKeyboardHeight = Math.max(0, originalScreenHeight - viewport.height);
-					
-					// Ambang batas: Keyboard dianggap muncul jika selisih > 150px
 					const isKeyboardOpen = currentKeyboardHeight > 150;
 
 					if(inputField === document.activeElement && isKeyboardOpen) {
-						// === KEYBOARD MUNCUL ===
-						
-						// A. DORONG UI KE ATAS SEBESAR KEYBOARD (Bukan cuma header)
-						// Ini menjawab request "Minimal setinggi keyboard"
+						// Dorong ke atas (Smooth karena ada CSS transition)
 						chatPage.style.top = `-${currentKeyboardHeight}px`;
-						
-						// B. Pastikan Scroll Chat di Bawah
 						jumpToBottom();
-						
 					} else {
-						// === KEYBOARD TUTUP ===
-						
-						// Kembalikan ke 0
+						// Turun kembali (Smooth)
 						chatPage.style.top = '0px';
 					}
-
-					// C. Kunci Scroll Window (Penyebab loncat)
 					window.scrollTo(0, 0);
 				};
 				
 				// 3. PASANG LISTENER
 				if(viewport) {
 					viewport.addEventListener('resize', handleResize);
-					// Fallback timer untuk memastikan posisi
+					// Interval penjaga posisi
 					setInterval(() => {
 						if(inputField === document.activeElement) window.scrollTo(0, 0);
 					}, 500);
 				}
 				
-				// 4. LOGIKA FOKUS INPUT
+				// 4. LOGIKA FOKUS
 				if(inputField) {
 					inputField.addEventListener('focus', () => {
-						// Paksa hitung ulang segera
 						setTimeout(handleResize, 50);
-						setTimeout(handleResize, 300); // Cek lagi setelah animasi keyboard selesai
+						// Panggil lagi saat animasi keyboard iOS selesai (sekitar 300ms)
+						// untuk memastikan posisi akhir presisi
+						setTimeout(handleResize, 300); 
 						setTimeout(jumpToBottom, 350);
 					});
 
@@ -2444,7 +2428,7 @@
 					});
 				}
 				
-				// 5. SATPAM SCROLL (Chat & Sidebar)
+				// 5. SATPAM SCROLL & BLOKIR SENTUHAN LUAR (FITUR LAMA)
 				const preventRubberBand = (element) => {
 					if(!element) return;
 					element.addEventListener('touchmove', function(e) {
@@ -2465,14 +2449,13 @@
 				if(chatContainer) preventRubberBand(chatContainer);
 				if(sidebarContent) preventRubberBand(sidebarContent);
 				
-				// 6. BLOKIR SENTUHAN LUAR
 				document.addEventListener('touchmove', function(e) {
 					const isChat = e.target.closest('#chat-container');
 					const isSidebar = e.target.closest('#sidebar-content');
 					if(!isChat && !isSidebar) { e.preventDefault(); }
 				}, { passive: false });
 				
-				// 7. AUTO SCROLL (MUTATION OBSERVER)
+				// 6. AUTO SCROLL & ANTI DOUBLE TAP
 				if(chatContainer) {
 					const observer = new MutationObserver((mutations) => {
 						if(mutations.some(m => m.addedNodes.length > 0)) {
@@ -2483,7 +2466,6 @@
 					observer.observe(chatContainer, { childList: true, subtree: true });
 				}
 				
-				// 8. ANTI-DOUBLE TAP ZOOM
 				let lastTouchEnd = 0;
 				document.addEventListener('touchend', function(event) {
 					const now = (new Date()).getTime();
