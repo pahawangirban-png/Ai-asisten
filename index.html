@@ -2350,58 +2350,77 @@
         }
 		
 		// ============================
-        // PATCH KHUSUS IOS 15 (Safe Mode)
+        // PATCH KHUSUS IOS 15 (Versi Anti-Karet/Rubber Band)
         // ============================
-        /**
-         * Fungsi ini HANYA akan berjalan di iOS 15.
-         * Tujuannya memperbaiki layout 'bocor' saat keyboard muncul
-         * dan masalah status bar tanpa mengganggu versi iOS lain/Android.
-         */
         function applyIOS15SpecificFix() {
-            // Deteksi User Agent
             const ua = navigator.userAgent || navigator.vendor || window.opera;
-            
-            // Regex: Cari kata "iPhone" DAN "OS 15_"
+            // Deteksi Spesifik iOS 15
             const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
 
             if (isIOS15) {
-                console.log("⚠️ iOS 15 Terdeteksi: Menerapkan Patch Kompatibilitas...");
+                console.log("⚠️ iOS 15 Detected: Activating Anti-Rubber Band Patch");
 
-                // 1. Fix Status Bar (Paksa background body jadi putih solid)
-                // Ini membantu iOS merender teks status bar menjadi hitam (kontras)
-                document.body.style.backgroundColor = "#ffffff";
-                
-                // 2. Fix Layout Bocor / Keyboard Issue
-                // Menggunakan Visual Viewport API untuk resize container secara paksa
-                if (window.visualViewport) {
-                    const handleResize = () => {
-                        const height = window.visualViewport.height;
-                        const page = document.getElementById('chat-page');
-                        
-                        // Paksa tinggi body dan chat-page sesuai area terlihat (visual viewport)
-                        // agar tidak ada area 'bocor' di balik keyboard
-                        document.body.style.height = height + 'px';
-                        document.body.style.minHeight = height + 'px';
-                        
-                        if (page) {
-                            page.style.height = height + 'px';
+                // Referensi elemen penting
+                const viewport = window.visualViewport;
+                const chatPage = document.getElementById('chat-page');
+                const chatContainer = document.getElementById('chat-container');
+
+                // Fungsi untuk "Memaku" Layar saat Keyboard Muncul
+                const handleResize = () => {
+                    // Cek apakah keyboard kira-kira sedang aktif 
+                    // (Tinggi viewport lebih kecil dari tinggi layar asli)
+                    const isKeyboardOpen = viewport.height < window.innerHeight;
+
+                    if (isKeyboardOpen) {
+                        // KUNCI BODY AGAR TIDAK BISA DITARIK (MENGHILANGKAN KARET)
+                        document.body.style.height = `${viewport.height}px`;
+                        document.body.style.overflow = 'hidden'; 
+                        document.body.style.position = 'fixed'; // Ini paku utamanya
+                        document.body.style.width = '100%';
+                        document.body.style.top = '0';
+                        document.body.style.left = '0';
+
+                        // Paksa Chat Page menyesuaikan ukuran viewport keyboard
+                        if (chatPage) {
+                            chatPage.style.height = `${viewport.height}px`;
+                            chatPage.style.overflow = 'hidden'; // Kunci scroll di wrapper
                         }
                         
-                        // Kunci scroll window ke 0,0 agar header tetap di tempat (tidak terdorong)
+                        // Pastikan container chat tetap bisa di-scroll
+                        if (chatContainer) {
+                            chatContainer.style.height = 'auto'; // Biarkan flex mengatur
+                            chatContainer.style.overflowY = 'auto';
+                        }
+                        
+                        // Kembalikan scroll window ke 0 agar header tidak terbang
                         window.scrollTo(0, 0);
-                    };
 
-                    // Pasang event listener
-                    window.visualViewport.addEventListener('resize', handleResize);
-                    window.visualViewport.addEventListener('scroll', handleResize);
-                    
-                    // Jalankan sekali di awal untuk inisialisasi
-                    handleResize();
+                    } else {
+                        // RESET SAAT KEYBOARD TURUN (KEMBALI NORMAL)
+                        document.body.style.height = '100%';
+                        document.body.style.overflow = ''; // Lepas kunci
+                        document.body.style.position = ''; // Lepas paku
+                        document.body.style.width = '';
+                        document.body.style.top = '';
+                        document.body.style.left = '';
+
+                        if (chatPage) {
+                            chatPage.style.height = '100%';
+                        }
+                    }
+                };
+
+                if (viewport) {
+                    viewport.addEventListener('resize', handleResize);
+                    viewport.addEventListener('scroll', () => window.scrollTo(0, 0)); // Double protection
                 }
+                
+                // Set warna tema putih untuk status bar
+                document.body.style.backgroundColor = "#ffffff";
             }
         }
 
-        // Jalankan Patch ini di akhir
+        // Jalankan Patch
         applyIOS15SpecificFix();
         
         // ============================
