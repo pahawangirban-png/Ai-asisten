@@ -1251,17 +1251,21 @@
 				// Raw HTML langsung render
 				htmlContent = content;
 			} else if(role === 'model') {
-				// Proses markdown dengan showdown default
+				// PROSES MARKDOWN DENGAN KONFIGURASI TABEL YANG BENAR
 				let rawHtml = converter.makeHtml(content);
-				// Simple wrapper untuk tabel (universal compatibility)
+				// Pastikan tabel mendapatkan wrapper untuk scroll horizontal
 				const tempDiv = document.createElement('div');
 				tempDiv.innerHTML = rawHtml;
+				// Proses semua tabel dan berikan wrapper
 				const tables = tempDiv.querySelectorAll('table');
 				tables.forEach(tbl => {
-					const wrapper = document.createElement('div');
-					wrapper.className = 'overflow-x-auto';
-					tbl.parentNode.insertBefore(wrapper, tbl);
-					wrapper.appendChild(tbl);
+					// Cek apakah tabel sudah punya wrapper
+					if(!tbl.parentElement.classList.contains('overflow-x-auto')) {
+						const wrapper = document.createElement('div');
+						wrapper.className = 'overflow-x-auto';
+						tbl.parentNode.insertBefore(wrapper, tbl);
+						wrapper.appendChild(tbl);
+					}
 				});
 				htmlContent = tempDiv.innerHTML;
 			} else {
@@ -1269,25 +1273,26 @@
 				htmlContent = content.replace(/\n/g, '<br>');
 			}
 			// Tombol Copy (sederhana dan kompatibel)
-			const copyButtonHtml = role === 'model' && !isLoading && !isRawHtml ? `<div class="copy-container hidden absolute bottom-1.5 left-4 select-none">
-		            <button class="copy-btn text-slate-400 p-0 flex items-center transition-colors hover:text-slate-600" title="Salin">
-		                <svg viewBox="0 0 1024 1024" width="14" height="14" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-		                    <path d="M768 832a128 128 0 0 1-128 128H192A128 128 0 0 1 64 832V384a128 128 0 0 1 128-128v64a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64h64z"></path>
-		                    <path d="M384 128a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64V192a64 64 0 0 0-64-64H384zm0-64h448a128 128 0 0 1 128 128v448a128 128 0 0 1-128 128H384a128 128 0 0 1-128-128V192A128 128 0 0 1 384 64z"></path>
-		                </svg>
-		            </button>
-		        </div>` : '';
+			const copyButtonHtml = role === 'model' && !isLoading && !isRawHtml ? `
+        <div class="copy-container hidden absolute bottom-1.5 left-4 select-none">
+            <button class="copy-btn text-slate-400 p-0 flex items-center transition-colors hover:text-slate-600" title="Salin">
+                <svg viewBox="0 0 1024 1024" width="14" height="14" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                    <path d="M768 832a128 128 0 0 1-128 128H192A128 128 0 0 1 64 832V384a128 128 0 0 1 128-128v64a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64h64z"></path>
+                    <path d="M384 128a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64V192a64 64 0 0 0-64-64H384zm0-64h448a128 128 0 0 1 128 128v448a128 128 0 0 1-128 128H384a128 128 0 0 1-128-128V192A128 128 0 0 1 384 64z"></path>
+                </svg>
+            </button>
+        </div>` : '';
 			div.innerHTML = `
-		        <div class="${bubbleClass} relative flex flex-col bg-gray-100 px-4 pt-3 pb-6 rounded-2xl shadow-sm mb-4">
-		            <div class="flex justify-between items-center mb-1 border-b-[0.5px] border-gray-300 pb-1">
-		                <span class="text-xs font-bold uppercase tracking-wide ${nameColorClass}">${name}</span>
-		                <span class="text-[10px] text-slate-400 font-sans">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-		            </div>
-		            
-		            <div class="text-sm md:text-base text-slate-700 font-medium leading-relaxed markdown-body mt-1 chat-content">${htmlContent}</div>
-		            
-		            ${copyButtonHtml}
-		        </div>`;
+        <div class="${bubbleClass} relative flex flex-col bg-gray-100 px-4 pt-3 pb-6 rounded-2xl shadow-sm mb-4">
+            <div class="flex justify-between items-center mb-1 border-b-[0.5px] border-gray-300 pb-1">
+                <span class="text-xs font-bold uppercase tracking-wide ${nameColorClass}">${name}</span>
+                <span class="text-[10px] text-slate-400 font-sans">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+            
+            <div class="text-sm md:text-base text-slate-700 font-medium leading-relaxed markdown-body mt-1 chat-content">${htmlContent}</div>
+            
+            ${copyButtonHtml}
+        </div>`;
 			// Pastikan margin konsisten
 			const contentBody = div.querySelector('.markdown-body');
 			if(contentBody && contentBody.lastElementChild) {
