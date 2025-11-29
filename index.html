@@ -1974,120 +1974,112 @@
 			}, "HAPUS", "text-red-600", "text-blue-600");
 		}
 		// ============================
-		// FILE HANDLING (FIX: IOS 15 MULTI-SELECT ENABLED)
-		// ============================
-		
-        // --- PATCH KHUSUS IOS 15: FIX MULTI-SELECT ---
+        // FIX FINAL IOS 15: MULTI-SELECT + GALLERY DEADLOCK
+        // ============================
+
+        // 1. PATCH OTOMATIS: HAPUS ACCEPT (AGAR BISA PILIH BANYAK FILE)
         (function() {
-            const ua = navigator.userAgent;
-            const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
-            
+            const isIOS15 = /iPhone/.test(navigator.userAgent) && /OS 15_/.test(navigator.userAgent);
             if (isIOS15) {
-                const fileInput = document.getElementById('file-input');
-                if (fileInput) {
-                    // Hapus atribut 'accept' khusus di iOS 15.
-                    // Ini memaksa iOS 15 mengaktifkan mode 'Select Multiple'
-                    // meskipun jadi menampilkan semua jenis file.
-                    fileInput.removeAttribute('accept');
-                    console.log("🔓 iOS 15: Atribut 'accept' dihapus untuk mengaktifkan Multi-Select.");
-                }
+                const fi = document.getElementById('file-input');
+                if (fi) fi.removeAttribute('accept');
             }
         })();
 
-		/**
-		 * Handle file input change
-		 */
-		document.getElementById('file-input').addEventListener('change', async (e) => {
-			// 1. AMBIL FILE & AMANKAN KE ARRAY
+        // 2. LISTENER UPLOAD (DENGAN TEKNIK SLICE)
+        document.getElementById('file-input').addEventListener('change', async (e) => {
+            // A. AMANKAN FILE
             const rawFiles = e.target.files;
-			if (!rawFiles || !rawFiles.length) return;
+            if (!rawFiles || !rawFiles.length) return;
             const files = Array.from(rawFiles);
 
-            // 2. RESET TOMBOL DETIK ITU JUGA (ANTI-MACET)
+            // B. RESET TOMBOL LANGSUNG (Supaya tidak mati)
             e.target.value = ''; 
 
-            // Indikator loading
+            // Indikator Loading
             const btn = e.target.parentElement.querySelector('button');
             const originalIcon = btn.innerHTML;
             btn.innerHTML = `<div class="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>`;
 
-			try {
-                for (const file of files) {
-                    if (uploadedFiles.find(f => f.name === file.name)) continue;
+            // Cek iOS 15
+            const isIOS15 = /iPhone/.test(navigator.userAgent) && /OS 15_/.test(navigator.userAgent);
 
-                    const fileType = file.name.split('.').pop().toLowerCase();
-                    const isImage = file.type.startsWith('image/');
+            try {
+                for (const originalFile of files) {
+                    // Cek duplikat
+                    if (uploadedFiles.find(f => f.name === originalFile.name)) continue;
 
-                    // --- VALIDASI MANUAL (KARENA ACCEPT DIHAPUS DI IOS 15) ---
-                    // Kita harus saring manual di sini karena picker menampilkan semua file
-                    const allowedExts = ['pdf','doc','docx','xls','xlsx','pptx','txt','jpg','jpeg','png','gif','webp','heic'];
-                    if (!allowedExts.includes(fileType) && !isImage) {
-                        alert(`Format file tidak didukung: .${fileType}`);
-                        continue;
+                    // --- INTI SOLUSI MACET GALERI ---
+                    let fileToRead = originalFile;
+                    const isImage = originalFile.type.startsWith('image/');
+
+                    // Jika iOS 15 & Gambar -> SLICE DULU (Memaksa OS memproses file)
+                    if (isIOS15 && isImage) {
+                        fileToRead = originalFile.slice(0, originalFile.size, originalFile.type);
+                        fileToRead.name = originalFile.name; // Tempel nama lagi
                     }
 
-                    // --- TRIK PREVIEW INSTAN (BLOB URL) ---
+                    // --- VALIDASI MANUAL (Pengganti accept) ---
+                    const ext = originalFile.name.split('.').pop().toLowerCase();
+                    const validExts = ['pdf','doc','docx','xls','xlsx','pptx','txt','jpg','jpeg','png','gif','webp','heic'];
+                    if (!validExts.includes(ext) && !isImage) continue;
+
+                    // --- PREVIEW INSTAN (Blob URL) ---
                     let previewUrl = null;
                     if (isImage) {
-                        previewUrl = URL.createObjectURL(file);
+                        previewUrl = URL.createObjectURL(fileToRead);
                     }
 
-                    // --- PROSES BACA DATA (UNTUK AI) ---
-                    const readFileData = new Promise((resolve, reject) => {
+                    // --- BACA DATA ---
+                    const readFile = new Promise((resolve, reject) => {
                         const reader = new FileReader();
-                        
-                        reader.onload = (evt) => resolve(evt.target.result);
-                        reader.onerror = (err) => reject(err);
+                        reader.onload = (ev) => resolve(ev.target.result);
+                        reader.onerror = reject;
 
                         // Strategi Baca
-                        if (['doc', 'docx', 'xls', 'xlsx', 'pptx'].includes(fileType)) {
-                            reader.readAsArrayBuffer(file);
-                        } else if (fileType === 'txt') {
-                            reader.readAsText(file);
+                        if (['doc','docx','xls','xlsx','pptx'].includes(ext)) {
+                            reader.readAsArrayBuffer(fileToRead);
+                        } else if (ext === 'txt') {
+                            reader.readAsText(fileToRead);
                         } else {
-                            reader.readAsDataURL(file); // Gambar/PDF
+                            // Gambar/PDF pakai DataURL (Aman karena sudah di-slice)
+                            reader.readAsDataURL(fileToRead);
                         }
                     });
 
                     try {
-                        const result = await readFileData;
-                        
+                        const result = await readFile;
                         let content, mimeType, isTextContent = false;
 
-                        // Parsing Data
-                        if (['doc', 'docx', 'xls', 'xlsx', 'pptx'].includes(fileType)) {
-                            if (['doc', 'docx'].includes(fileType)) {
-                                const res = await mammoth.extractRawText({ arrayBuffer: result });
-                                content = res.value; mimeType = 'text/plain'; isTextContent = true;
-                            } else if (['xls', 'xlsx'].includes(fileType)) {
-                                const wb = XLSX.read(result, { type: 'buffer' });
-                                content = wb.SheetNames.map(n => XLSX.utils.sheet_to_txt(wb.Sheets[n])).join('\n\n');
-                                mimeType = 'text/plain'; isTextContent = true;
-                            } else if (fileType === 'pptx') {
-                                const zip = await JSZip.loadAsync(result);
-                                const slides = [];
-                                zip.folder("ppt/slides").forEach((path, f) => {
-                                    if (path.startsWith("slide") && path.endsWith(".xml")) {
-                                        slides.push(f.async("string").then(extractTextFromSlideXML));
-                                    }
-                                });
-                                content = (await Promise.all(slides)).join('\n\n');
-                                mimeType = 'text/plain'; isTextContent = true;
-                            }
-                        } else if (fileType === 'txt') {
+                        // Parsing Logic
+                        if (['doc','docx'].includes(ext)) {
+                            const res = await mammoth.extractRawText({ arrayBuffer: result });
+                            content = res.value; mimeType = 'text/plain'; isTextContent = true;
+                        } else if (['xls','xlsx'].includes(ext)) {
+                            const wb = XLSX.read(result, { type: 'buffer' });
+                            content = wb.SheetNames.map(n => XLSX.utils.sheet_to_txt(wb.Sheets[n])).join('\n\n');
+                            mimeType = 'text/plain'; isTextContent = true;
+                        } else if (ext === 'pptx') {
+                            const zip = await JSZip.loadAsync(result);
+                            const slides = [];
+                            zip.folder("ppt/slides").forEach((path, f) => {
+                                if (path.includes("slide") && path.endsWith(".xml")) slides.push(f.async("string").then(extractTextFromSlideXML));
+                            });
+                            content = (await Promise.all(slides)).join('\n\n');
+                            mimeType = 'text/plain'; isTextContent = true;
+                        } else if (ext === 'txt') {
                             content = result; mimeType = 'text/plain'; isTextContent = true;
                         } else {
-                            // Gambar/PDF
+                            // Gambar/PDF (Ambil Base64 murni)
                             content = result.split(',')[1];
-                            mimeType = isImage ? file.type : 'application/pdf';
+                            mimeType = isImage ? originalFile.type : 'application/pdf';
                             isTextContent = false;
                         }
 
-                        // Simpan
                         uploadedFiles.push({
-                            name: file.name,
-                            size: file.size,
-                            type: fileType,
+                            name: originalFile.name,
+                            size: originalFile.size,
+                            type: ext,
                             data: content,
                             mimeType: mimeType,
                             isTextContent: isTextContent,
@@ -2095,19 +2087,20 @@
                         });
 
                     } catch (err) {
-                        console.error("Gagal baca data file:", file.name);
+                        console.error("Gagal baca:", originalFile.name);
                     }
                 }
 
-                // Render Preview
-                renderFilePreviews();
+                // PANGGIL FUNGSI YANG SUDAH ADA DI ATAS
+                renderFilePreviews(); 
 
-            } catch (globalErr) {
-                console.error("Error Upload:", globalErr);
+            } catch (e) {
+                console.error(e);
             } finally {
+                e.target.value = ''; // Reset tombol
                 btn.innerHTML = originalIcon;
             }
-		});
+        });
 		/**
 		 * Handle image download
 		 */
