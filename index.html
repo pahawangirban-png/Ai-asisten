@@ -2010,6 +2010,10 @@
             });
         };
 
+		// ============================
+		// FILE HANDLING (IOS 15 "SLICE" FIX)
+		// ============================
+		
 		/**
 		 * Handle file input change
 		 */
@@ -2019,40 +2023,73 @@
 
             const btn = e.target.parentElement.querySelector('button');
             const originalIcon = btn.innerHTML;
+            // Indikator loading
             btn.innerHTML = `<div class="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>`;
 
 			try {
-                for (const file of files) {
-                    if (uploadedFiles.find(f => f.name === file.name)) continue;
-					const file = originalFile.slice(0, originalFile.size, originalFile.type);
-                    
-                    file.name = originalFile.name;
+                for (const originalFile of files) {
+                    // Cek duplikasi
+                    if (uploadedFiles.find(f => f.name === originalFile.name)) continue;
+
+                    // --- SOLUSI INTI (THE SLICE HACK) ---
+                    // Di iOS 15, file dari Galeri (HEIC) sering macet.
+                    // Kita 'kloning' file dengan .slice(). Ini memaksa iOS menyelesaikan
+                    // konversi gambar sebelum file dibaca oleh FileReader.
+                    const file = originalFile.slice(0, originalFile.size, originalFile.type);
+                    // Kita kembalikan nama properti yang hilang saat slice
+                    file.name = originalFile.name; 
+                    // ------------------------------------
 
                     const fileType = file.name.split('.').pop().toLowerCase();
                     const isImage = file.type.startsWith('image/');
 
-                    // Delay kecil untuk iOS 15 (membiarkan sistem nafas)
-                    if (isImage) await new Promise(r => setTimeout(r, 100));
+                    // Promise Wrapper untuk pembacaan file
+                    const readFile = new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        
+                        reader.onload = (event) => {
+                            resolve(event.target.result);
+                        };
+                        
+                        reader.onerror = (err) => {
+                            // Jika gagal baca, reject
+                            reject(err);
+                        };
+
+                        // STRATEGI BACA:
+                        // 1. Dokumen Office -> Wajib ArrayBuffer
+                        if (['doc', 'docx', 'xls', 'xlsx', 'pptx'].includes(fileType)) {
+                            reader.readAsArrayBuffer(file);
+                        }
+                        // 2. Text -> Text
+                        else if (fileType === 'txt') {
+                            reader.readAsText(file);
+                        }
+                        // 3. Gambar/PDF -> DataURL (Base64)
+                        else {
+                            reader.readAsDataURL(file); 
+                        }
+                    });
 
                     try {
+                        // Tunggu hasil baca
+                        const result = await readFile;
+                        
                         let content, mimeType, isTextContent = false;
 
-                        // 1. DOKUMEN (Word/Excel/PPT) - Butuh ArrayBuffer
+                        // PROSES HASIL BACA
                         if (['doc', 'docx', 'xls', 'xlsx', 'pptx'].includes(fileType)) {
-                            const buffer = await readFileAsBuffer(file);
-
+                            // result adalah ArrayBuffer
                             if (['doc', 'docx'].includes(fileType)) {
-                                const res = await mammoth.extractRawText({ arrayBuffer: buffer });
+                                const res = await mammoth.extractRawText({ arrayBuffer: result });
                                 content = res.value;
-                                mimeType = 'text/plain';
-                                isTextContent = true;
+                                mimeType = 'text/plain'; isTextContent = true;
                             } else if (['xls', 'xlsx'].includes(fileType)) {
-                                const wb = XLSX.read(buffer, { type: 'buffer' });
+                                const wb = XLSX.read(result, { type: 'buffer' });
                                 content = wb.SheetNames.map(n => XLSX.utils.sheet_to_txt(wb.Sheets[n])).join('\n\n');
-                                mimeType = 'text/plain';
-                                isTextContent = true;
+                                mimeType = 'text/plain'; isTextContent = true;
                             } else if (fileType === 'pptx') {
-                                const zip = await JSZip.loadAsync(buffer);
+                                const zip = await JSZip.loadAsync(result);
                                 const slides = [];
                                 zip.folder("ppt/slides").forEach((path, f) => {
                                     if (path.startsWith("slide") && path.endsWith(".xml")) {
@@ -2060,31 +2097,20 @@
                                     }
                                 });
                                 content = (await Promise.all(slides)).join('\n\n');
-                                mimeType = 'text/plain';
-                                isTextContent = true;
+                                mimeType = 'text/plain'; isTextContent = true;
                             }
-                        } 
-                        // 2. TEXT (Txt)
-                        else if (fileType === 'txt') {
-                            content = await readFileAsText(file);
-                            mimeType = 'text/plain';
-                            isTextContent = true;
-                        } 
-                        // 3. GAMBAR & PDF (Base64) - INI YANG KITA PERBAIKI
-                        else if (fileType === 'pdf' || isImage) {
-                            // BACA SEBAGAI BUFFER DULU (ANTI CRASH IOS 15)
-                            const buffer = await readFileAsBuffer(file);
-                            // BARU CONVERT KE BASE64 MANUAL
-                            content = arrayBufferToBase64(buffer);
-                            
+                        } else if (fileType === 'txt') {
+                            content = result;
+                            mimeType = 'text/plain'; isTextContent = true;
+                        } else {
+                            // Gambar/PDF (result adalah DataURL Base64)
+                            // Kita ambil raw base64-nya saja (setelah koma)
+                            content = result.split(',')[1];
                             mimeType = isImage ? file.type : 'application/pdf';
                             isTextContent = false;
-                        } 
-                        else {
-                            console.warn("Format skip: " + file.name);
-                            continue;
                         }
 
+                        // Simpan ke array
                         uploadedFiles.push({
                             name: file.name,
                             size: file.size,
@@ -2096,15 +2122,17 @@
 
                     } catch (err) {
                         console.error("Gagal proses file:", file.name, err);
+                        // Jangan hentikan loop, lanjut ke file berikutnya
                     }
                 }
 
+                // Tampilkan preview
                 renderFilePreviews();
 
             } catch (globalErr) {
-                console.error("Upload Error:", globalErr);
+                console.error("Critical Upload Error:", globalErr);
             } finally {
-                // WAJIB RESET INPUT
+                // WAJIB RESET (Agar tombol tidak mati)
                 e.target.value = ''; 
                 btn.innerHTML = originalIcon;
             }
