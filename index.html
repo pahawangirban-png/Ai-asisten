@@ -1,401 +1,1816 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
-    <!-- PWA / iOS Configuration -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="AI Assistant">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/4712/4712027.png">
-
-    <title>AI Assistant - Settings Icon</title>
-    
-    <!-- Libraries -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- IMPORT FONT: Inter & Orbitron (Weights 400-900) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-    <!-- Tailwind Config -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { 
-                        sans: ['Inter', 'sans-serif'],
-                        orbitron: ['Orbitron', 'sans-serif'] 
-                    }
-                }
-            }
-        }
-    </script>
-
-    <style>
-        /* === 1. GLOBAL RESET & IOS BASE === */
-        *, *::before, *::after {
-            touch-action: manipulation;
-        }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden; 
-            background-color: #ffffff;
-            overscroll-behavior: none; 
-            -webkit-overflow-scrolling: touch;
-            -webkit-user-select: none; 
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        #chat-container, input, textarea {
-            -webkit-user-select: text;
-            user-select: text;
-        }
-
-        *:focus { outline: none; box-shadow: none; }
-
-        /* === 2. UTILITIES === */
-        #chat-container {
-            -webkit-overflow-scrolling: touch;
-            overscroll-behavior-y: contain;
-        }
-
-        #user-input::-webkit-scrollbar { display: none; }
-        #user-input { -ms-overflow-style: none; scrollbar-width: none; }
-
-        .safe-pt { padding-top: env(safe-area-inset-top); }
-        .safe-pb { padding-bottom: env(safe-area-inset-bottom); }
-
-        .markdown-body { font-size: 1rem; line-height: 1.6; color: #334155; }
-        .markdown-body p { margin-bottom: 0.75rem; }
-        .markdown-body pre { background: #e2e8f0; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.5rem 0; }
-        .markdown-body code { font-family: monospace; background: #f1f5f9; padding: 0.1rem 0.3rem; border-radius: 0.2rem; }
-
-        .dot-flashing {
-            position: relative; width: 6px; height: 6px;
-            border-radius: 50%; background-color: #94a3b8;
-            animation: dot-flashing 1s infinite linear alternate; animation-delay: 0.5s;
-        }
-        .dot-flashing::before, .dot-flashing::after {
-            content: ''; display: inline-block; position: absolute; top: 0;
-            width: 6px; height: 6px; border-radius: 50%; background-color: #94a3b8;
-            animation: dot-flashing 1s infinite alternate;
-        }
-        .dot-flashing::before { left: -10px; animation-delay: 0s; }
-        .dot-flashing::after { left: 10px; animation-delay: 1s; }
-        @keyframes dot-flashing { 0% { background-color: #94a3b8; } 50%, 100% { background-color: #cbd5e1; } }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
+	<title>AI ASISTEN</title>
+	<meta name="description" content="Aplikasi Chat UI. Dibuat agar responsif, cepat, dan elegan." />
+	<meta name="theme-color" content="#151515" />
+	<link rel="manifest" href="manifest.json" />
+	<link rel="apple-touch-icon" href="https://xdrqauwxvwooojufzndv.supabase.co/storage/v1/object/public/icons/icon-192.png" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+	<meta name="apple-mobile-web-app-title" content="AI ASISTEN" />
+	<script src="https://cdn.tailwindcss.com"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+	<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.7.0/mammoth.browser.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+	<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@900&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap" rel="stylesheet">
+	<style>
+		/* --- PERBAIKAN: KEMBALIKAN KE STANDAR --- */
+		html {
+			overscroll-behavior: none;
+			/* Mencegah efek karet saat scroll mentok */
+			height: 100%;
+		}
+		body {
+			font-family: "Inter", sans-serif;
+			touch-action: manipulation;
+			background-color: #151515;
+			height: 100%;
+			margin: 0;
+			padding: 0;
+			/* Text selection disable */
+			-webkit-user-select: none;
+			-moz-user-select: none;
+			-ms-user-select: none;
+			user-select: none;
+		}
+		#chat-container {
+			flex: 1;
+			/* Mengisi ruang sisa */
+			min-height: 0;
+			/* WAJIB: Agar flex item bisa di-scroll */
+			overscroll-behavior-y: contain;
+			-webkit-overflow-scrolling: touch;
+			scrollbar-width: none;
+			overflow-y: auto;
+			/* Pastikan bisa discroll */
+		}
+		/* --- PERBAIKAN: GUNAKAN 100dvh --- */
+		.h-dynamic-screen {
+			height: 100vh;
+			/* Fallback */
+			height: 100dvh;
+			/* Gunakan ini agar pas dengan address bar */
+		}
+		.min-h-dynamic-screen {
+			min-height: 100vh;
+			min-height: 100dvh;
+		}
+		/* --- PERBAIKAN: Indikator "Thinking" --- */
+		.thinking-indicator {
+			/* Atur tampilan teks "OMI is thinking" */
+			font-style: italic;
+			/* color: #9ca3af;  <-- DIHAPUS, warna diatur oleh animasi */
+			font-weight: 300;
+			font-size: 0.875rem;
+			/* 14px, ini membuatnya lebih kecil */
+			animation: pulse-text 1.8s infinite ease-in-out;
+		}
+		.thinking-indicator::after {
+			/* Ini bagian yang membuat titik-titik animasi */
+			content: '.';
+			/* Titik awal */
+			display: inline-block;
+			width: 1.5em;
+			/* Beri ruang stabil untuk 3 titik agar teks tidak goyang */
+			text-align: left;
+			animation: thinking-dots 1.5s infinite;
+		}
+		/* Animasi untuk titik-titik (keluar satu per satu) */
+		@keyframes thinking-dots {
+			0%, 20% {
+				content: '.';
+				/* 1 titik */
+			}
+			40%, 60% {
+				content: '..';
+				/* 2 titik */
+			}
+			80%, 100% {
+				content: '...';
+				/* 3 titik */
+			}
+		}
+		/* --- PERBAIKAN: Animasi diubah dari 'opacity' ke 'color' --- */
+		@keyframes pulse-text {
+			0%, 100% {
+				color: #f3f4f6;
+				/* Warna chat (Terang) */
+			}
+			50% {
+				color: #6b7280;
+				/* Dibuat lebih redup (dari #9ca3af) */
+			}
+		}
+		/* Styling untuk markdown (dibiarkan jika Anda ingin AI lagi nanti) */
+		.ai-message-content table {
+			border-collapse: separate;
+			border-spacing: 0;
+			width: 100%;
+			margin-top: 1rem;
+			margin-bottom: 1rem;
+			border-radius: 0.5rem;
+			overflow: hidden;
+			/* --- PERBAIKAN: Border disamakan dgn gelembung chat (neutral-700) --- */
+			border: 1px solid #404040;
+		}
+		.ai-message-content th, .ai-message-content td {
+			padding: 8px 12px;
+			text-align: left;
+			border: none;
+			/* --- PERBAIKAN: Border disamakan dgn gelembung chat (neutral-700) --- */
+			border-bottom: 1px solid #404040;
+		}
+		/* Tambahkan garis antar kolom */
+		.ai-message-content th:not(:last-child),
+		.ai-message-content td:not(:last-child) {
+			/* --- PERBAIKAN: Border disamakan dgn gelembung chat (neutral-700) --- */
+			border-right: 1px solid #404040;
+		}
+		/* Hapus border di baris terakhir */
+		.ai-message-content tr:last-child td {
+			border-bottom: none;
+		}
+		.ai-message-content th {
+			/* --- PERBAIKAN: Header lebih gelap (neutral-800) --- */
+			background-color: #272727;
+			font-weight: 600;
+		}
+		.ai-message-content ul, .ai-message-content ol {
+			margin-top: 0.5rem;
+			margin-bottom: 0.5rem;
+			padding-left: 2rem;
+			list-style: revert;
+		}
+		#settings-container {
+			scrollbar-width: none;
+		}
+		#settings-container::-webkit-scrollbar {
+			display: none;
+		}
+		/* --- STYLING SLIDER TEMPERATUR KUSTOM --- */
+		.custom-range {
+			-webkit-appearance: none;
+			/* Hapus style bawaan */
+			appearance: none;
+			width: 100%;
+			height: 2.25rem;
+			/* 36px (h-9) - INI TETAP */
+			background-color: transparent;
+			/* Inputnya sendiri transparan */
+			cursor: pointer;
+		}
+		/* 1. Track (Boks Kotak) - WebKit (Chrome, Safari, Edge) */
+		.custom-range::-webkit-slider-runnable-track {
+			width: 100%;
+			height: 2.25rem;
+			/* 36px (h-9) - INI TETAP */
+			background-color: #323232;
+			/* Warna bg-[#323232] */
+			border-radius: 0.5rem;
+			/* rounded-lg */
+		}
+		/* 2. Thumb (Tombol geser) - WebKit */
+		.custom-range::-webkit-slider-thumb {
+			-webkit-appearance: none;
+			appearance: none;
+			height: 34px;
+			/* PERBAIKAN: Lebih tinggi dari track (36px) */
+			width: 14px;
+			/* PERBAIKAN: Dibuat tipis */
+			background-color: #f3f4f6;
+			/* Warna thumb (putih) */
+			border-radius: 8px;
+			/* 2px, agar tetap kotak tapi lebih tajam */
+			border: none;
+			/* Kalkulasi margin-top untuk memusatkan thumb */
+			/* (Tinggi Track 36px - Tinggi Thumb 40px) / 2 = -2px */
+			margin-top: 1px;
+			/* PERBAIKAN: Dihitung ulang agar menonjol */
+		}
+		/* 3. Track - Firefox (Mozilla) */
+		.custom-range::-moz-range-track {
+			width: 100%;
+			height: 2.25rem;
+			/* 36px (h-9) - INI TETAP */
+			background-color: #323232;
+			border-radius: 0.5rem;
+		}
+		/* 4. Thumb - Firefox */
+		.custom-range::-moz-range-thumb {
+			height: 40px;
+			/* PERBAIKAN: Lebih tinggi dari track (36px) */
+			width: 10px;
+			/* PERBAIKAN: Dibuat tipis */
+			background-color: #f3f4f6;
+			border-radius: 0.125rem;
+			/* 2px, agar tetap kotak tapi lebih tajam */
+			border: none;
+		}
+	</style>
 </head>
-<body class="flex flex-col relative">
+<body class="bg-[#151515]">
+	<div id="loading-screen" class="flex items-center justify-center min-h-dynamic-screen">
+		<svg class="animate-spin h-10 w-10 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+			<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+			<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+		</svg>
+	</div>
+	<div id="login-screen" class="hidden items-center justify-center min-h-dynamic-screen">
+		<main class="w-full max-w-md mx-auto p-6">
+			<div class="bg-[#212121] p-8 rounded-2xl shadow-lg">
+				<div class="flex flex-col items-center mb-10">
+					<div class="flex items-center justify-center h-16 w-16 rounded-full border border-neutral-700 bg-[#323232]">
+						<svg class="h-8 w-8 text-gray-300" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+							<g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+							<g id="SVGRepo_iconCarrier">
+								<path d="M13.5 16.5854C13.5 17.4138 12.8284 18.0854 12 18.0854C11.1716 18.0854 10.5 17.4138 10.5 16.5854C10.5 15.7569 11.1716 15.0854 12 15.0854C12.8284 15.0854 13.5 15.7569 13.5 16.5854Z" fill="currentColor"></path>
+								<path fill-rule="evenodd" clip-rule="evenodd" d="M5.94209 10.0005C5.93921 9.87333 5.9375 9.73733 5.9375 9.59375C5.9375 8.70739 6.00254 7.50382 6.27381 6.28307C6.54278 5.07271 7.03242 3.76302 7.94009 2.74189C8.8791 1.6855 10.2132 1 12 1C13.7868 1 15.1209 1.6855 16.0599 2.74189C16.9676 3.76302 17.4572 5.07271 17.7262 6.28307C17.9975 7.50382 18.0625 8.70739 18.0625 9.59375C18.0625 9.73733 18.0608 9.87333 18.0579 10.0005C19.688 10.0314 21 11.3625 21 13V20C21 21.6569 19.6569 23 18 23H6C4.34315 23 3 21.6569 3 20V13C3 11.3625 4.31196 10.0314 5.94209 10.0005ZM16.0573 10C16.0605 9.87465 16.0625 9.73868 16.0625 9.59375C16.0625 8.79261 16.0025 7.74618 15.7738 6.71693C15.5428 5.67729 15.1574 4.73698 14.5651 4.07061C14.0041 3.4395 13.2132 3 12 3C10.7868 3 9.9959 3.4395 9.43491 4.07061C8.84258 4.73698 8.45722 5.67729 8.22619 6.71693C7.99747 7.74618 7.9375 8.79261 7.9375 9.59375C7.9375 9.73868 7.93946 9.87465 7.94265 10H16.0573ZM19 13C19 12.4477 18.5523 12 18 12H6C5.44772 12 5 12.4477 5 13V20C5 20.5523 5.44772 21 6 21H18C18.5523 21 19 20.5523 19 20V13Z" fill="currentColor"></path>
+							</g>
+						</svg>
+					</div>
+				</div>
+				<form id="login-form" class="space-y-4">
+					<div>
+						<input type="email" id="email" required class="w-full pl-4 py-3 rounded-xl focus:outline-none bg-[#323232] text-gray-100" placeholder="Email" />
+					</div>
+					<div>
+						<input type="password" id="password" required class="w-full pl-4 py-3 rounded-xl focus:outline-none bg-[#323232] text-gray-100" placeholder="Password" />
+					</div>
+					<button type="submit" id="login-button" class="w-full bg-blue-700 text-white py-3 rounded-xl text-base font-medium transition-colors disabled:bg-gray-400"> MASUK </button>
+				</form>
+				<p id="error-message" class="text-red-500 text-sm text-center hidden pt-4"></p>
+			</div>
+		</main>
+	</div>
+	<div id="chat-app" class="hidden h-dynamic-screen flex flex-col">
+		<header class="bg-[#151515] border-b border-neutral-700 p-4 shadow-sm">
+			<div class="flex items-center justify-between relative">
+				<button id="sidebar-toggle-button" title="Buka Menu" class="text-gray-300 p-2 rounded-full text-sm font-medium">
+					<svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+					</svg>
+				</button>
+				<div class="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
+					<h1 class="text-xl font-black text-gray-300 -mb-1" style="font-family: 'Orbitron', sans-serif;">AI ASISTEN</h1>
+				</div>
+				<div class="flex items-center space-x-3">
+					<button id="settings-button" title="Pengaturan" class="text-gray-300 p-2 rounded-full text-sm font-medium">
+						<svg class="w-6 h-6 text-gray-300" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+							<g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+							<g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+							<g id="SVGRepo_iconCarrier">
+								<g id="user-admin">
+									<path d="M22.3,16.7l1.4-1.4L20,11.6l-5.8,5.8c-0.5-0.3-1.1-0.4-1.7-0.4C10.6,17,9,18.6,9,20.5s1.6,3.5,3.5,3.5s3.5-1.6,3.5-3.5 c0-0.6-0.2-1.2-0.4-1.7l1.9-1.9l2.3,2.3l1.4-1.4l-2.3-2.3l1.1-1.1L22.3,16.7z M12.5,22c-0.8,0-1.5-0.7-1.5-1.5s0.7-1.5,1.5-1.5 s1.5,0.7,1.5,1.5S13.3,22,12.5,22z"></path>
+									<path d="M2,19c0-3.9,3.1-7,7-7c2,0,3.9,0.9,5.3,2.4l1.5-1.3c-0.9-1-1.9-1.8-3.1-2.3C14.1,9.7,15,7.9,15,6c0-3.3-2.7-6-6-6 S3,2.7,3,6c0,1.9,0.9,3.7,2.4,4.8C2.2,12.2,0,15.3,0,19v5h8v-2H2V19z M5,6c0-2.2,1.8-4,4-4s4,1.8,4,4s-1.8,4-4,4S5,8.2,5,6z"></path>
+								</g>
+							</g>
+						</svg>
+					</button>
+					<button id="logout-button" title="Keluar" class="text-gray-300 p-2 rounded-full text-sm font-medium">
+						<svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+							<path fill-rule="evenodd" clip-rule="evenodd" d="M2 6.5C2 4.01472 4.01472 2 6.5 2H12C14.2091 2 16 3.79086 16 6V7C16 7.55228 15.5523 8 15 8C14.4477 8 14 7.55228 14 7V6C14 4.89543 13.1046 4 12 4H6.5C5.11929 4 4 5.11929 4 6.5V17.5C4 18.8807 5.11929 20 6.5 20H12C13.1046 20 14 19.1046 14 18V17C14 16.4477 14.4477 16 15 16C15.5523 16 16 16.4477 16 17V18C16 20.2091 14.2091 22 12 22H6.5C4.01472 22 2 19.9853 2 17.5V6.5ZM18.2929 8.29289C18.6834 7.90237 19.3166 7.90237 19.7071 8.29289L22.7071 11.2929C23.0976 11.6834 23.0976 12.3166 22.7071 12.7071L19.7071 15.7071C19.3166 16.0976 18.6834 16.0976 18.2929 15.7071C17.9024 15.3166 17.9024 14.6834 18.2929 14.2929L19.5858 13L11 13C10.4477 13 10 12.5523 10 12C10 11.4477 10.4477 11 11 11L19.5858 11L18.2929 9.70711C17.9024 9.31658 17.9024 8.68342 18.2929 8.29289Z"></path>
+						</svg>
+					</button>
+				</div>
+			</div>
+		</header>
+		<div id="sidebar-overlay" class="hidden fixed inset-0 bg-black/50 z-20"></div>
+		<div id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-[#151515] shadow-lg z-30 transition-transform duration-300 ease-in-out -translate-x-full">
+			<div class="p-4">
+				<button id="new-chat-button" title="Percakapan Baru" class="w-full flex items-center justify-center bg-[#272727] text-gray-300 p-3 rounded-lg text-base font-medium hover:bg-neutral-700 transition-colors">
+					<svg class="w-6 h-6 mr-3" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"></path>
+						<path d="M8 12h8"></path>
+						<path d="M12 8v8"></path>
+					</svg>
+					<span>Percakapan Baru</span>
+				</button>
+				<div id="chat-history-list" class="mt-4 flex flex-col">
+				</div>
+			</div>
+		</div>
+		<main id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6">
+			<div id="chat-messages" class="max-w-3xl mx-auto flex flex-col space-y-4"></div>
+		</main>
+		<footer class="bg-[#151515] px-4 pt-4 pb-6">
+			<div class="max-w-3xl mx-auto">
+				<div id="file-preview-container" class="mb-3 grid grid-cols-2 md:grid-cols-4 gap-2"></div>
+				<form id="chat-form">
+					<div class="relative w-full">
+						<button type="button" id="upload-button" class="absolute left-1 top-1/2 -translate-y-1/2 text-gray-400 focus:outline-none focus:ring-2 rounded-full p-2">
+							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<line x1="12" y1="5" x2="12" y2="19"></line>
+								<line x1="5" y1="12" x2="19" y2="12"></line>
+							</svg>
+						</button>
+						<input type="text" id="chat-input" placeholder="Ketik pesan Anda..." autocomplete="off" class="flex-1 w-full pl-12 py-3 rounded-full focus:outline-none bg-[#272727] text-gray-300 pr-12" />
+						<button type="submit" id="send-button" class="absolute right-1 top-1/2 -translate-y-1/2 text-blue-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-full p-2 disabled:text-gray-400 disabled:cursor-not-allowed">
+							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<line x1="5" y1="12" x2="19" y2="12"></line>
+								<polyline points="12 5 19 12 12 19"></polyline>
+							</svg>
+						</button>
+					</div>
+				</form>
+			</div>
+		</footer>
+	</div>
+	<div id="settings-page" class="hidden h-dynamic-screen flex flex-col">
+		<header class="bg-[#151515] border-b border-neutral-700 p-4 shadow-sm">
+			<div class="flex items-center justify-between relative">
+				<button id="settings-back-button" title="Kembali" class="text-gray-300 p-2 rounded-full text-sm font-medium">
+					<svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+					</svg>
+				</button>
+				<div class="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
+					<h1 class="text-xl font-black text-gray-300 -mb-1" style="font-family: 'Orbitron', sans-serif;">ADMIN MENU</h1>
+				</div>
+				<div class="flex items-center space-x-3">
+					<button id="settings-save-button" type="submit" form="settings-form" title="Simpan" class="text-green-500 p-2 rounded-full text-sm font-medium">
+						<svg class="w-7 h-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+						</svg>
+					</button>
+				</div>
+			</div>
+		</header>
+		<main id="settings-container" class="flex-1 overflow-y-auto p-4 md:p-6">
+			<div class="max-w-3xl mx-auto">
+				<form id="settings-form" class="space-y-4">
+					<div class="bg-[#212121] border border-neutral-700 rounded-lg p-4">
+						<label class="block text-base font-medium text-gray-300 mb-1">Model Gemini</label>
+						<p class="text-sm text-gray-400 mb-3">Pilih model AI yang akan digunakan. 'Flash' lebih cepat, 'Pro' lebih pintar.</p>
+						<div class="relative">
+							<button type="button" id="custom-model-button" class="flex w-full items-center justify-between rounded-lg bg-[#323232] px-3 py-2 text-left text-gray-100 focus:outline-none">
+								<span id="custom-model-label">gemini 2.5 flash</span>
+								<svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+									<path fill-rule="evenodd" d="M10 3a.75.75 0 01.55.24l3.25 3.5a.75.75 0 11-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 01-1.1-1.02l3.25-3.5A.75.75 0 0110 3zM10 17a.75.75 0 01-.55-.24l-3.25-3.5a.75.75 0 011.1-1.02L10 15.148l2.7-2.91a.75.75 0 011.1 1.02l-3.25 3.5A.75.75 0 0110 17z" clip-rule="evenodd" />
+								</svg>
+							</button>
+							<div id="custom-model-options" class="hidden absolute z-10 mt-1 w-full overflow-hidden rounded-lg bg-[#272727] border border-neutral-700 shadow-lg max-h-60 overflow-y-auto">
+								<div class="custom-model-option p-3 hover:bg-neutral-700 cursor-pointer text-gray-100" data-value="gemini-2.0-flash">gemini 2.0 flash</div>
+								<div class="custom-model-option p-3 hover:bg-neutral-700 cursor-pointer text-gray-100" data-value="gemini-2.0-flash-lite">gemini 2.0 flash lite</div>
+								<div class="custom-model-option p-3 hover:bg-neutral-700 cursor-pointer text-gray-100" data-value="gemini-2.5-flash">gemini 2.5 flash</div>
+								<div class="custom-model-option p-3 hover:bg-neutral-700 cursor-pointer text-gray-100" data-value="gemini-2.5-flash-lite">gemini 2.5 flash lite</div>
+								<div class="custom-model-option p-3 hover:bg-neutral-700 cursor-pointer text-gray-100" data-value="gemini-2.5-pro">gemini 2.5 pro</div>
+							</div>
+						</div>
+						<select id="setting-model" class="hidden">
+							<option value="gemini-2.0-flash">gemini 2.0 flash</option>
+							<option value="gemini-2.0-flash-lite">gemini 2.0 flash lite</option>
+							<option value="gemini-2.5-flash" selected="">gemini 2.5 flash</option>
+							<option value="gemini-2.5-flash-lite">gemini 2.5 flash lite</option>
+							<option value="gemini-2.5-pro">gemini 2.5 pro</option>
+						</select>
+					</div>
+					<div class="bg-[#212121] border border-neutral-700 rounded-lg p-4">
+						<label for="setting-prompt" class="block text-base font-medium text-gray-300 mb-1">Custom Prompt (System Instruction)</label>
+						<p class="text-sm text-gray-400 mb-3">Instruksi kustom yang akan selalu diikuti oleh AI di setiap percakapan.</p>
+						<div class="w-full rounded-lg border border-neutral-600 bg-[#323232] p-3">
+							<textarea id="setting-prompt" rows="4" class="w-full focus:outline-none bg-transparent text-gray-100" placeholder="Contoh: Kamu adalah asisten APIP yang profesional..."></textarea>
+						</div>
+					</div>
+					<div class="bg-[#212121] border border-neutral-700 rounded-lg p-4">
+						<div class="flex justify-between items-center mb-1">
+							<label for="setting-temp" class="text-base font-medium text-gray-300">Temperatur</label>
+						</div>
+						<p class="text-sm text-gray-400 mb-3">Mengatur kreativitas AI. Nilai rendah (0.0) lebih fokus, nilai tinggi (1.0) lebih acak.</p>
+						<div class="relative w-full h-9 flex items-center"> <span id="setting-temp-label" class="absolute left-1/2 -translate-x-1/2 text-sm font-mono font-medium text-gray-100 z-10 pointer-events-none select-none">0.7</span>
+							<input id="setting-temp" type="range" min="0" max="1" step="0.1" value="0.7" class="custom-range w-full">
+						</div>
+					</div>
+					<div class="bg-[#212121] border border-neutral-700 rounded-lg p-4">
+						<label for="setting-tokens" class="block text-base font-medium text-gray-300 mb-1">Max Output Tokens</label>
+						<p class="text-sm text-gray-400 mb-3">Batas token/kata untuk *jawaban* AI. Nilai lebih tinggi bolehkan jawaban panjang. (Maks: 8192)</p>
+						<input id="setting-tokens" type="number" value="2048" class="w-full p-3 rounded-lg focus:outline-none bg-[#323232] text-gray-100">
+					</div>
+				</form>
+				<div class="mt-4">
+					<div class="bg-[#212121] border border-neutral-700 rounded-lg p-4 mb-4">
+						<label class="block text-base font-medium text-gray-300 mb-1">Tambah Pengguna Baru</label>
+						<p class="text-sm text-gray-400 mb-3">Buat akun baru secara manual untuk pengguna.</p>
+						<div class="space-y-2">
+							<input type="email" id="create-email-input" class="w-full p-3 rounded-lg focus:outline-none bg-[#323232] text-gray-100" placeholder="Email Pengguna">
+							<input type="password" id="create-password-input" class="w-full p-3 rounded-lg focus:outline-none bg-[#323232] text-gray-100" placeholder="Password Pengguna">
+							<button id="create-user-button" class="w-full bg-blue-700 text-white text-sm font-medium p-3 rounded-lg">TAMBAH PENGGUNA</button>
+						</div>
+					</div>
+					<div class="bg-[#212121] border border-neutral-700 rounded-lg p-4">
+						<h3 class="block text-base font-medium text-gray-300 mb-3">Daftar Pengguna</h3>
+						<div id="user-list-container" class="space-y-2">
+							<p id="user-list-loading" class="text-sm text-gray-400">Memuat daftar pengguna...</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</main>
+	</div>
+	</div>
+	</main>
+	</div>
+	<input type="file" id="file-input" accept=".pdf,.docx,.xls,.xlsx,.pptx" multiple class="hidden" />
+	<div id="confirm-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+		<div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+		<div class="relative bg-[#212121] w-full max-w-[18rem] rounded-2xl shadow-lg overflow-hidden">
+			<div class="p-4">
+				<h2 id="confirm-title" class="text-lg font-bold text-gray-100 text-center mb-2">Judul Konfirmasi</h2>
+				<p id="confirm-message" class="text-gray-400 text-sm text-center">Pesan konfirmasi.</p>
+			</div>
+			<div class="border-t border-neutral-700 flex">
+				<button id="modal-cancel-button" class="w-1/2 py-3 text-center text-sm font-medium text-indigo-400 font-bold border-r border-neutral-700"> BATAL </button>
+				<button id="modal-agree-button" class="w-1/2 py-3 text-center text-sm font-medium text-red-500 font-bold"> SETUJU </button>
+			</div>
+		</div>
+		<div id="alert-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+			<div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+			<div class="relative bg-[#212121] w-full max-w-[18rem] rounded-2xl shadow-lg overflow-hidden">
+				<div class="p-4">
+					<h2 id="alert-title" class="text-lg font-bold text-gray-100 text-center mb-2">Pemberitahuan</h2>
+					<p id="alert-message" class="text-gray-400 text-sm text-center">Isi pesan alert.</p>
+				</div>
+				<div class="border-t border-neutral-700 flex">
+					<button id="alert-ok-button" class="w-full py-3 text-center text-sm font-medium text-indigo-400 font-bold"> OK </button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script>
+		// --- Inisialisasi Supabase ---
+		const SUPABASE_URL = 'https://xdrqauwxvwooojufzndv.supabase.co';
+		const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkcnFhdXd4dndvb29qdWZ6bmR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1MDQyNDgsImV4cCI6MjA3ODA4MDI0OH0.mH7MEeAggksdAlandZpwuyGPYo08SuuWkXoMXVvwSiI';
+		const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+		// --- Inisialisasi PWA ---
+		const manifestContent = {
+			"name": "AI ASISTEN",
+			"short_name": "AI ASISTEN",
+			"start_url": ".",
+			"display": "standalone",
+			"background_color": "#151515",
+			"theme_color": "#151515",
+			"description": "Aplikasi Chat AI canggih.",
+			"icons": [{
+				"src": "https://xdrqauwxvwooojufzndv.supabase.co/storage/v1/object/public/icons/icon-48.png",
+				"sizes": "48x48",
+				"type": "image/png"
+			}, {
+				"src": "https://xdrqauwxvwooojufzndv.supabase.co/storage/v1/object/public/icons/icon-192.png",
+				"sizes": "192x192",
+				"type": "image/png",
+				"purpose": "any maskable"
+			}, {
+				"src": "https://xdrqauwxvwooojufzndv.supabase.co/storage/v1/object/public/icons/icon-512.png",
+				"sizes": "512x512",
+				"type": "image/png"
+			}]
+		};
+		const manifestURL = URL.createObjectURL(new Blob([JSON.stringify(manifestContent)], {
+			type: 'application/json'
+		}));
+		document.querySelector('link[rel="manifest"]').setAttribute('href', manifestURL);
+		// --- Selektor DOM ---
+		const loginScreen = document.getElementById('login-screen');
+		const loginForm = document.getElementById('login-form');
+		const emailInput = document.getElementById('email');
+		const passwordInput = document.getElementById('password');
+		const loginButton = document.getElementById('login-button');
+		const errorMessage = document.getElementById('error-message');
+		const chatApp = document.getElementById('chat-app');
+		const logoutButton = document.getElementById('logout-button');
+		const loadingScreen = document.getElementById('loading-screen');
+		const confirmModal = document.getElementById('confirm-modal');
+		const modalCancelButton = document.getElementById('modal-cancel-button');
+		const modalAgreeButton = document.getElementById('modal-agree-button');
+		const alertModal = document.getElementById('alert-modal');
+		const alertTitle = document.getElementById('alert-title');
+		const alertMessage = document.getElementById('alert-message');
+		const alertOkButton = document.getElementById('alert-ok-button');
+		const sidebarToggleButton = document.getElementById('sidebar-toggle-button');
+		const sidebar = document.getElementById('sidebar');
+		const sidebarOverlay = document.getElementById('sidebar-overlay');
+		const chatForm = document.getElementById('chat-form');
+		const chatInput = document.getElementById('chat-input');
+		const chatMessages = document.getElementById('chat-messages');
+		const chatContainer = document.getElementById('chat-container');
+		const sendButton = document.getElementById('send-button');
+		const uploadButton = document.getElementById('upload-button');
+		const fileInput = document.getElementById('file-input');
+		const filePreviewContainer = document.getElementById('file-preview-container');
+		const settingsButton = document.getElementById('settings-button');
+		const settingsForm = document.getElementById('settings-form');
+		const settingsModel = document.getElementById('setting-model');
+		const settingsPrompt = document.getElementById('setting-prompt');
+		const settingsTemp = document.getElementById('setting-temp');
+		const settingsTempLabel = document.getElementById('setting-temp-label');
+		const settingsTokens = document.getElementById('setting-tokens');
+		const settingsPage = document.getElementById('settings-page');
+		const settingsBackButton = document.getElementById('settings-back-button');
+		const customModelButton = document.getElementById('custom-model-button');
+		const customModelLabel = document.getElementById('custom-model-label');
+		const customModelOptions = document.getElementById('custom-model-options');
+		// ... (Selektor customModelOptions) ...
+		const createEmailInput = document.getElementById('create-email-input');
+		const createPasswordInput = document.getElementById('create-password-input');
+		const createUserButton = document.getElementById('create-user-button');
+		const userListContainer = document.getElementById('user-list-container');
+		const userListLoading = document.getElementById('user-list-loading');
+		// --- Variabel Global & State Aplikasi (Versi Supabase) ---
+		let userRole = 'user'; // Akan di-set saat login
+		let chatList = []; // Akan diisi dari Supabase
+		let activeChatId = null;
+		let isNewChat = true;
+		let uploadedFiles = [];
+		let chatHistory = []; // Ini sekarang cache lokal untuk pesan yang sedang aktif
+		// API_KEY DIHAPUS DARI SINI
+		let appSettings = { // Akan diisi dari Supabase
+			model: 'gemini-2.5-flash',
+			customPrompt: '',
+			temperature: 0.7,
+			maxTokens: 2048
+		};
+		let lastTouchEnd = 0;
+		const markdownConverter = new showdown.Converter();
+		markdownConverter.setOption('tables', true);
+		let currentConfirmAction = () => {}; // Variabel untuk menyimpan fungsi callback
+		// --- Pencegah Zoom Double-Tap Mobile ---
+		document.addEventListener('touchend', (event) => {
+			const now = Date.now();
+			if(now - lastTouchEnd <= 300) {
+				event.preventDefault();
+			}
+			lastTouchEnd = now;
+		}, false);
+		// --- Fungsi Helper & Utilitas ---
+		const scrollToBottom = () => {
+			chatContainer.scrollTo({
+				top: chatContainer.scrollHeight,
+				behavior: 'smooth'
+			});
+		};
+		const formatFileSize = (bytes) => {
+			if(bytes < 1024 * 1024) {
+				return (bytes / 1024).toFixed(1) + ' KB';
+			} else {
+				return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+			}
+		};
 
-    <!-- === SIDEBAR & OVERLAY === -->
-    <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/20 z-40 hidden transition-opacity opacity-0 backdrop-blur-sm"></div>
+		function forceLayoutRedraw() {
+			// Beri jeda singkat agar keyboard punya waktu untuk mulai menutup
+			setTimeout(() => {
+				window.scrollTo(0, 0);
+			}, 30);
+		}
 
-    <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
-        
-        <!-- Sidebar Top Section -->
-        <div class="flex-none min-h-[64px] safe-pt flex items-center px-4">
-            <!-- TOMBOL PERCAKAPAN BARU -->
-            <button onclick="startNewChat()" class="w-full flex items-center justify-center px-4 py-3 bg-gray-100 text-slate-700 rounded-2xl hover:bg-gray-200 active:scale-95 transition-all duration-200 group">
-                <svg class="w-5 h-5 mr-3 text-slate-500 group-hover:text-slate-800 transition-colors" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"></path>
-                    <path d="M8 12h8"></path>
-                    <path d="M12 8v8"></path>
-                </svg>
-                <span class="font-bold text-sm text-slate-700">Percakapan Baru</span>
-            </button>
-        </div>
-
-        <div class="flex-1 overflow-y-auto"></div>
-    </div>
-
-    <!-- === SECTION: LOGIN PAGE === -->
-    <div id="login-page" class="absolute inset-0 z-[30] flex items-center justify-center bg-gray-100 p-4 transition-all duration-300 transform">
-        <div class="bg-white w-full max-w-sm p-8 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-center gap-6">
-            
-            <div class="flex flex-col items-center justify-center text-center">
-                <img src="logo.png" alt="AI Logo" class="w-24 h-24 object-contain -mt-2 mb-0 drop-shadow-sm">
-                <h1 class="font-orbitron text-2xl font-extrabold text-slate-800 tracking-wider">
-                    AI ASISTEN
-                </h1>
-            </div>
-
-            <div class="w-full space-y-3">
-                <input type="email" placeholder="Email" class="login-input w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-slate-300 transition-all">
-                <input type="password" placeholder="Password" class="login-input w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-slate-300 transition-all">
-            </div>
-            
-            <button onclick="enterApp()" class="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm tracking-wide rounded-xl shadow-sm transition-transform active:scale-95 uppercase">
-                Masuk
-            </button>
-        </div>
-    </div>
-
-    <!-- === SECTION: CHAT APP === -->
-    <div id="chat-page" class="flex-1 flex flex-col h-full hidden opacity-0 relative bg-white w-full z-10">
-        
-        <!-- Header -->
-        <header class="flex-none min-h-[64px] safe-pt flex items-center justify-between px-3 border-b border-gray-100 bg-white z-20 select-none">
-            
-            <div class="flex items-center gap-2 h-16">
-                <img src="logo.png" alt="AI Icon" class="w-14 h-14 object-contain drop-shadow-sm">
-                <div>
-                    <h2 class="font-orbitron font-extrabold text-lg text-slate-800 tracking-wide">AI ASISTEN</h2>
-                    <p class="text-[11px] text-slate-500 font-medium font-sans">
-                        Artificial Intelligence
-                    </p>
-                </div>
-            </div>
-
-            <!-- Header Buttons (Settings & Menu) -->
-            <div class="flex items-center">
-                <!-- Settings Icon (No Function) -->
-                <button class="p-3 text-slate-400 hover:text-slate-600 transition-colors">
-                    <svg class="w-6 h-6" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-                        <g id="SVGRepo_iconCarrier">
-                            <g>
-                                <path fill="none" d="M0 0h24v24H0z"></path>
-                                <path d="M12 14v2a6 6 0 0 0-6 6H4a8 8 0 0 1 8-8zm0-1c-3.315 0-6-2.685-6-6s2.685-6 6-6 6 2.685 6 6-2.685 6-6 6zm0-2c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm9 6h1v5h-8v-5h1v-1a3 3 0 0 1 6 0v1zm-2 0v-1a1 1 0 0 0-2 0v1h2z"></path>
-                            </g>
-                        </g>
-                    </svg> 
-                </button>
-
-                <!-- Toggle Sidebar Icon -->
-                <button onclick="toggleSidebar()" class="p-3 text-slate-400 hover:text-slate-600 transition-colors">
-                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <g stroke-width="0"></g>
-                        <g stroke-linecap="round" stroke-linejoin="round"></g>
-                        <g> 
-                            <path d="M5 7H19" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path> 
-                            <path d="M5 12L19 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path> 
-                            <path d="M5 17L19 17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path> 
-                        </g>
-                    </svg>
-                </button>
-            </div>
-        </header>
-
-        <!-- Messages Area -->
-        <main id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
-            <div class="w-full max-w-3xl mx-auto">
-                <div class="bg-white border border-gray-200 p-4 rounded-2xl shadow-sm">
-                    <!-- Header Pesan -->
-                    <div class="flex justify-between items-center mb-1 border-b-[0.5px] border-gray-200 pb-1">
-                        <span class="text-xs font-bold uppercase tracking-wide bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">ASISTEN</span>
-                        <span class="text-xs text-slate-400 font-sans current-time">--:--</span>
-                    </div>
-                    <div class="text-slate-700 leading-relaxed markdown-body">
-                        Halo! Ikon pengaturan telah ditambahkan di sebelah ikon menu. Saat ini ikon tersebut belum memiliki fungsi.
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <!-- Input Area -->
-        <div class="flex-none bg-white border-t border-gray-100 px-4 pt-4 pb-6 safe-pb z-30 w-full select-none">
-            <div class="w-full max-w-3xl mx-auto relative flex items-end bg-gray-100 rounded-[2rem] border border-transparent transition-all">
-                
-                <button class="absolute left-2 bottom-2 w-10 h-10 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-700 hover:bg-gray-200 transition-colors">
-                    <i class="fa-solid fa-plus text-xl"></i>
-                </button>
-                
-                <textarea 
-                    id="user-input"
-                    rows="1"
-                    placeholder="Ketik pesan..." 
-                    class="w-full py-4 pl-14 pr-14 bg-transparent text-slate-800 text-base placeholder:text-slate-400 resize-none max-h-32 rounded-[2rem] focus:outline-none focus:ring-0"
-                    style="min-height: 56px;"
-                    oninput="adjustHeight(this)"
-                    onkeydown="handleEnter(event)"
-                ></textarea>
-                
-                <button id="send-btn" class="absolute right-2 bottom-2 w-10 h-10 flex items-center justify-center rounded-full bg-slate-900 text-white hover:bg-slate-800 shadow-sm transition-transform active:scale-90 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <svg class="w-5 h-5 translate-x-0.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none">
-                        <path fill="#ffffff" fill-rule="evenodd" d="M2.345 2.245a1 1 0 0 1 1.102-.14l18 9a1 1 0 0 1 0 1.79l-18 9a1 1 0 0 1-1.396-1.211L4.613 13H10a1 1 0 1 0 0-2H4.613L2.05 3.316a1 1 0 0 1 .294-1.071z" clip-rule="evenodd"></path>
-                    </svg>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const apiKey = ""; 
-        const loginPage = document.getElementById('login-page');
-        const chatPage = document.getElementById('chat-page');
-        const chatContainer = document.getElementById('chat-container');
-        const userInput = document.getElementById('user-input');
-        const sendBtn = document.getElementById('send-btn');
-        const loginInputs = document.querySelectorAll('.login-input');
-        
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOverlay = document.getElementById('sidebar-overlay');
-
-        function toggleSidebar() {
-            const isClosed = sidebar.classList.contains('-translate-x-full');
-            if (isClosed) {
-                sidebar.classList.remove('-translate-x-full');
-                sidebarOverlay.classList.remove('hidden');
-                setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                sidebarOverlay.classList.add('opacity-0');
-                setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
-            }
-        }
-
-        function startNewChat() {
-            toggleSidebar();
-            setTimeout(() => { window.location.reload(); }, 300);
-        }
-
-        let lastTouchEnd = 0;
-        document.addEventListener('touchend', function (event) {
-            const now = (new Date()).getTime();
-            if (now - lastTouchEnd <= 300) event.preventDefault();
-            lastTouchEnd = now;
-        }, false);
-
-        document.body.addEventListener('touchmove', (e) => {
-            const isScrollableChat = e.target.closest('#chat-container');
-            const isScrollableSidebar = e.target.closest('#sidebar'); 
-            const isInput = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
-            if (!isScrollableChat && !isInput && !isScrollableSidebar) e.preventDefault();
-        }, { passive: false });
-
-        const resetScroll = () => {
-            window.scrollTo(0, 0);
-            setTimeout(() => { document.body.scrollTop = 0; }, 50);
-        };
-        loginInputs.forEach(input => input.addEventListener('blur', resetScroll));
-        userInput.addEventListener('blur', resetScroll);
-
-        sendBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault(); 
-            e.stopPropagation();
-            sendMessage();
-        }, { passive: false });
-
-        sendBtn.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            sendMessage();
-        });
-
-        function enterApp() {
-            loginPage.style.pointerEvents = 'none';
-            loginPage.style.opacity = '0';
-            setTimeout(() => {
-                loginPage.classList.add('hidden');
-                loginPage.style.zIndex = '-1'; 
-                loginPage.style.display = 'none'; 
-                chatPage.classList.remove('hidden');
-                chatPage.classList.add('flex'); 
-                void chatPage.offsetWidth; 
-                chatPage.style.opacity = '1';
-                userInput.focus();
-            }, 300);
-        }
-
-        async function sendMessage() {
-            const text = userInput.value.trim();
-            if (!text) return;
-
-            userInput.blur();
-            userInput.value = '';
-            userInput.style.height = '56px';
-            sendBtn.disabled = true;
-
-            appendMessage('user', text);
-            const loadingMsg = appendMessage('model', '', true);
-
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: text }] }] })
-                });
-
-                const data = await response.json();
-                const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, tidak ada respon.";
-
-                loadingMsg.remove();
-                appendMessage('model', aiText);
-
-            } catch (error) {
-                loadingMsg.remove();
-                appendMessage('model', "Error koneksi jaringan.");
-            } finally {
-                sendBtn.disabled = false;
-            }
-        }
-
-        function appendMessage(role, content, isLoading = false) {
-            const div = document.createElement('div');
-            div.className = 'w-full max-w-3xl mx-auto animate-[fadeIn_0.3s_ease-out]';
-            
-            const isUser = role === 'user';
-            const bgClass = 'bg-white';
-            const borderClass = 'border-gray-200';
-            
-            const name = isUser ? 'ANDA' : 'ASISTEN';
-            const nameColorClass = isUser 
-                ? 'text-slate-500' 
-                : 'bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent';
-            
-            let htmlContent = isLoading 
-                ? `<div class="flex items-center h-6 pl-2 gap-1"><div class="dot-flashing"></div></div>`
-                : (role === 'model' ? marked.parse(content) : content.replace(/\n/g, '<br>'));
-
-            div.innerHTML = `
-                <div class="flex flex-col ${bgClass} border ${borderClass} p-4 rounded-2xl shadow-sm mb-4">
-                    <div class="flex justify-between items-center mb-1 border-b-[0.5px] border-gray-200 pb-1">
-                        <span class="text-xs font-bold uppercase tracking-wide ${nameColorClass}">${name}</span>
-                        <span class="text-xs text-slate-400 font-sans">${getFormattedTime()}</span>
-                    </div>
-                    <div class="text-base text-slate-700 leading-relaxed markdown-body">
-                        ${htmlContent}
-                    </div>
-                </div>
-            `;
-            chatContainer.appendChild(div);
-            scrollToBottom();
-            return div;
-        }
-
-        function adjustHeight(el) {
-            el.style.height = 'auto';
-            el.style.height = Math.min(Math.max(el.scrollHeight, 56), 128) + 'px';
-        }
-
-        function handleEnter(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        }
-
-        function scrollToBottom() {
-            chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
-        }
-
-        function getFormattedTime() {
-            return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-
-        document.querySelectorAll('.current-time').forEach(el => el.textContent = getFormattedTime());
-    </script>
+		function extractTextFromSlideXML(xmlString) {
+			try {
+				const parser = new DOMParser();
+				const xmlDoc = parser.parseFromString(xmlString, "application/xml");
+				const textNodes = xmlDoc.getElementsByTagName("a:t");
+				const textContent = Array.from(textNodes).map(node => node.textContent).join(' ');
+				return textContent;
+			} catch (e) {
+				console.error("Error parsing slide XML with DOMParser:", e);
+				return '';
+			}
+		}
+		const renderFilePreviews = () => {
+			filePreviewContainer.innerHTML = '';
+			uploadedFiles.forEach((file, index) => {
+				const fileSizeFormatted = formatFileSize(file.size);
+				let iconSvg = '';
+				const fileType = file.type;
+				const mimeType = file.mimeType;
+				if(mimeType === 'application/pdf' || fileType === 'pdf') {
+					iconSvg = `
+					<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+						<path fill="#EF4444" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2 -2V4a2 2 0 012-2h8l6 6z"/><path fill="#DC2626" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="7" font-family="sans-serif" font-weight="bold">PDF</text>
+					</svg>`;
+				} else if(mimeType.includes('word') || fileType === 'doc' || fileType === 'docx') {
+					iconSvg = `
+					<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#3B82F6" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#2563EB" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-family="sans-serif" font-weight="bold">W</text></svg>`;
+				} else if(mimeType.includes('excel') || mimeType.includes('spreadsheet') || fileType === 'xls' || fileType === 'xlsx') {
+					iconSvg = `
+					<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#22C55E" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#16A34A" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-family="sans-serif" font-weight="bold">X</text></svg>`;
+				} else if(mimeType.includes('powerpoint') || mimeType.includes('presentation') || fileType === 'ppt' || fileType === 'pptx') {
+					iconSvg = `
+					<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#F97316" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#EA580C" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-family="sans-serif" font-weight="bold">P</text></svg>`;
+				} else {
+					iconSvg = `
+					<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+						<path fill="#6B7280" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2 -2V4a2 2 0 012-2h8l6 6z"/><path fill="#4B5563" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="7" font-family="sans-serif" font-weight="bold">FILE</text>
+					</svg>`;
+				}
+				const fileCard = `
+	              <div class="file-preview-card bg-[#272727] text-gray-200 rounded-lg p-2 flex flex-row items-center relative text-sm shadow-sm cursor-pointer">
+	                  <div class="w-10 h-10 mr-2 flex-shrink-0">${iconSvg}</div>
+	                  <div class="overflow-hidden text-left flex-1 min-w-0">
+	                      <div class="font-medium truncate text-xs" title="${file.name}">${file.name}</div>
+	                      <div class="text-xs text-gray-400">${fileSizeFormatted}</div>
+	                  </div>
+	                  <button type="button" class="delete-file-button absolute top-0 right-0 -mt-2 -mr-2 rounded-full w-5 h-5 focus:outline-none invisible text-neutral-600 hover:text-red-500" data-index="${index}">
+	                      <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor">
+								<g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"></path></g>
+							</svg>
+	                  </button>
+	              </div>`;
+				filePreviewContainer.innerHTML += fileCard;
+			});
+		};
+		const renderChatList = () => {
+			const chatHistoryListContainer = document.getElementById('chat-history-list');
+			chatHistoryListContainer.innerHTML = '';
+			chatList.forEach(chat => {
+				const isActive = (chat.id == activeChatId);
+				const titleColorClass = isActive ? 'text-blue-500' : 'text-gray-300';
+				const chatItemHTML = `
+		            <div class="chat-history-item flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer" data-id="${chat.id}">
+		                <span class="${titleColorClass} text-base truncate min-w-0">${chat.title}</span>
+		                <button class="delete-chat-button text-gray-400 hover:text-red-500 opacity-0 invisible transition-all p-1 ml-2 flex-shrink-0" data-id="${chat.id}">
+							<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+								<g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z"></path></g>
+							</svg>
+		                </button>
+		            </div>
+		        `;
+				chatHistoryListContainer.innerHTML += chatItemHTML;
+			});
+		};
+		// --- Fungsi Inti Aplikasi ---
+		const addMessage = (sender, message, isMarkdown = false, duration = 0) => {
+			const msgDiv = document.createElement('div');
+			msgDiv.className = 'chat-bubble px-4 py-2 rounded-xl w-full flex flex-col';
+			const now = new Date();
+			const hours = String(now.getHours()).padStart(2, '0');
+			const minutes = String(now.getMinutes()).padStart(2, '0');
+			const timestamp = `${hours}:${minutes}`;
+			const messageElement = document.createElement('div');
+			const timeElement = document.createElement('div');
+			timeElement.textContent = timestamp;
+			if(sender === 'user') {
+				const headerDiv = document.createElement('div');
+				headerDiv.className = 'flex justify-between items-center mb-1';
+				const nameElement = document.createElement('div');
+				nameElement.className = 'text-sm font-bold text-blue-400';
+				nameElement.textContent = 'Anda';
+				timeElement.className = 'text-xs text-gray-500';
+				headerDiv.appendChild(nameElement);
+				headerDiv.appendChild(timeElement);
+				msgDiv.classList.add('text-gray-100', 'self-start', 'border', 'border-neutral-700', 'pb-3');
+				msgDiv.appendChild(headerDiv);
+				if(message) {
+					messageElement.className = 'min-h-[1.5rem]';
+					messageElement.textContent = message;
+					msgDiv.appendChild(messageElement);
+				}
+				const fileHtml = (isMarkdown && typeof isMarkdown === 'string') ? isMarkdown : '';
+				if(fileHtml) {
+					const fileContainer = document.createElement('div');
+					fileContainer.className = (message ? 'mt-2' : '') + ' grid grid-cols-2 md:grid-cols-4 gap-2';
+					fileContainer.innerHTML = fileHtml;
+					fileContainer.querySelectorAll('.file-preview-card').forEach(card => {
+						card.classList.remove('cursor-pointer');
+					});
+					fileContainer.querySelectorAll('.delete-file-button').forEach(btn => {
+						btn.remove();
+					});
+					msgDiv.appendChild(fileContainer);
+				}
+			} else if(sender === 'ai') {
+				const headerDiv = document.createElement('div');
+				headerDiv.className = 'flex justify-between items-center mb-1';
+				const nameElement = document.createElement('div');
+				nameElement.className = 'text-sm font-bold text-white mb-1';
+				nameElement.textContent = 'Ai Asisten';
+				timeElement.className = 'text-xs text-gray-500 ai-timestamp';
+				headerDiv.appendChild(nameElement);
+				headerDiv.appendChild(timeElement);
+				msgDiv.classList.add('text-gray-100', 'self-start', 'border', 'border-neutral-700');
+				messageElement.className = 'ai-message-content min-h-[1.5rem] flex items-center';
+				if(message === 'TYPING_PLACEHOLDER') {
+					/* --- PERBAIKAN: Ganti 3 dot menjadi teks "thinking" --- */
+					messageElement.innerHTML = `<div class="thinking-indicator">AI thinking</div>`;
+				} else {
+					messageElement.classList.remove('flex', 'items-center');
+					messageElement.innerHTML = isMarkdown ? markdownConverter.makeHtml(message) : message;
+				}
+				const footerDiv = document.createElement('div');
+				footerDiv.className = 'flex justify-end mt-1';
+				const copyButton = document.createElement('button');
+				copyButton.className = 'copy-chat-button text-gray-400 focus:outline-none rounded invisible';
+				copyButton.title = 'Salin teks';
+				copyButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+				footerDiv.appendChild(copyButton);
+				msgDiv.appendChild(headerDiv);
+				msgDiv.appendChild(messageElement);
+				msgDiv.appendChild(footerDiv);
+			}
+			chatMessages.appendChild(msgDiv);
+			return msgDiv;
+		};
+		// --- Fungsi Inisialisasi Aplikasi (BARU) ---
+		const initializeApp = async (session) => {
+			if(!session) {
+				showLoginScreen();
+				return;
+			}
+			try {
+				let [profileRes, settingsRes] = await Promise.all([
+					supabase.from('profiles').select('role').eq('id', session.user.id).single(),
+					supabase.from('global_settings').select('*').eq('id', 1).single()
+				]);
+				if(profileRes.error) throw profileRes.error;
+				if(settingsRes.error) throw settingsRes.error;
+				userRole = profileRes.data.role;
+				// Salin data pengaturan ke appSettings
+				appSettings.model = settingsRes.data.model;
+				appSettings.customPrompt = settingsRes.data.custom_prompt;
+				appSettings.temperature = settingsRes.data.temperature;
+				appSettings.maxTokens = settingsRes.data.max_tokens;
+				if(userRole === 'admin') {
+					settingsButton.classList.remove('hidden');
+				} else {
+					settingsButton.classList.add('hidden');
+				}
+				await showChatApp(session.user.id, true); // (shouldFocus = true)
+			} catch (error) {
+				console.error("Error initializing app:", error.message);
+				showCustomAlert("Error", "Gagal memuat data pengguna. Silakan coba login kembali.");
+				await supabase.auth.signOut();
+				showLoginScreen();
+			}
+		};
+		// --- Fungsi Tampilan & Autentikasi (BARU) ---
+		const showLoginScreen = () => {
+			loadingScreen.classList.add('hidden');
+			chatApp.classList.add('hidden');
+			settingsPage.classList.add('hidden');
+			loginScreen.classList.remove('hidden');
+			loginScreen.classList.add('flex');
+			chatMessages.innerHTML = '';
+			chatHistory = [];
+			uploadedFiles = [];
+			renderFilePreviews();
+			emailInput.value = '';
+			passwordInput.value = '';
+		};
+		const showChatApp = async (userId, shouldFocus = true) => {
+			loadingScreen.classList.add('hidden');
+			loginScreen.classList.add('hidden');
+			settingsPage.classList.add('hidden');
+			loginScreen.classList.remove('flex');
+			chatApp.classList.remove('hidden');
+			try {
+				const {
+					data,
+					error
+				} = await supabase.from('conversations').select('id, title').eq('user_id', userId).order('created_at', {
+					ascending: false
+				});
+				if(error) throw error;
+				chatList = data;
+			} catch (error) {
+				console.error("Gagal memuat daftar percakapan:", error.message);
+				chatList = [];
+			}
+			renderChatList();
+			const lastActiveId = localStorage.getItem('siapip_lastActiveId');
+			const chatExists = lastActiveId && chatList.find(c => c.id === lastActiveId);
+			if(chatExists) {
+				activeChatId = lastActiveId;
+				isNewChat = false;
+				renderChatList();
+				// chatMessages.innerHTML = ''; // DIHAPUS DARI SINI
+				try {
+					const {
+						data: messages,
+						error: messagesError
+					} = await supabase.from('messages').select('role, parts').eq('conversation_id', activeChatId).order('created_at', {
+						ascending: true
+					}); // 1. Ambil data dulu (layar belum dibersihkan)
+					if(messagesError) throw messagesError;
+					chatMessages.innerHTML = ''; // 2. DIPINDAH KE SINI. Bersihkan layar SETELAH data siap.
+					chatHistory = messages;
+					if(chatHistory.length > 0) {
+						chatHistory.forEach(msg => { // 3. Render chat asli
+							const messageText = msg.parts.find(p => p.text) ? msg.parts.find(p => p.text).text : '';
+							if(msg.role === 'user') {
+								const filePart = msg.parts.find(p => p.fileHtml);
+								const filesHtml = filePart ? filePart.fileHtml : '';
+								addMessage('user', messageText, filesHtml);
+							} else {
+								addMessage('ai', messageText, true);
+							}
+						});
+						// PERBAIKAN SCROLL: Hanya scroll jika chatnya panjang
+						setTimeout(() => {
+							if(chatContainer.scrollHeight > chatContainer.clientHeight) {
+								scrollToBottom();
+							}
+						}, 0);
+					} else {
+						addMessage('ai', 'Halo! Melanjutkan percakapan...', true);
+					}
+				} catch (error) {
+					chatMessages.innerHTML = ''; // Tetap bersihkan jika error
+					console.error("Gagal memuat pesan:", error.message);
+					addMessage('ai', `Gagal memuat riwayat: ${error.message}`, false);
+				}
+				// --- PERBAIKAN SELESAI ---
+			} else {
+				chatHistory = [];
+				activeChatId = null;
+				isNewChat = true;
+				chatMessages.innerHTML = '';
+				addMessage('ai', 'Halo! UI ini sudah siap. Silakan mulai dari sini.', true);
+			}
+			if(shouldFocus) {
+				chatInput.focus();
+			}
+			sendButton.disabled = true;
+		};
+		const handleLogin = async (e) => {
+			e.preventDefault();
+			loginButton.disabled = true;
+			loginButton.textContent = 'Memproses...';
+			errorMessage.textContent = '';
+			errorMessage.classList.add('hidden');
+			const {
+				data,
+				error
+			} = await supabase.auth.signInWithPassword({
+				email: emailInput.value,
+				password: passwordInput.value,
+			});
+			if(error) {
+				errorMessage.textContent = 'Email atau password salah.';
+				errorMessage.classList.remove('hidden');
+				loginButton.disabled = false;
+				loginButton.textContent = 'MASUK';
+			} else if(data.session) {
+				await initializeApp(data.session);
+			}
+		};
+		const handleLogout = async () => {
+			const {
+				error
+			} = await supabase.auth.signOut();
+			if(!error) {
+				showLoginScreen();
+			} else {
+				console.error('Gagal logout:', error.message);
+			}
+		};
+		const checkAuth = async () => {
+			const {
+				data: {
+					session
+				}
+			} = await supabase.auth.getSession();
+			if(session) {
+				await initializeApp(session);
+			} else {
+				showLoginScreen();
+			}
+		};
+		// --- Fungsi Logika Chat ---
+		const startNewChat = (shouldFocus = true) => {
+			isNewChat = true;
+			activeChatId = null;
+			localStorage.removeItem('siapip_lastActiveId');
+			renderChatList();
+			chatHistory = [];
+			uploadedFiles = [];
+			renderFilePreviews();
+			chatMessages.innerHTML = '';
+			addMessage('ai', 'Halo! Silakan mulai percakapan baru.', true);
+			if(shouldFocus) {
+				chatInput.focus();
+			}
+		};
+		// --- Fungsi Modal & Sidebar ---
+		const showConfirmModal = () => {
+			confirmModal.classList.remove('hidden');
+		};
+		const hideConfirmModal = () => {
+			confirmModal.classList.add('hidden');
+		};
+		const showCustomAlert = (title, message) => {
+			alertTitle.textContent = title;
+			alertMessage.textContent = message;
+			alertModal.classList.remove('hidden');
+		};
+		// Fungsi untuk menampilkan alert kustom
+		const showCustomConfirm = (title, message, onAgreeCallback) => {
+			// Ambil elemen (kita tidak menambahkannya ke atas agar rapi di sini)
+			const confirmTitle = document.getElementById('confirm-title');
+			const confirmMessage = document.getElementById('confirm-message');
+			// Setel teks modal
+			confirmTitle.textContent = title;
+			confirmMessage.textContent = message;
+			// Simpan aksi "Setuju" ke variabel global
+			currentConfirmAction = onAgreeCallback;
+			// Tampilkan modal
+			confirmModal.classList.remove('hidden');
+		};
+		// Fungsi untuk menyembunyikan alert kustom
+		const hideCustomAlert = () => {
+			alertModal.classList.add('hidden');
+		};
+		// Listener untuk tombol OK di modal alert
+		alertOkButton.addEventListener('click', hideCustomAlert);
+		const showSettingsPage = () => {
+			// Muat pengaturan saat ini ke dalam form
+			settingsModel.value = appSettings.model;
+			// Gunakan '??' (Nullish Coalescing) dan fallback ke string kosong ''
+			settingsPrompt.value = appSettings.customPrompt ?? appSettings.custom_prompt ?? '';
+			settingsTemp.value = appSettings.temperature;
+			settingsTempLabel.textContent = appSettings.temperature;
+			settingsTokens.value = appSettings.maxTokens || appSettings.max_tokens;
+			const selectedOption = settingsModel.querySelector(`option[value="${appSettings.model}"]`);
+			if(selectedOption) {
+				customModelLabel.textContent = selectedOption.textContent;
+			}
+			chatApp.classList.add('hidden');
+			settingsPage.classList.remove('hidden');
+			// --- ▼▼▼ TAMBAHKAN PANGGILAN INI ▼▼▼ ---
+			loadUsers(); // Muat daftar pengguna saat halaman dibuka
+			// --- ▲▲▲ AKHIR TAMBAHAN ▲▲▲ ---
+		};
+		const openSidebar = () => {
+			sidebar.classList.remove('-translate-x-full');
+			sidebarOverlay.classList.remove('hidden');
+		};
+		const closeSidebar = () => {
+			sidebar.classList.add('-translate-x-full');
+			sidebarOverlay.classList.add('hidden');
+		};
+		// --- ▼▼▼ TAMBAHKAN TIGA FUNGSI BARU INI ▼▼▼ ---
+		// Fungsi helper untuk memanggil Edge Function Admin
+		async function callAdminFunction(action, payload = {}) {
+			const functionUrl = `${SUPABASE_URL}/functions/v1/admin-user-manager`;
+			const {
+				data: {
+					session
+				}
+			} = await supabase.auth.getSession();
+			const response = await fetch(functionUrl, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${session.access_token}`
+				},
+				body: JSON.stringify({
+					action,
+					payload
+				}),
+			});
+			if(!response.ok) {
+				const errorData = await response.json();
+				throw new Error(errorData.error || "Gagal memanggil fungsi admin.");
+			}
+			return response.json();
+		}
+		// Fungsi untuk me-render daftar pengguna ke UI
+		async function renderUserList(users) { // <-- TAMBAHKAN 'async'
+			userListContainer.innerHTML = ''; // Kosongkan
+			if(users.length === 0) {
+				userListContainer.innerHTML = '<p class="text-sm text-gray-400">Tidak ada pengguna ditemukan.</p>';
+				return;
+			}
+			// --- ▼▼▼ INI ADALAH PERBAIKANNYA ▼▼▼ ---
+			// Ambil ID admin yang sedang login (secara async)
+			const {
+				data: {
+					user: selfUser
+				}
+			} = await supabase.auth.getUser();
+			const selfId = selfUser ? selfUser.id : null;
+			// --- ▲▲▲ AKHIR PERBAIKAN ▲▲▲ ---
+			users.forEach(user => {
+				const isFrozen = user.banned_until && (new Date(user.banned_until) > new Date());
+				const userCard = document.createElement('div');
+				userCard.className = `flex items-center justify-between p-3 bg-[#323232] rounded-lg ${isFrozen ? 'opacity-50' : ''}`;
+				// Tentukan teks, class, dan aksi untuk tombol freeze/unfreeze
+				const freezeAction = isFrozen ? 'unfreeze_user' : 'freeze_user';
+				const freezeText = isFrozen ? 'Buka' : 'Freeze';
+				const freezeClass = isFrozen ? 'bg-blue-900/50 text-blue-400 hover:text-blue-300' : 'bg-yellow-900/50 text-yellow-400 hover:text-yellow-300';
+				userCard.innerHTML = `
+					<div class="min-w-0">
+						<p class="text-sm font-medium text-gray-100 truncate">${user.email}</p>
+						<p class="text-xs text-gray-400">${isFrozen ? '(FROZEN)' : `Role: ${user.role}`}</p>
+					</div>
+					<div class="flex space-x-2 flex-shrink-0">
+						<button class="freeze-toggle-button text-sm font-medium px-3 py-1 rounded-lg ${freezeClass}" 
+								data-id="${user.id}" 
+								data-email="${user.email}"
+								data-action="${freezeAction}"
+								${user.id === selfId ? 'disabled' : ''}> ${freezeText}
+						</button>
+						
+						<button class="delete-user-button text-red-500 hover:text-red-400 text-sm font-medium px-3 py-1 bg-red-900/50 rounded-lg" 
+								data-id="${user.id}" 
+								data-email="${user.email}"
+								${user.id === selfId ? 'disabled' : ''}> Hapus
+						</button>
+					</div>
+				`;
+				userListContainer.appendChild(userCard);
+			});
+		}
+		// Fungsi untuk memuat daftar pengguna
+		async function loadUsers() {
+			try {
+				userListContainer.innerHTML = '<p id="user-list-loading" class="text-sm text-gray-400">Memuat daftar pengguna...</p>';
+				const usersWithRoles = await callAdminFunction('list_users');
+				// --- ▼▼▼ PERBAIKAN: Tambahkan 'await' ▼▼▼ ---
+				await renderUserList(usersWithRoles);
+			} catch (error) {
+				userListContainer.innerHTML = `<p class="text-sm text-red-400">Gagal memuat pengguna: ${error.message}</p>`;
+			}
+		}
+		async function callGeminiAPI(chatHistory, files) {
+			const startTime = Date.now();
+			const placeholder = addMessage('ai', 'TYPING_PLACEHOLDER');
+			// Panggil scroll pertama untuk "OMI is thinking..."
+			scrollToBottom();
+			// 1. Ambil pengaturan dari state global (yang dimuat dari Supabase)
+			const {
+				model,
+				customPrompt,
+				temperature,
+				maxTokens
+			} = appSettings;
+			const apiModelName = model;
+			// 2. Tentukan URL Edge Function
+			const functionUrl = `${SUPABASE_URL}/functions/v1/call-gemini`;
+			// 3. Siapkan Konfigurasi
+			const generationConfig = {
+				temperature: parseFloat(temperature),
+				maxOutputTokens: parseInt(maxTokens, 10),
+			};
+			let systemInstruction = null;
+			if(customPrompt && customPrompt.trim() !== '') {
+				systemInstruction = {
+					role: "system",
+					parts: [{
+						text: customPrompt
+					}]
+				};
+			}
+			// 4. Salin dan Bersihkan Riwayat Chat
+			// Ini penting: 'chatHistory' dari database berisi {fileHtml}
+			const contents = JSON.parse(JSON.stringify(chatHistory));
+			contents.forEach(message => {
+				if(message.parts && message.role === 'user') {
+					// Hanya sisakan 'text', hapus 'fileHtml' dari riwayat
+					const textPart = message.parts.find(p => p.text);
+					message.parts = textPart ? [{
+						text: textPart.text
+					}] : [];
+				}
+			});
+			// 5. Tambahkan File Baru (yang di-upload) ke pesan terakhir
+			if(files.length > 0) {
+				const lastUserMessage = contents[contents.length - 1];
+				const originalUserText = (lastUserMessage.parts.length > 0 && lastUserMessage.parts[0].text) ? lastUserMessage.parts[0].text : '';
+				let combinedTextContent = '';
+				const fileParts = [];
+				files.forEach(file => {
+					if(file.isTextContent) {
+						combinedTextContent += `[Konten Dokumen Dilampirkan: ${file.name}]:\n---\n${file.data}\n---\n\n`;
+					} else {
+						fileParts.push({
+							inlineData: {
+								mimeType: file.mimeType,
+								data: file.data
+							}
+						});
+					}
+				});
+				lastUserMessage.parts = [{
+					text: combinedTextContent + originalUserText
+				}, ...fileParts];
+			}
+			// 6. Buat 'payload' yang akan dikirim ke Edge Function
+			// Ini adalah "isi" dari panggilan API
+			const requestPayload = {
+				contents: contents,
+				generationConfig: generationConfig,
+				"tools": [{
+					"google_search": {}
+				}] // Ini bagian yang penting
+			};
+			if(systemInstruction) {
+				requestPayload.systemInstruction = systemInstruction;
+			}
+			try {
+				// 7. Ambil Sesi Token
+				const {
+					data: {
+						session
+					}
+				} = await supabase.auth.getSession();
+				if(!session) {
+					throw new Error('Sesi tidak valid. Harap login kembali.');
+				}
+				// 8. Panggil Edge Function
+				const response = await fetch(functionUrl, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': `Bearer ${session.access_token}`
+					},
+					// Kirim 'model' dan 'payload' (sesuai yang diharapkan 'index.ts')
+					body: JSON.stringify({
+						model: apiModelName,
+						payload: requestPayload
+					}),
+				});
+				// 9. Logika Cerdas untuk Membaca Error (JSON atau Teks)
+				if(!response.ok) {
+					let errorText = `API Error ${response.status}: ${response.statusText}`;
+					try {
+						// Coba baca error sebagai JSON
+						const errorData = await response.json();
+						errorText = `API Error ${response.status}: ${errorData.error || 'Unknown error'}`;
+					} catch (e) {
+						// Jika gagal, baca sebagai teks mentah
+						errorText = `Server Error ${response.status}: ${await response.text()}`;
+					}
+					throw new Error(errorText);
+				}
+				// 10. Proses Respons Sukses
+				const data = await response.json();
+				if(!data.candidates || !data.candidates[0].content) {
+					if(data.promptFeedback && data.promptFeedback.blockReason) {
+						throw new Error(`Permintaan diblokir: ${data.promptFeedback.blockReason}`);
+					}
+					if(data.candidates && data.candidates[0].content && data.candidates[0].content.parts[0].functionCall) {
+						throw new Error('AI mencoba memanggil fungsi, tetapi belum ditangani.');
+					}
+					throw new Error('Respon API tidak valid atau kosong.');
+				}
+				if(!data.candidates[0].content.parts[0].text) {
+					console.log("Respon AI bukanlah teks:", data.candidates[0].content.parts);
+					throw new Error('Respon AI tidak mengandung teks yang dapat ditampilkan.');
+				}
+				const aiMessage = data.candidates[0].content.parts[0].text;
+				// 11. Tampilkan ke UI
+				const messageElement = placeholder.querySelector('.ai-message-content');
+				messageElement.innerHTML = markdownConverter.makeHtml(aiMessage);
+				messageElement.classList.remove('flex', 'items-center');
+				placeholder.querySelector('.ai-timestamp').textContent = new Date().toLocaleTimeString('id-ID', {
+					hour: '2-digit',
+					minute: '2-digit'
+				});
+				/* --- INI PERBAIKANNYA (A): SCROLL SETELAH KONTEN DIMUAT --- */
+				scrollToBottom();
+				// 12. Simpan ke cache lokal dan Database
+				const aiParts = [{
+					text: aiMessage
+				}];
+				chatHistory.push({
+					role: "model",
+					parts: aiParts
+				});
+				if(activeChatId) {
+					try {
+						const {
+							error
+						} = await supabase.from('messages').insert({
+							conversation_id: activeChatId,
+							role: 'model',
+							parts: aiParts
+						});
+						if(error) throw error;
+					} catch (error) {
+						console.error("Gagal menyimpan pesan AI:", error.message);
+					}
+				}
+			} catch (error) {
+				// 13. Tampilkan error dengan jelas di UI
+				console.error('Gagal memanggil Gemini API:', error);
+				const messageElement = placeholder.querySelector('.ai-message-content');
+				messageElement.innerHTML = `<span class="text-red-400 font-medium">Terjadi Kesalahan:</span><br><span class="text-red-400">${error.message}</span>`;
+				messageElement.classList.remove('flex', 'items-center');
+				placeholder.querySelector('.ai-timestamp').textContent = new Date().toLocaleTimeString('id-ID', {
+					hour: '2-digit',
+					minute: '2-digit'
+				});
+				/* --- INI PERBAIKANNYA (B): SCROLL SETELAH ERROR DIMUAT --- */
+				scrollToBottom();
+			} finally {
+				// Tidak ada scroll di sini lagi
+			}
+		}
+		// --- Event Listeners Utama ---
+		window.addEventListener('load', () => {
+			// --- FIX BUG MODAL (PENTING) ---
+			// Memindahkan alertModal agar tidak terkurung di dalam confirmModal
+			if(alertModal && alertModal.parentElement === confirmModal) {
+				document.body.appendChild(alertModal);
+			}
+			// Listener Auth
+			loginForm.addEventListener('submit', handleLogin);
+			logoutButton.addEventListener('click', handleLogout);
+			// Listener untuk tombol undang pengguna
+			// Listener untuk tombol tambah pengguna
+			createUserButton.addEventListener('click', async () => {
+				const email = createEmailInput.value;
+				const password = createPasswordInput.value;
+				if(!email || !password) {
+					showCustomAlert("Input Tidak Lengkap", "Silakan masukkan email DAN password.");
+					return;
+				}
+				if(password.length < 6) {
+					showCustomAlert("Input Tidak Valid", "Password harus minimal 6 karakter.");
+					return;
+				}
+				createUserButton.disabled = true;
+				createUserButton.textContent = "Menambahkan...";
+				try {
+					await callAdminFunction('create_user', {
+						email: email,
+						password: password
+					});
+					showCustomAlert("Berhasil", `Pengguna ${email} berhasil dibuat.`);
+					createEmailInput.value = '';
+					createPasswordInput.value = '';
+					loadUsers(); // Muat ulang daftar
+				} catch (error) {
+					showCustomAlert("Gagal", `Gagal menambah: ${error.message}`);
+				} finally {
+					createUserButton.disabled = false;
+					createUserButton.textContent = "TAMBAH PENGGUNA";
+				}
+			});
+			// Listener untuk tombol hapus dan freeze (event delegation)
+			userListContainer.addEventListener('click', async (e) => {
+				const deleteButton = e.target.closest('.delete-user-button');
+				const freezeButton = e.target.closest('.freeze-toggle-button');
+				if(deleteButton) {
+					const userId = deleteButton.dataset.id;
+					const userEmail = deleteButton.dataset.email;
+					/* --- PERBAIKAN: Menggunakan modal kustom --- */
+					showCustomConfirm("Hapus Pengguna?", `Anda yakin ingin menghapus pengguna ${userEmail} secara permanen? Tindakan ini tidak bisa dibatalkan.`, async () => {
+						// Logika yang tadinya ada di dalam 'if(confirm...)' dipindah ke sini
+						try {
+							deleteButton.textContent = "Menghapus...";
+							deleteButton.disabled = true;
+							await callAdminFunction('delete_user', {
+								id: userId
+							});
+							// showCustomAlert("Berhasil", ...) <-- DIHAPUS
+							await loadUsers();
+						} catch (error) {
+							// showCustomAlert("Gagal", ...) <-- DIHAPUS
+							console.error("Gagal Hapus Pengguna:", error.message);
+							await loadUsers(); // Tetap refresh UI meski gagal
+						}
+					});
+				}
+				if(freezeButton) {
+					const userId = freezeButton.dataset.id;
+					const userEmail = freezeButton.dataset.email;
+					const action = freezeButton.dataset.action; // 'freeze_user' atau 'unfreeze_user'
+					const actionText = action === 'freeze_user' ? 'membekukan' : 'membuka';
+					/* --- PERBAIKAN: Menggunakan modal kustom --- */
+					showCustomConfirm(`${actionText.charAt(0).toUpperCase() + actionText.slice(1)} Akun?`, // "Membekukan Akun?"
+						`Anda yakin ingin ${actionText} akun ${userEmail}?`, async () => {
+							// Logika yang tadinya ada di dalam 'if(confirm...)' dipindah ke sini
+							try {
+								freezeButton.textContent = "Memproses...";
+								freezeButton.disabled = true;
+								await callAdminFunction(action, {
+									id: userId
+								});
+								// showCustomAlert("Berhasil", ...) <-- DIHAPUS
+								await loadUsers();
+							} catch (error) {
+								// showCustomAlert("Gagal", ...) <-- DIHAPUS
+								console.error("Gagal Freeze/Unfreeze:", error.message);
+								await loadUsers(); // Tetap refresh UI meski gagal
+							}
+						});
+				}
+			});
+			// Listener Dropdown Kustom
+			customModelButton.addEventListener('click', () => {
+				customModelOptions.classList.toggle('hidden');
+			});
+			customModelOptions.addEventListener('click', (e) => {
+				if(e.target.classList.contains('custom-model-option')) {
+					const selectedValue = e.target.dataset.value;
+					const selectedText = e.target.textContent;
+					customModelLabel.textContent = selectedText;
+					settingsModel.value = selectedValue;
+					customModelOptions.classList.add('hidden');
+				}
+			});
+			document.addEventListener('click', (e) => {
+				if(!customModelButton.contains(e.target) && !customModelOptions.contains(e.target)) {
+					customModelOptions.classList.add('hidden');
+				}
+			});
+			// Listener Halaman Pengaturan
+			settingsButton.addEventListener('click', showSettingsPage);
+			settingsBackButton.addEventListener('click', async () => { // Dibuat async
+				// Panggil showChatApp TANPA FOKUS
+				const {
+					data: {
+						session
+					}
+				} = await supabase.auth.getSession();
+				if(session) {
+					await showChatApp(session.user.id, false); // Tambahkan await
+				} else {
+					showLoginScreen();
+				}
+			});
+			settingsTemp.addEventListener('input', (e) => {
+				settingsTempLabel.textContent = e.target.value;
+			});
+			// Listener Simpan Pengaturan (ke Supabase)
+			settingsForm.addEventListener('submit', async (e) => {
+				e.preventDefault();
+				const saveButton = document.getElementById('settings-save-button');
+				saveButton.disabled = true;
+				// Logika pembersihan input kosong
+				let cleanPrompt = settingsPrompt.value;
+				if(!cleanPrompt) {
+					cleanPrompt = "";
+				}
+				const newSettings = {
+					model: settingsModel.value,
+					custom_prompt: cleanPrompt,
+					temperature: parseFloat(settingsTemp.value),
+					max_tokens: parseInt(settingsTokens.value, 10)
+				};
+				try {
+					// 1. Update ke Database
+					const {
+						error
+					} = await supabase.from('global_settings').update(newSettings).eq('id', 1);
+					if(error) throw error;
+					// 2. Sinkronisasi Variabel Lokal
+					appSettings.model = newSettings.model;
+					appSettings.customPrompt = newSettings.custom_prompt;
+					appSettings.custom_prompt = newSettings.custom_prompt;
+					appSettings.temperature = newSettings.temperature;
+					appSettings.maxTokens = newSettings.max_tokens;
+					// 3. Tampilkan Notifikasi Berhasil
+					showCustomAlert("Berhasil", "Pengaturan tersimpan!");
+					// HAPUS baris 'showChatApp' di sini.
+					// Biarkan user menekan tombol 'Kembali' (panah kiri) secara manual
+					// agar Alert tertutup sempurna sebelum halaman berganti.
+				} catch (error) {
+					console.error("Gagal menyimpan:", error.message);
+					showCustomAlert("Gagal", `Gagal menyimpan: ${error.message}`);
+				} finally {
+					saveButton.disabled = false;
+					// Lepaskan fokus dari tombol agar menekan Enter tidak memicu submit lagi
+					saveButton.blur();
+				}
+			});
+			// Listener Sidebar
+			sidebarToggleButton.addEventListener('click', openSidebar);
+			sidebarOverlay.addEventListener('click', closeSidebar);
+			let sidebarSelectedItem = null;
+			const chatHistoryList = document.getElementById('chat-history-list');
+			// Listener Salin Teks Chat
+			chatMessages.addEventListener('click', (e) => {
+				const clickedBubble = e.target.closest('.chat-bubble');
+				const clickedCopyButton = e.target.closest('.copy-chat-button');
+				if(clickedCopyButton) {
+					const bubble = clickedCopyButton.closest('.chat-bubble');
+					const messageElement = bubble.querySelector('.ai-message-content');
+					if(messageElement) {
+						const originalHtml = messageElement.innerHTML;
+						const plainText = messageElement.textContent;
+						const inlineStyles = `<style>.copy-wrapper { font-family: Arial, sans-serif; font-size: 11pt; text-align: justify; } .copy-wrapper table { border-collapse: collapse; margin-top: 1rem; margin-bottom: 1rem; max-width: 100%; } .copy-wrapper th, .copy-wrapper td { border: 1px solid #e5e7eb; padding: 8px; } .copy-wrapper th { background-color: #f9fafb; } .copy-wrapper ul, .copy-wrapper ol { margin-top: 0.5rem; margin-bottom: 0.5rem; padding-left: 1.5rem; list-style: revert; } .copy-wrapper li, .copy-wrapper td, .copy-wrapper th { text-align: left; }</style>`;
+						const htmlToCopy = `${inlineStyles}<div class="copy-wrapper">${originalHtml}</div>`;
+						try {
+							const htmlBlob = new Blob([htmlToCopy], {
+								type: 'text/html'
+							});
+							const textBlob = new Blob([plainText], {
+								type: 'text/plain'
+							});
+							const item = new ClipboardItem({
+								'text/html': htmlBlob,
+								'text/plain': textBlob
+							});
+							navigator.clipboard.write([item]).then(() => {
+								clickedCopyButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+								clickedCopyButton.classList.add('text-green-500');
+								setTimeout(() => {
+									clickedCopyButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+									clickedCopyButton.classList.remove('text-green-500');
+								}, 1500);
+							}).catch(err => {
+								console.error('Gagal menyalin (rich): ', err);
+							});
+						} catch (e) {
+							console.error('ClipboardItem gagal, fallback ke plain text: ', e);
+							navigator.clipboard.writeText(plainText).catch(err => {
+								console.error('Gagal menyalin (fallback): ', err);
+							});
+						}
+						return;
+					}
+				}
+				let targetCopyButton = null;
+				if(clickedBubble) {
+					targetCopyButton = clickedBubble.querySelector('.copy-chat-button');
+				}
+				document.querySelectorAll('.copy-chat-button').forEach(button => {
+					if(button !== targetCopyButton) {
+						button.classList.add('invisible');
+					}
+				});
+				if(targetCopyButton) {
+					targetCopyButton.classList.toggle('invisible');
+				}
+			});
+			// Listener klik global (sembunyikan tombol)
+			document.addEventListener('click', (e) => {
+				if(!e.target.closest('.chat-bubble')) {
+					document.querySelectorAll('.copy-chat-button').forEach(button => {
+						button.classList.add('invisible');
+					});
+				}
+				if(!e.target.closest('.file-preview-card')) {
+					document.querySelectorAll('.delete-file-button').forEach(button => {
+						button.classList.add('invisible');
+					});
+				}
+			});
+			// --- PERBAIKAN KEYBOARD IOS/SAFARI ---
+			// Terapkan ke semua input field di aplikasi
+			emailInput.addEventListener('blur', forceLayoutRedraw);
+			passwordInput.addEventListener('blur', forceLayoutRedraw);
+			chatInput.addEventListener('blur', forceLayoutRedraw);
+			// Tambahan untuk input di halaman settings
+			createEmailInput.addEventListener('blur', forceLayoutRedraw);
+			createPasswordInput.addEventListener('blur', forceLayoutRedraw);
+			settingsPrompt.addEventListener('blur', forceLayoutRedraw);
+			settingsTokens.addEventListener('blur', forceLayoutRedraw);
+			// Listener Form Submit (Logika Inti Supabase)
+			chatForm.addEventListener('submit', async (e) => {
+				e.preventDefault();
+				const userMessage = chatInput.value.trim();
+				if(!userMessage && uploadedFiles.length === 0) return;
+				const {
+					data: {
+						user
+					}
+				} = await supabase.auth.getUser();
+				if(!user) {
+					/* --- INI PERBAIKANNYA --- */
+					showCustomAlert("Sesi Berakhir", "Sesi Anda berakhir. Harap login kembali.");
+					showLoginScreen();
+					return;
+				}
+				const capturedFiles = [...uploadedFiles];
+				let currentChatId = activeChatId;
+				if(isNewChat && (userMessage || capturedFiles.length > 0)) {
+					let newTitle = userMessage.substring(0, 30);
+					if(!newTitle && capturedFiles.length > 0) {
+						newTitle = capturedFiles[0].name.substring(0, 30);
+					}
+					newTitle += (newTitle.length === 30 ? '...' : '');
+					try {
+						const {
+							data: newConvo,
+							error
+						} = await supabase.from('conversations').insert({
+							user_id: user.id,
+							title: newTitle || "Percakapan baru"
+						}).select('id, title').single();
+						if(error) throw error;
+						const newChat = newConvo;
+						chatList.unshift(newChat);
+						currentChatId = newChat.id;
+						activeChatId = newChat.id;
+						isNewChat = false;
+						localStorage.setItem('siapip_lastActiveId', activeChatId);
+						renderChatList();
+						chatMessages.innerHTML = '';
+					} catch (error) {
+						console.error("Gagal membuat percakapan baru:", error.message);
+						addMessage('ai', `Error: Gagal memulai percakapan. ${error.message}`, false);
+						return;
+					}
+				}
+				let filesHtml = '';
+				if(capturedFiles.length > 0) {
+					filesHtml = filePreviewContainer.innerHTML;
+					filePreviewContainer.innerHTML = '';
+				}
+				addMessage('user', userMessage, filesHtml);
+				const userParts = [];
+				if(userMessage) {
+					userParts.push({
+						text: userMessage
+					});
+				}
+				if(filesHtml) {
+					userParts.push({
+						fileHtml: filesHtml
+					});
+				}
+				chatHistory.push({
+					role: "user",
+					parts: userParts
+				});
+				try {
+					const {
+						error
+					} = await supabase.from('messages').insert({
+						conversation_id: currentChatId,
+						role: 'user',
+						parts: userParts
+					});
+					if(error) throw error;
+				} catch (error) {
+					console.error("Gagal menyimpan pesan user:", error.message);
+				}
+				chatInput.value = '';
+				sendButton.disabled = true;
+				uploadedFiles = [];
+				scrollToBottom();
+				await callGeminiAPI(chatHistory, capturedFiles);
+			});
+			chatInput.addEventListener('input', () => {
+				sendButton.disabled = chatInput.value.trim().length === 0;
+			});
+			// Listener Tombol "Percakapan Baru"
+			document.getElementById('new-chat-button').addEventListener('click', () => {
+				startNewChat();
+				closeSidebar();
+			});
+			// Listener Tombol Modal (Batal)
+			modalCancelButton.addEventListener('click', () => {
+				/* --- PERBAIKAN: Dibuat generik --- */
+				// sidebarSelectedItem = null; // Dipindah ke logikanya langsung
+				hideConfirmModal();
+				currentConfirmAction = () => {}; // Kosongkan aksi
+			});
+			// Listener Tombol Modal (Setuju Hapus dari Supabase)
+			modalAgreeButton.addEventListener('click', async () => {
+				// 1. Ambil aksi yang tersimpan (misal: "hapus user A")
+				const actionToRun = currentConfirmAction;
+				// 2. Kosongkan aksi global SEGERA
+				currentConfirmAction = () => {};
+				// 3. TUTUP MODAL SEGERA (Sesuai permintaan Anda)
+				hideConfirmModal();
+				// 4. Jalankan aksinya (hapus/freeze/refresh UI)
+				//    secara 'fire and forget' di background.
+				//    (Tidak pakai 'await' di sini)
+				if(typeof actionToRun === 'function') {
+					actionToRun();
+				}
+			});
+			chatHistoryList.addEventListener('click', async (e) => {
+				const chatItem = e.target.closest('.chat-history-item');
+				const deleteButton = e.target.closest('.delete-chat-button');
+				if(deleteButton) {
+					e.stopPropagation();
+					const idToDelete = deleteButton.dataset.id; // Ambil ID dari tombol
+					/* --- PERBAIKAN: Menggunakan modal kustom baru --- */
+					showCustomConfirm("Hapus Percakapan?", "Tindakan ini tidak dapat dibatalkan. Anda yakin ingin menghapus percakapan ini?", async () => {
+						// Logika yang tadinya ada di modalAgreeButton dipindah ke sini
+						if(!idToDelete) return;
+						try {
+							const {
+								error
+							} = await supabase.from('conversations').delete().eq('id', idToDelete);
+							if(error) throw error;
+							chatList = chatList.filter(chat => chat.id !== idToDelete);
+							if(idToDelete == activeChatId) {
+								startNewChat(false);
+							}
+							renderChatList();
+							sidebarSelectedItem = null; // Dulu di tombol Batal
+						} catch (error) {
+							console.error("Gagal menghapus percakapan:", error.message);
+							// showCustomAlert("Gagal", ...) <-- DIHAPUS
+						} finally {
+							closeSidebar(); // Dulu di tombol Setuju
+						}
+					});
+					return; // Penting agar tidak lanjut ke logika klik chatItem
+				}
+				if(chatItem) {
+					const clickedId = chatItem.dataset.id;
+					if(sidebarSelectedItem === clickedId) {
+						// --- KLIK KEDUA: MUAT CHAT ---
+						if(clickedId != activeChatId || isNewChat) { // Perbaikan bug perbandingan (==)
+							activeChatId = clickedId;
+							isNewChat = false;
+							localStorage.setItem('siapip_lastActiveId', activeChatId);
+							renderChatList();
+							uploadedFiles = [];
+							renderFilePreviews();
+							// chatMessages.innerHTML = ''; // DIHAPUS DARI SINI
+							// addMessage('ai', 'Memuat percakapan...', true); // DIHAPUS DARI SINI
+							try {
+								const {
+									data: messages,
+									error
+								} = await supabase.from('messages').select('role, parts').eq('conversation_id', activeChatId).order('created_at', {
+									ascending: true
+								}); // 1. Ambil data dulu
+								if(error) throw error;
+								chatMessages.innerHTML = ''; // 2. DIPINDAH KE SINI. Bersihkan SETELAH data siap.
+								chatHistory = messages;
+								if(chatHistory.length > 0) {
+									chatHistory.forEach(msg => { // 3. Render chat asli
+										const messageText = msg.parts.find(p => p.text) ? msg.parts.find(p => p.text).text : '';
+										if(msg.role === 'user') {
+											const filePart = msg.parts.find(p => p.fileHtml);
+											const filesHtml = filePart ? filePart.fileHtml : '';
+											addMessage('user', messageText, filesHtml);
+										} else {
+											addMessage('ai', messageText, true);
+										}
+									});
+								} else {
+									addMessage('ai', `Melanjutkan percakapan "${chatItem.querySelector('span').textContent}"...`, true);
+								}
+								// PERBAIKAN SCROLL: Hanya scroll jika chatnya panjang
+								setTimeout(() => {
+									if(chatContainer.scrollHeight > chatContainer.clientHeight) {
+										scrollToBottom();
+									}
+								}, 0);
+							} catch (error) {
+								chatMessages.innerHTML = ''; // Tetap bersihkan jika error
+								console.error("Gagal memuat pesan:", error.message);
+								addMessage('ai', `Gagal memuat riwayat: ${error.message}`, false);
+							}
+						}
+						const thisDeleteButton = chatItem.querySelector('.delete-chat-button');
+						if(thisDeleteButton) {
+							thisDeleteButton.classList.add('opacity-0', 'invisible');
+							thisDeleteButton.classList.remove('opacity-100');
+						}
+						sidebarSelectedItem = null;
+						closeSidebar();
+					} else {
+						// --- KLIK PERTAMA: TAMPILKAN TOMBOL ---
+						chatHistoryList.querySelectorAll('.delete-chat-button').forEach(btn => {
+							btn.classList.add('opacity-0', 'invisible');
+							btn.classList.remove('opacity-100');
+						});
+						const thisDeleteButton = chatItem.querySelector('.delete-chat-button');
+						if(thisDeleteButton) {
+							thisDeleteButton.classList.remove('opacity-0', 'invisible');
+							thisDeleteButton.classList.add('opacity-100');
+						}
+						sidebarSelectedItem = clickedId;
+					}
+				}
+			});
+			// Listener Sembunyikan Tombol Hapus (jika klik di luar list)
+			document.addEventListener('click', (e) => {
+				const isOutsideList = !e.target.closest('#chat-history-list');
+				const isOutsideModal = !e.target.closest('#confirm-modal');
+				if(isOutsideList && isOutsideModal) {
+					document.querySelectorAll('.delete-chat-button').forEach(btn => {
+						btn.classList.add('opacity-0', 'invisible');
+						btn.classList.remove('opacity-100');
+					});
+					sidebarSelectedItem = null;
+				}
+			}, true);
+			// Listener Upload File
+			uploadButton.addEventListener('click', () => {
+				fileInput.click();
+			});
+			fileInput.addEventListener('change', async (e) => {
+				const selectedFiles = e.target.files;
+				if(!selectedFiles.length) return;
+				for(const file of selectedFiles) {
+					if(!uploadedFiles.find(f => f.name === file.name)) {
+						const fileType = file.name.split('.').pop().toLowerCase();
+						const reader = new FileReader();
+						const promise = new Promise((resolve, reject) => {
+							reader.onload = async (e) => {
+								try {
+									let content, mimeType, isTextContent = false;
+									if(['doc', 'docx'].includes(fileType)) {
+										if(typeof mammoth === 'undefined') return reject(new Error("Pustaka .docx (mammoth.js) gagal dimuat."));
+										const result = await mammoth.extractRawText({
+											arrayBuffer: e.target.result
+										});
+										content = result.value;
+										mimeType = 'text/plain';
+										isTextContent = true;
+									} else if(['xls', 'xlsx'].includes(fileType)) {
+										if(typeof XLSX === 'undefined') return reject(new Error("Pustaka .xlsx (xlsx.js) gagal dimuat."));
+										const workbook = XLSX.read(e.target.result, {
+											type: 'buffer'
+										});
+										content = workbook.SheetNames.map(name => XLSX.utils.sheet_to_txt(workbook.Sheets[name])).join('\n\n');
+										mimeType = 'text/plain';
+										isTextContent = true;
+									} else if(fileType === 'pptx') {
+										if(typeof JSZip === 'undefined') return reject(new Error("Pustaka .pptx (JSZip) gagal dimuat."));
+										const zip = await JSZip.loadAsync(e.target.result);
+										const slideTextPromises = [];
+										zip.folder("ppt/slides").forEach((relativePath, file) => {
+											if(relativePath.startsWith("slide") && relativePath.endsWith(".xml")) {
+												slideTextPromises.push(file.async("string").then(extractTextFromSlideXML));
+											}
+										});
+										const slideTexts = await Promise.all(slideTextPromises);
+										content = slideTexts.join('\n\n');
+										mimeType = 'text/plain';
+										isTextContent = true;
+									} else if(fileType === 'pdf') {
+										content = e.target.result.split(',')[1];
+										mimeType = file.type;
+										isTextContent = false;
+									} else {
+										return reject(new Error(`Tipe file .${fileType} tidak didukung.`));
+									}
+									resolve({
+										name: file.name,
+										size: file.size,
+										type: fileType,
+										data: content,
+										mimeType: mimeType,
+										isTextContent: isTextContent
+									});
+								} catch (error) {
+									reject(error);
+								}
+							};
+							reader.onerror = (error) => reject(error);
+							if(fileType === 'pdf') {
+								reader.readAsDataURL(file);
+							} else if(['doc', 'docx', 'xls', 'xlsx', 'pptx'].includes(fileType)) {
+								reader.readAsArrayBuffer(file);
+							} else {
+								reject(new Error(`Tipe file .${fileType} tidak diizinkan.`));
+							}
+						});
+						try {
+							const processedFile = await promise;
+							if(processedFile) {
+								uploadedFiles.push(processedFile);
+							}
+						} catch (error) {
+							console.error("Gagal memproses file:", error);
+							/* --- INI PERBAIKANNYA --- */
+							showCustomAlert("File Error", `Gagal memproses file "${file.name}": ${error.message}`);
+						}
+					}
+				}
+				renderFilePreviews();
+				fileInput.value = '';
+			});
+			filePreviewContainer.addEventListener('click', (e) => {
+				const deleteButton = e.target.closest('.delete-file-button');
+				const clickedCard = e.target.closest('.file-preview-card');
+				if(deleteButton) {
+					const indexToRemove = parseInt(deleteButton.dataset.index, 10);
+					uploadedFiles.splice(indexToRemove, 1);
+					renderFilePreviews();
+				} else if(clickedCard) {
+					document.querySelectorAll('.delete-file-button').forEach(btn => {
+						btn.classList.add('invisible');
+					});
+					const buttonInThisCard = clickedCard.querySelector('.delete-file-button');
+					if(buttonInThisCard) {
+						buttonInThisCard.classList.remove('invisible');
+					}
+				}
+			});
+			// Jalankan pemeriksaan Auth untuk memulai
+			checkAuth();
+			// Daftarkan Service Worker
+			if('serviceWorker' in navigator) {
+				navigator.serviceWorker.register('/sw.js').then((registration) => {
+					console.log('Service Worker berhasil terdaftar:', registration.scope);
+				}).catch((error) => {
+					console.error('Pendaftaran Service Worker gagal:', error);
+				});
+			}
+		});
+	</script>
 </body>
 </html>
