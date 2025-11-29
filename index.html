@@ -2351,14 +2351,14 @@
 		
 		// ==========================================
     // ==========================================
-    // SOLUSI FINAL IOS 15: PAKU BETON + JARAK 15PX + NATURAL ANIMATION
+    // SOLUSI FINAL IOS 15: PAKU BETON + SOLID LAYOUT (NO ANIMATION)
     // ==========================================
     (function() {
         const ua = navigator.userAgent;
         const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
 
         if (isIOS15) {
-            console.log("🎨 iOS 15: Mode Presisi (15px) + Natural Motion...");
+            console.log("🗿 iOS 15: Mode Solid (Tanpa Animasi Buatan)...");
 
             const viewport = window.visualViewport;
             const chatPage = document.getElementById('chat-page');
@@ -2376,7 +2376,7 @@
                 }
             };
 
-            // 1. INJEKSI CSS "PAKU BETON" + ANIMASI NATURAL
+            // 1. INJEKSI CSS "PAKU BETON" (TANPA TRANSISI HEADER)
             const style = document.createElement('style');
             style.innerHTML = `
                 html, body {
@@ -2404,32 +2404,31 @@
                     /* JARAK PRESISI: 15px */
                     padding-bottom: 15px !important; 
                 }
+                /* HAPUS ANIMASI: Biarkan header solid menyatu dengan layout */
                 header {
-                    /* REVISI ANIMASI: ease-out lebih natural untuk gerakan turun */
-                    /* Durasi 0.35s disamakan dengan rata-rata speed keyboard iOS */
-                    transition: margin-top 0.35s ease-out, opacity 0.35s ease-out;
-                    will-change: margin-top, opacity;
+                    will-change: margin-top;
                 }
             `;
             document.head.appendChild(style);
 
-            // 2. LOGIKA INTERAKSI (SLIDING ANIMATION)
+            // 2. LOGIKA INTERAKSI (INSTANT SNAP)
             if (inputField && header) {
                 const headerHeight = header.offsetHeight || 80;
 
                 inputField.addEventListener('focus', () => {
-                    // Header Naik (Sembunyi)
+                    // Header Langsung Naik (Tanpa Animasi)
+                    // Ini memberikan efek 'terdorong' instan saat input aktif
                     header.style.marginTop = `-${headerHeight}px`; 
-                    header.style.opacity = '0'; 
-
+                    
                     if (viewport) chatPage.style.height = `${viewport.height}px`;
                     window.scrollTo(0, 0);
                 });
 
                 inputField.addEventListener('blur', () => {
-                    // Header Turun (Muncul) - Natural
+                    // Header Langsung Turun (Tanpa Animasi)
+                    // Dia akan muncul tepat saat layout container chat memanjang
+                    // Memberikan kesan "Satu Kesatuan"
                     header.style.marginTop = '0px';
-                    header.style.opacity = '1';
 
                     if (viewport) chatPage.style.height = `${viewport.height}px`;
                     window.scrollTo(0, 0);
@@ -2482,7 +2481,7 @@
                 }
             }, { passive: false });
 
-            // 6. AUTO SCROLL (HANYA SAAT CHAT BARU)
+            // 6. AUTO SCROLL (MUTATION OBSERVER)
             if (chatContainer) {
                 const observer = new MutationObserver((mutations) => {
                     const hasNewNodes = mutations.some(m => m.addedNodes.length > 0);
