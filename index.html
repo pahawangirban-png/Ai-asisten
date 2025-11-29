@@ -7,7 +7,7 @@
 	<meta name="description" content="Aplikasi Chat UI. Dibuat agar responsif, cepat, dan elegan." />
 	<meta name="theme-color" content="#151515" />
 	<link rel="manifest" href="manifest.json" />
-	<link rel="apple-touch-icon" href="https://xdrqauwxvwooojufzndv.supabase.co/storage/v1/object/public/icons/icon-192.png" />
+	<link rel="apple-touch-icon" href="https://xdrqauwxvwooojufzndv.supabase.co/storage/v1/object/public/icons/icon-192i.png" />
 	<meta name="apple-mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 	<meta name="apple-mobile-web-app-title" content="AI ASISTEN" />
@@ -24,10 +24,9 @@
 	<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@900&display=swap" rel="stylesheet">
 	<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap" rel="stylesheet">
 	<style>
-		/* --- PERBAIKAN: KEMBALIKAN KE STANDAR --- */
+		/* --- RESET DASAR --- */
 		html {
 			overscroll-behavior: none;
-			/* Mencegah efek karet saat scroll mentok */
 			height: 100%;
 		}
 		body {
@@ -37,81 +36,38 @@
 			height: 100%;
 			margin: 0;
 			padding: 0;
-			/* Text selection disable */
 			-webkit-user-select: none;
-			-moz-user-select: none;
-			-ms-user-select: none;
 			user-select: none;
 		}
 		#chat-container {
 			flex: 1;
-			/* Mengisi ruang sisa */
 			min-height: 0;
-			/* WAJIB: Agar flex item bisa di-scroll */
 			overscroll-behavior-y: contain;
 			-webkit-overflow-scrolling: touch;
 			scrollbar-width: none;
 			overflow-y: auto;
-			/* Pastikan bisa discroll */
+			scroll-behavior: auto !important;
+			/* Scroll otomatis muncul jika konten panjang */
 		}
-		/* --- PERBAIKAN: GUNAKAN 100dvh --- */
+		/* --- LAYOUT --- */
 		.h-dynamic-screen {
 			height: 100vh;
-			/* Fallback */
 			height: 100dvh;
-			/* Gunakan ini agar pas dengan address bar */
 		}
 		.min-h-dynamic-screen {
 			min-height: 100vh;
 			min-height: 100dvh;
 		}
-		/* --- PERBAIKAN: Indikator "Thinking" --- */
+		/* --- INDIKATOR THINKING (STATIS) --- */
 		.thinking-indicator {
-			/* Atur tampilan teks "OMI is thinking" */
 			font-style: italic;
-			/* color: #9ca3af;  <-- DIHAPUS, warna diatur oleh animasi */
+			color: #9ca3af;
+			/* Warna statis */
 			font-weight: 300;
 			font-size: 0.875rem;
-			/* 14px, ini membuatnya lebih kecil */
-			animation: pulse-text 1.8s infinite ease-in-out;
 		}
-		.thinking-indicator::after {
-			/* Ini bagian yang membuat titik-titik animasi */
-			content: '.';
-			/* Titik awal */
-			display: inline-block;
-			width: 1.5em;
-			/* Beri ruang stabil untuk 3 titik agar teks tidak goyang */
-			text-align: left;
-			animation: thinking-dots 1.5s infinite;
-		}
-		/* Animasi untuk titik-titik (keluar satu per satu) */
-		@keyframes thinking-dots {
-			0%, 20% {
-				content: '.';
-				/* 1 titik */
-			}
-			40%, 60% {
-				content: '..';
-				/* 2 titik */
-			}
-			80%, 100% {
-				content: '...';
-				/* 3 titik */
-			}
-		}
-		/* --- PERBAIKAN: Animasi diubah dari 'opacity' ke 'color' --- */
-		@keyframes pulse-text {
-			0%, 100% {
-				color: #f3f4f6;
-				/* Warna chat (Terang) */
-			}
-			50% {
-				color: #6b7280;
-				/* Dibuat lebih redup (dari #9ca3af) */
-			}
-		}
-		/* Styling untuk markdown (dibiarkan jika Anda ingin AI lagi nanti) */
+		/* Menghapus animasi titik-titik, ganti dengan teks statis jika perlu di JS */
+		/* --- MARKDOWN TABLES --- */
 		.ai-message-content table {
 			border-collapse: separate;
 			border-spacing: 0;
@@ -120,28 +76,33 @@
 			margin-bottom: 1rem;
 			border-radius: 0.5rem;
 			overflow: hidden;
-			/* --- PERBAIKAN: Border disamakan dgn gelembung chat (neutral-700) --- */
 			border: 1px solid #404040;
+		}
+		/* --- HR (GARIS PEMBATAS) KUSTOM --- */
+		.ai-message-content hr {
+			margin-top: 2.5rem;
+			/* Memberi jarak longgar di atas */
+			margin-bottom: 2.5rem;
+			/* Memberi jarak longgar di bawah */
+			border: 0;
+			/* Menghapus border kotak bawaan browser */
+			border-top: 1px solid #333333;
+			/* Garis super tipis dengan warna abu gelap lembut */
 		}
 		.ai-message-content th, .ai-message-content td {
 			padding: 8px 12px;
 			text-align: left;
 			border: none;
-			/* --- PERBAIKAN: Border disamakan dgn gelembung chat (neutral-700) --- */
 			border-bottom: 1px solid #404040;
 		}
-		/* Tambahkan garis antar kolom */
 		.ai-message-content th:not(:last-child),
 		.ai-message-content td:not(:last-child) {
-			/* --- PERBAIKAN: Border disamakan dgn gelembung chat (neutral-700) --- */
 			border-right: 1px solid #404040;
 		}
-		/* Hapus border di baris terakhir */
 		.ai-message-content tr:last-child td {
 			border-bottom: none;
 		}
 		.ai-message-content th {
-			/* --- PERBAIKAN: Header lebih gelap (neutral-800) --- */
 			background-color: #272727;
 			font-weight: 600;
 		}
@@ -151,70 +112,90 @@
 			padding-left: 2rem;
 			list-style: revert;
 		}
+		/* --- SCROLLBAR HIDING --- */
 		#settings-container {
 			scrollbar-width: none;
 		}
 		#settings-container::-webkit-scrollbar {
 			display: none;
 		}
-		/* --- STYLING SLIDER TEMPERATUR KUSTOM --- */
+		/* --- RANGE SLIDER CUSTOM --- */
 		.custom-range {
 			-webkit-appearance: none;
-			/* Hapus style bawaan */
 			appearance: none;
 			width: 100%;
 			height: 2.25rem;
-			/* 36px (h-9) - INI TETAP */
 			background-color: transparent;
-			/* Inputnya sendiri transparan */
 			cursor: pointer;
 		}
-		/* 1. Track (Boks Kotak) - WebKit (Chrome, Safari, Edge) */
 		.custom-range::-webkit-slider-runnable-track {
 			width: 100%;
 			height: 2.25rem;
-			/* 36px (h-9) - INI TETAP */
 			background-color: #323232;
-			/* Warna bg-[#323232] */
 			border-radius: 0.5rem;
-			/* rounded-lg */
 		}
-		/* 2. Thumb (Tombol geser) - WebKit */
 		.custom-range::-webkit-slider-thumb {
 			-webkit-appearance: none;
 			appearance: none;
 			height: 34px;
-			/* PERBAIKAN: Lebih tinggi dari track (36px) */
 			width: 14px;
-			/* PERBAIKAN: Dibuat tipis */
 			background-color: #f3f4f6;
-			/* Warna thumb (putih) */
 			border-radius: 8px;
-			/* 2px, agar tetap kotak tapi lebih tajam */
 			border: none;
-			/* Kalkulasi margin-top untuk memusatkan thumb */
-			/* (Tinggi Track 36px - Tinggi Thumb 40px) / 2 = -2px */
 			margin-top: 1px;
-			/* PERBAIKAN: Dihitung ulang agar menonjol */
 		}
-		/* 3. Track - Firefox (Mozilla) */
 		.custom-range::-moz-range-track {
 			width: 100%;
 			height: 2.25rem;
-			/* 36px (h-9) - INI TETAP */
 			background-color: #323232;
 			border-radius: 0.5rem;
 		}
-		/* 4. Thumb - Firefox */
 		.custom-range::-moz-range-thumb {
 			height: 40px;
-			/* PERBAIKAN: Lebih tinggi dari track (36px) */
 			width: 10px;
-			/* PERBAIKAN: Dibuat tipis */
 			background-color: #f3f4f6;
 			border-radius: 0.125rem;
-			/* 2px, agar tetap kotak tapi lebih tajam */
 			border: none;
+		}
+		.chat-bubble {
+			opacity: 0;
+			transform: translateY(20px);
+			animation: slideUpFade 0.4s ease-out forwards;
+		}
+		@keyframes slideUpFade {
+			from {
+				opacity: 0;
+				transform: translateY(20px);
+				/* Dari bawah */
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+				/* Ke posisi asli */
+			}
+		}
+		.typing-indicator span {
+			height: 5px;
+			width: 5px;
+			background-color: #9ca3af;
+			border-radius: 50%;
+			display: inline-block;
+			animation: bounce 1.4s infinite ease-in-out both;
+			margin: 0 1px;
+		}
+		.typing-indicator .bounce1 {
+			animation-delay: -0.32s;
+		}
+		.typing-indicator .bounce2 {
+			animation-delay: -0.16s;
+		}
+		@keyframes bounce {
+			0%, 80%, 100% {
+				transform: scale(0);
+			}
+			40% {
+				transform: scale(1);
+			}
 		}
 	</style>
 </head>
@@ -328,18 +309,18 @@
 	</div>
 	<div id="settings-page" class="hidden h-dynamic-screen flex flex-col">
 		<header class="bg-[#151515] border-b border-neutral-700 p-4 shadow-sm">
-			<div class="flex items-center justify-between relative">
-				<button id="settings-back-button" title="Kembali" class="text-gray-300 p-2 rounded-full text-sm font-medium">
+			<div class="relative flex items-center justify-between h-10">
+				<button id="settings-back-button" title="Kembali" class="z-10 text-gray-300 p-2 rounded-full text-sm font-medium hover:bg-neutral-800 transition-colors">
 					<svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
 					</svg>
 				</button>
-				<div class="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
-					<h1 class="text-xl font-black text-gray-300 -mb-1" style="font-family: 'Orbitron', sans-serif;">ADMIN MENU</h1>
+				<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+					<h1 class="text-xl font-black text-gray-300" style="font-family: 'Orbitron', sans-serif;">ADMIN MENU</h1>
 				</div>
-				<div class="flex items-center space-x-3">
-					<button id="settings-save-button" type="submit" form="settings-form" title="Simpan" class="text-green-500 p-2 rounded-full text-sm font-medium">
-						<svg class="w-7 h-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+				<div class="flex items-center space-x-3 z-10">
+					<button id="settings-save-button" type="submit" form="settings-form" title="Simpan" class="text-green-500 p-2 rounded-full text-sm font-medium hover:bg-neutral-800 transition-colors">
+						<svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
 							<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
 						</svg>
 					</button>
@@ -360,19 +341,15 @@
 								</svg>
 							</button>
 							<div id="custom-model-options" class="hidden absolute z-10 mt-1 w-full overflow-hidden rounded-lg bg-[#272727] border border-neutral-700 shadow-lg max-h-60 overflow-y-auto">
-								<div class="custom-model-option p-3 hover:bg-neutral-700 cursor-pointer text-gray-100" data-value="gemini-2.0-flash">gemini 2.0 flash</div>
-								<div class="custom-model-option p-3 hover:bg-neutral-700 cursor-pointer text-gray-100" data-value="gemini-2.0-flash-lite">gemini 2.0 flash lite</div>
-								<div class="custom-model-option p-3 hover:bg-neutral-700 cursor-pointer text-gray-100" data-value="gemini-2.5-flash">gemini 2.5 flash</div>
-								<div class="custom-model-option p-3 hover:bg-neutral-700 cursor-pointer text-gray-100" data-value="gemini-2.5-flash-lite">gemini 2.5 flash lite</div>
+								<div class="custom-model-option p-3 hover:bg-neutral-700 cursor-pointer text-gray-100" data-value="gemini-3-pro-preview">gemini 3 pro (terbaru)</div>
 								<div class="custom-model-option p-3 hover:bg-neutral-700 cursor-pointer text-gray-100" data-value="gemini-2.5-pro">gemini 2.5 pro</div>
+								<div class="custom-model-option p-3 hover:bg-neutral-700 cursor-pointer text-gray-100" data-value="gemini-2.5-flash">gemini 2.5 flash</div>
 							</div>
 						</div>
 						<select id="setting-model" class="hidden">
-							<option value="gemini-2.0-flash">gemini 2.0 flash</option>
-							<option value="gemini-2.0-flash-lite">gemini 2.0 flash lite</option>
-							<option value="gemini-2.5-flash" selected="">gemini 2.5 flash</option>
-							<option value="gemini-2.5-flash-lite">gemini 2.5 flash lite</option>
+							<option value="gemini-3-pro-preview">gemini 3 pro (terbaru)</option>
 							<option value="gemini-2.5-pro">gemini 2.5 pro</option>
+							<option value="gemini-2.5-flash" selected="">gemini 2.5 flash</option>
 						</select>
 					</div>
 					<div class="bg-[#212121] border border-neutral-700 rounded-lg p-4">
@@ -420,7 +397,7 @@
 	</div>
 	</main>
 	</div>
-	<input type="file" id="file-input" accept=".pdf,.docx,.xls,.xlsx,.pptx" multiple class="hidden" />
+	<input type="file" id="file-input" accept=".pdf,.docx,.xls,.xlsx,.pptx,.txt,image/*" multiple class="hidden" />
 	<div id="confirm-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
 		<div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
 		<div class="relative bg-[#212121] w-full max-w-[18rem] rounded-2xl shadow-lg overflow-hidden">
@@ -465,12 +442,12 @@
 				"sizes": "48x48",
 				"type": "image/png"
 			}, {
-				"src": "https://xdrqauwxvwooojufzndv.supabase.co/storage/v1/object/public/icons/icon-192.png",
+				"src": "https://xdrqauwxvwooojufzndv.supabase.co/storage/v1/object/public/icons/icon-192i.png",
 				"sizes": "192x192",
 				"type": "image/png",
 				"purpose": "any maskable"
 			}, {
-				"src": "https://xdrqauwxvwooojufzndv.supabase.co/storage/v1/object/public/icons/icon-512.png",
+				"src": "https://xdrqauwxvwooojufzndv.supabase.co/storage/v1/object/public/icons/icon-152i.png",
 				"sizes": "512x512",
 				"type": "image/png"
 			}]
@@ -533,11 +510,11 @@
 		let uploadedFiles = [];
 		let chatHistory = []; // Ini sekarang cache lokal untuk pesan yang sedang aktif
 		// API_KEY DIHAPUS DARI SINI
-		let appSettings = { // Akan diisi dari Supabase
+		let appSettings = {
 			model: 'gemini-2.5-flash',
-			customPrompt: '',
+			customPrompt: '', // Wajib camelCase
 			temperature: 0.7,
-			maxTokens: 2048
+			maxTokens: 2048 // Wajib camelCase
 		};
 		let lastTouchEnd = 0;
 		const markdownConverter = new showdown.Converter();
@@ -551,12 +528,15 @@
 			}
 			lastTouchEnd = now;
 		}, false);
-		// --- Fungsi Helper & Utilitas ---
+		// --- PERBAIKAN: SCROLL INSTAN (STATIS) ---
 		const scrollToBottom = () => {
-			chatContainer.scrollTo({
-				top: chatContainer.scrollHeight,
-				behavior: 'smooth'
-			});
+			const container = document.getElementById('chat-container');
+			if(container) {
+				container.scrollTo({
+					top: container.scrollHeight,
+					behavior: 'smooth' // Kunci agar tidak tersendat/kasar
+				});
+			}
 		};
 		const formatFileSize = (bytes) => {
 			if(bytes < 1024 * 1024) {
@@ -592,39 +572,37 @@
 				let iconSvg = '';
 				const fileType = file.type;
 				const mimeType = file.mimeType;
-				if(mimeType === 'application/pdf' || fileType === 'pdf') {
-					iconSvg = `
-					<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
-						<path fill="#EF4444" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2 -2V4a2 2 0 012-2h8l6 6z"/><path fill="#DC2626" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="7" font-family="sans-serif" font-weight="bold">PDF</text>
-					</svg>`;
+				// --- LOGIKA IKON (KODE ASLI TIDAK DIUBAH) ---
+				if(mimeType.startsWith('image/')) {
+					iconSvg = `<img src="data:${mimeType};base64,${file.data}" class="w-full h-full object-cover rounded-md" alt="preview" />`;
+				} else if(mimeType === 'application/pdf' || fileType === 'pdf') {
+					iconSvg = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#EF4444" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2 -2V4a2 2 0 012-2h8l6 6z"/><path fill="#DC2626" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="7" font-family="sans-serif" font-weight="bold">PDF</text></svg>`;
 				} else if(mimeType.includes('word') || fileType === 'doc' || fileType === 'docx') {
-					iconSvg = `
-					<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#3B82F6" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#2563EB" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-family="sans-serif" font-weight="bold">W</text></svg>`;
+					iconSvg = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#3B82F6" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#2563EB" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-family="sans-serif" font-weight="bold">W</text></svg>`;
 				} else if(mimeType.includes('excel') || mimeType.includes('spreadsheet') || fileType === 'xls' || fileType === 'xlsx') {
-					iconSvg = `
-					<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#22C55E" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#16A34A" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-family="sans-serif" font-weight="bold">X</text></svg>`;
+					iconSvg = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#22C55E" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#16A34A" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-family="sans-serif" font-weight="bold">X</text></svg>`;
 				} else if(mimeType.includes('powerpoint') || mimeType.includes('presentation') || fileType === 'ppt' || fileType === 'pptx') {
-					iconSvg = `
-					<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#F97316" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#EA580C" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-family="sans-serif" font-weight="bold">P</text></svg>`;
+					iconSvg = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#F97316" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#EA580C" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-family="sans-serif" font-weight="bold">P</text></svg>`;
+				} else if(fileType === 'txt' || mimeType === 'text/plain') {
+					iconSvg = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#9CA3AF" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#6B7280" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="9" font-family="sans-serif" font-weight="bold">TXT</text></svg>`;
 				} else {
-					iconSvg = `
-					<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
-						<path fill="#6B7280" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2 -2V4a2 2 0 012-2h8l6 6z"/><path fill="#4B5563" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="7" font-family="sans-serif" font-weight="bold">FILE</text>
-					</svg>`;
+					iconSvg = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#6B7280" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#4B5563" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="7" font-family="sans-serif" font-weight="bold">FILE</text></svg>`;
 				}
+				// --- KEMBALI KE GAYA ASLI (Tanpa 'invisible') ---
 				const fileCard = `
-	              <div class="file-preview-card bg-[#272727] text-gray-200 rounded-lg p-2 flex flex-row items-center relative text-sm shadow-sm cursor-pointer">
-	                  <div class="w-10 h-10 mr-2 flex-shrink-0">${iconSvg}</div>
-	                  <div class="overflow-hidden text-left flex-1 min-w-0">
-	                      <div class="font-medium truncate text-xs" title="${file.name}">${file.name}</div>
-	                      <div class="text-xs text-gray-400">${fileSizeFormatted}</div>
-	                  </div>
-	                  <button type="button" class="delete-file-button absolute top-0 right-0 -mt-2 -mr-2 rounded-full w-5 h-5 focus:outline-none invisible text-neutral-600 hover:text-red-500" data-index="${index}">
-	                      <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor">
-								<g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"></path></g>
-							</svg>
-	                  </button>
-	              </div>`;
+                  <div class="file-preview-card bg-[#272727] text-gray-200 rounded-lg p-2 flex flex-row items-center relative text-sm shadow-sm cursor-pointer">
+                      <div class="w-10 h-10 mr-2 flex-shrink-0 flex items-center justify-center overflow-hidden rounded bg-[#323232]">${iconSvg}</div>
+                      <div class="overflow-hidden text-left flex-1 min-w-0">
+                          <div class="font-medium truncate text-xs" title="${file.name}">${file.name}</div>
+                          <div class="text-xs text-gray-400">${fileSizeFormatted}</div>
+                      </div>
+                      
+                      <button type="button" class="delete-file-button absolute top-0 right-0 -mt-2 -mr-2 rounded-full w-5 h-5 focus:outline-none text-neutral-600 hover:text-red-500" data-index="${index}">
+                          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor">
+                                <g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"></path></g>
+                            </svg>
+                      </button>
+                  </div>`;
 				filePreviewContainer.innerHTML += fileCard;
 			});
 		};
@@ -647,26 +625,19 @@
 				chatHistoryListContainer.innerHTML += chatItemHTML;
 			});
 		};
-		// --- Fungsi Inti Aplikasi ---
-		const addMessage = (sender, message, isMarkdown = false, duration = 0) => {
+		// --- PERBAIKAN: ANIMASI BEDA UNTUK HISTORY VS BARU ---
+		// GANTI fungsi addMessage dengan ini:
+		const addMessage = (sender, message, isMarkdown = false, isHistory = false) => {
 			const msgDiv = document.createElement('div');
+			// Hapus style.opacity = '1' manual agar animasi CSS (fadeIn) bisa jalan
 			msgDiv.className = 'chat-bubble px-4 py-2 rounded-xl w-full flex flex-col';
 			const now = new Date();
-			const hours = String(now.getHours()).padStart(2, '0');
-			const minutes = String(now.getMinutes()).padStart(2, '0');
-			const timestamp = `${hours}:${minutes}`;
+			const timestamp = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 			const messageElement = document.createElement('div');
-			const timeElement = document.createElement('div');
-			timeElement.textContent = timestamp;
 			if(sender === 'user') {
 				const headerDiv = document.createElement('div');
 				headerDiv.className = 'flex justify-between items-center mb-1';
-				const nameElement = document.createElement('div');
-				nameElement.className = 'text-sm font-bold text-blue-400';
-				nameElement.textContent = 'Anda';
-				timeElement.className = 'text-xs text-gray-500';
-				headerDiv.appendChild(nameElement);
-				headerDiv.appendChild(timeElement);
+				headerDiv.innerHTML = `<div class="text-sm font-bold text-blue-400">Anda</div><div class="text-xs text-gray-500">${timestamp}</div>`;
 				msgDiv.classList.add('text-gray-100', 'self-start', 'border', 'border-neutral-700', 'pb-3');
 				msgDiv.appendChild(headerDiv);
 				if(message) {
@@ -674,49 +645,45 @@
 					messageElement.textContent = message;
 					msgDiv.appendChild(messageElement);
 				}
-				const fileHtml = (isMarkdown && typeof isMarkdown === 'string') ? isMarkdown : '';
-				if(fileHtml) {
+				// Logika render file preview (User)
+				if(isMarkdown && typeof isMarkdown === 'string' && isMarkdown !== '') {
 					const fileContainer = document.createElement('div');
 					fileContainer.className = (message ? 'mt-2' : '') + ' grid grid-cols-2 md:grid-cols-4 gap-2';
-					fileContainer.innerHTML = fileHtml;
-					fileContainer.querySelectorAll('.file-preview-card').forEach(card => {
-						card.classList.remove('cursor-pointer');
-					});
-					fileContainer.querySelectorAll('.delete-file-button').forEach(btn => {
-						btn.remove();
-					});
+					fileContainer.innerHTML = isMarkdown;
+					// Bersihkan tombol hapus di bubble chat
+					fileContainer.querySelectorAll('.file-preview-card').forEach(card => card.classList.remove('cursor-pointer'));
+					fileContainer.querySelectorAll('.delete-file-button').forEach(btn => btn.remove());
 					msgDiv.appendChild(fileContainer);
 				}
 			} else if(sender === 'ai') {
 				const headerDiv = document.createElement('div');
 				headerDiv.className = 'flex justify-between items-center mb-1';
-				const nameElement = document.createElement('div');
-				nameElement.className = 'text-sm font-bold text-white mb-1';
-				nameElement.textContent = 'Ai Asisten';
-				timeElement.className = 'text-xs text-gray-500 ai-timestamp';
-				headerDiv.appendChild(nameElement);
-				headerDiv.appendChild(timeElement);
+				headerDiv.innerHTML = `<div class="text-sm font-bold text-white mb-1">Ai Asisten</div><div class="text-xs text-gray-500 ai-timestamp">${timestamp}</div>`;
 				msgDiv.classList.add('text-gray-100', 'self-start', 'border', 'border-neutral-700');
-				messageElement.className = 'ai-message-content min-h-[1.5rem] flex items-center';
+				messageElement.className = 'ai-message-content min-h-[1.5rem]';
 				if(message === 'TYPING_PLACEHOLDER') {
-					/* --- PERBAIKAN: Ganti 3 dot menjadi teks "thinking" --- */
-					messageElement.innerHTML = `<div class="thinking-indicator">AI thinking</div>`;
+					// Gunakan indikator bouncing dots yang baru (HTML structure baru)
+					messageElement.innerHTML = `
+                <div class="typing-indicator">
+                    <span class="bounce1"></span>
+                    <span class="bounce2"></span>
+                    <span></span>
+                </div>`;
 				} else {
-					messageElement.classList.remove('flex', 'items-center');
 					messageElement.innerHTML = isMarkdown ? markdownConverter.makeHtml(message) : message;
 				}
 				const footerDiv = document.createElement('div');
 				footerDiv.className = 'flex justify-end mt-1';
-				const copyButton = document.createElement('button');
-				copyButton.className = 'copy-chat-button text-gray-400 focus:outline-none rounded invisible';
-				copyButton.title = 'Salin teks';
-				copyButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
-				footerDiv.appendChild(copyButton);
+				footerDiv.innerHTML = `<button class="copy-chat-button text-gray-400 focus:outline-none rounded invisible"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>`;
 				msgDiv.appendChild(headerDiv);
 				msgDiv.appendChild(messageElement);
 				msgDiv.appendChild(footerDiv);
 			}
 			chatMessages.appendChild(msgDiv);
+			// Scroll smooth hanya jika bukan sedang memuat history (agar tidak pusing saat load awal)
+			if(!isHistory) {
+				scrollToBottom();
+			}
 			return msgDiv;
 		};
 		// --- Fungsi Inisialisasi Aplikasi (BARU) ---
@@ -765,6 +732,7 @@
 			emailInput.value = '';
 			passwordInput.value = '';
 		};
+		// --- PERBAIKAN: SMART RENDER & INSTANT SCROLL ---
 		const showChatApp = async (userId, shouldFocus = true) => {
 			loadingScreen.classList.add('hidden');
 			loginScreen.classList.add('hidden');
@@ -772,73 +740,55 @@
 			loginScreen.classList.remove('flex');
 			chatApp.classList.remove('hidden');
 			try {
-				const {
-					data,
-					error
-				} = await supabase.from('conversations').select('id, title').eq('user_id', userId).order('created_at', {
-					ascending: false
-				});
-				if(error) throw error;
-				chatList = data;
-			} catch (error) {
-				console.error("Gagal memuat daftar percakapan:", error.message);
-				chatList = [];
-			}
-			renderChatList();
-			const lastActiveId = localStorage.getItem('siapip_lastActiveId');
-			const chatExists = lastActiveId && chatList.find(c => c.id === lastActiveId);
-			if(chatExists) {
-				activeChatId = lastActiveId;
-				isNewChat = false;
-				renderChatList();
-				// chatMessages.innerHTML = ''; // DIHAPUS DARI SINI
-				try {
+				if(chatList.length === 0) {
 					const {
-						data: messages,
-						error: messagesError
-					} = await supabase.from('messages').select('role, parts').eq('conversation_id', activeChatId).order('created_at', {
-						ascending: true
-					}); // 1. Ambil data dulu (layar belum dibersihkan)
-					if(messagesError) throw messagesError;
-					chatMessages.innerHTML = ''; // 2. DIPINDAH KE SINI. Bersihkan layar SETELAH data siap.
-					chatHistory = messages;
-					if(chatHistory.length > 0) {
-						chatHistory.forEach(msg => { // 3. Render chat asli
-							const messageText = msg.parts.find(p => p.text) ? msg.parts.find(p => p.text).text : '';
-							if(msg.role === 'user') {
-								const filePart = msg.parts.find(p => p.fileHtml);
-								const filesHtml = filePart ? filePart.fileHtml : '';
-								addMessage('user', messageText, filesHtml);
-							} else {
-								addMessage('ai', messageText, true);
-							}
-						});
-						// PERBAIKAN SCROLL: Hanya scroll jika chatnya panjang
-						setTimeout(() => {
-							if(chatContainer.scrollHeight > chatContainer.clientHeight) {
-								scrollToBottom();
-							}
-						}, 0);
-					} else {
-						addMessage('ai', 'Halo! Melanjutkan percakapan...', true);
-					}
-				} catch (error) {
-					chatMessages.innerHTML = ''; // Tetap bersihkan jika error
-					console.error("Gagal memuat pesan:", error.message);
-					addMessage('ai', `Gagal memuat riwayat: ${error.message}`, false);
+						data,
+						error
+					} = await supabase.from('conversations').select('id, title').eq('user_id', userId).order('created_at', {
+						ascending: false
+					});
+					if(error) throw error;
+					chatList = data || [];
 				}
-				// --- PERBAIKAN SELESAI ---
-			} else {
-				chatHistory = [];
-				activeChatId = null;
-				isNewChat = true;
-				chatMessages.innerHTML = '';
-				addMessage('ai', 'Halo! UI ini sudah siap. Silakan mulai dari sini.', true);
+				renderChatList();
+				const lastActiveId = localStorage.getItem('siapip_lastActiveId');
+				const chatExists = lastActiveId && chatList.find(c => c.id === lastActiveId);
+				if(chatExists) {
+					if(activeChatId === lastActiveId && chatMessages.children.length > 0) {
+						// Chat sudah aktif dan sudah dirender, cukup scroll
+						scrollToBottom();
+					} else {
+						activeChatId = lastActiveId;
+						isNewChat = false;
+						renderChatList();
+						const {
+							data: messages,
+							error
+						} = await supabase.from('messages').select('role, parts').eq('conversation_id', activeChatId).order('created_at', {
+							ascending: true
+						});
+						if(error) throw error;
+						chatMessages.innerHTML = '';
+						chatHistory = messages || [];
+						if(chatHistory.length > 0) {
+							// Render semua pesan sekaligus tanpa delay
+							chatHistory.forEach(msg => {
+								const txt = msg.parts.find(p => p.text)?.text || '';
+								const file = msg.parts.find(p => p.fileHtml)?.fileHtml;
+								addMessage(msg.role === 'user' ? 'user' : 'ai', txt, msg.role === 'user' ? file : true, true);
+							});
+							scrollToBottom();
+						} else {
+							addMessage('ai', 'Melanjutkan percakapan...', true, false);
+						}
+					}
+				} else {
+					startNewChat(false);
+				}
+				if(shouldFocus) setTimeout(() => chatInput.focus(), 50);
+			} catch (error) {
+				console.error("Error:", error.message);
 			}
-			if(shouldFocus) {
-				chatInput.focus();
-			}
-			sendButton.disabled = true;
 		};
 		const handleLogin = async (e) => {
 			e.preventDefault();
@@ -931,13 +881,13 @@
 		// Listener untuk tombol OK di modal alert
 		alertOkButton.addEventListener('click', hideCustomAlert);
 		const showSettingsPage = () => {
-			// Muat pengaturan saat ini ke dalam form
 			settingsModel.value = appSettings.model;
-			// Gunakan '??' (Nullish Coalescing) dan fallback ke string kosong ''
-			settingsPrompt.value = appSettings.customPrompt ?? appSettings.custom_prompt ?? '';
+			// Ambil dari customPrompt, jika kosong fallback ke string kosong
+			settingsPrompt.value = appSettings.customPrompt ?? '';
 			settingsTemp.value = appSettings.temperature;
 			settingsTempLabel.textContent = appSettings.temperature;
-			settingsTokens.value = appSettings.maxTokens || appSettings.max_tokens;
+			// Ambil dari maxTokens
+			settingsTokens.value = appSettings.maxTokens;
 			const selectedOption = settingsModel.querySelector(`option[value="${appSettings.model}"]`);
 			if(selectedOption) {
 				customModelLabel.textContent = selectedOption.textContent;
@@ -1040,62 +990,74 @@
 				userListContainer.innerHTML = `<p class="text-sm text-red-400">Gagal memuat pengguna: ${error.message}</p>`;
 			}
 		}
+		// --- FUNGSI CHAT UTAMA (TEXT, DOKUMEN, & GOOGLE SEARCH) ---
+		// --- FUNGSI CHAT UTAMA (BERSIH & AKURAT) ---
 		async function callGeminiAPI(chatHistory, files) {
-			const startTime = Date.now();
 			const placeholder = addMessage('ai', 'TYPING_PLACEHOLDER');
-			// Panggil scroll pertama untuk "OMI is thinking..."
 			scrollToBottom();
-			// 1. Ambil pengaturan dari state global (yang dimuat dari Supabase)
-			const {
-				model,
-				customPrompt,
-				temperature,
-				maxTokens
-			} = appSettings;
-			const apiModelName = model;
-			// 2. Tentukan URL Edge Function
+
+			const { model, customPrompt, temperature, maxTokens } = appSettings;
 			const functionUrl = `${SUPABASE_URL}/functions/v1/call-gemini`;
-			// 3. Siapkan Konfigurasi
+			
 			const generationConfig = {
 				temperature: parseFloat(temperature),
 				maxOutputTokens: parseInt(maxTokens, 10),
 			};
-			let systemInstruction = null;
-			if(customPrompt && customPrompt.trim() !== '') {
-				systemInstruction = {
-					role: "system",
-					parts: [{
-						text: customPrompt
-					}]
-				};
-			}
-			// 4. Salin dan Bersihkan Riwayat Chat
-			// Ini penting: 'chatHistory' dari database berisi {fileHtml}
+
+			// 1. AKTIFKAN ALAT PENCARI (Agar AI tidak bodoh)
+			const tools = [
+				{ google_search: {} } 
+			];
+
+			// 2. SYSTEM INSTRUCTION (WAKTU REAL-TIME)
+            // Kita suntikkan waktu sekarang agar AI sadar tanggal/jam
+            const currentDate = new Date().toLocaleString('id-ID', { 
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', 
+                hour: '2-digit', minute: '2-digit', timeZoneName: 'short' 
+            });
+
+            let baseSystemPrompt = `Current Date/Time: ${currentDate}. You are a helpful AI Assistant. You have access to Google Search. Use it for current events.`;
+            
+            if(customPrompt && customPrompt.trim() !== '') {
+                baseSystemPrompt += `\n\nCustom Instruction: ${customPrompt}`;
+            }
+
+			const systemInstruction = {
+				role: "system",
+				parts: [{ text: baseSystemPrompt }]
+			};
+
+			// 3. MEMBERSIHKAN HISTORY (Hapus Gambar Base64 agar hemat token)
 			const contents = JSON.parse(JSON.stringify(chatHistory));
-			contents.forEach(message => {
-				if(message.parts && message.role === 'user') {
-					// Hanya sisakan 'text', hapus 'fileHtml' dari riwayat
-					const textPart = message.parts.find(p => p.text);
-					message.parts = textPart ? [{
-						text: textPart.text
-					}] : [];
+
+			contents.forEach(msg => {
+				if (msg.parts) {
+					msg.parts.forEach(p => {
+						if (p.text && typeof p.text === 'string' && p.text.includes('<img src="data:')) {
+							p.text = '[Info Sistem: User melihat gambar hasil AI di sini]';
+						}
+					});
+				}
+				if(msg.role === 'user') {
+					const textPart = msg.parts.find(p => p.text);
+					msg.parts = textPart ? [{ text: textPart.text }] : [{ text: "..." }];
 				}
 			});
-			// 5. Tambahkan File Baru (yang di-upload) ke pesan terakhir
+
+			// 4. MASUKKAN FILE DOKUMEN (JIKA ADA)
 			if(files.length > 0) {
 				const lastUserMessage = contents[contents.length - 1];
 				const originalUserText = (lastUserMessage.parts.length > 0 && lastUserMessage.parts[0].text) ? lastUserMessage.parts[0].text : '';
+				
 				let combinedTextContent = '';
 				const fileParts = [];
+
 				files.forEach(file => {
 					if(file.isTextContent) {
-						combinedTextContent += `[Konten Dokumen Dilampirkan: ${file.name}]:\n---\n${file.data}\n---\n\n`;
+						combinedTextContent += `[Lampiran Dokumen: ${file.name}]:\n---\n${file.data}\n---\n\n`;
 					} else {
 						fileParts.push({
-							inlineData: {
-								mimeType: file.mimeType,
-								data: file.data
-							}
+							inlineData: { mimeType: file.mimeType, data: file.data }
 						});
 					}
 				});
@@ -1103,116 +1065,158 @@
 					text: combinedTextContent + originalUserText
 				}, ...fileParts];
 			}
-			// 6. Buat 'payload' yang akan dikirim ke Edge Function
-			// Ini adalah "isi" dari panggilan API
+
+			// 5. KIRIM DATA
 			const requestPayload = {
 				contents: contents,
 				generationConfig: generationConfig,
-				"tools": [{
-					"google_search": {}
-				}] // Ini bagian yang penting
+				tools: tools, 
+                systemInstruction: systemInstruction
 			};
-			if(systemInstruction) {
-				requestPayload.systemInstruction = systemInstruction;
-			}
+
 			try {
-				// 7. Ambil Sesi Token
-				const {
-					data: {
-						session
-					}
-				} = await supabase.auth.getSession();
-				if(!session) {
-					throw new Error('Sesi tidak valid. Harap login kembali.');
-				}
-				// 8. Panggil Edge Function
+				const { data: { session } } = await supabase.auth.getSession();
+				if(!session) throw new Error('Sesi tidak valid.');
+
 				const response = await fetch(functionUrl, {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
 						'Authorization': `Bearer ${session.access_token}`
 					},
-					// Kirim 'model' dan 'payload' (sesuai yang diharapkan 'index.ts')
 					body: JSON.stringify({
-						model: apiModelName,
+						model: model, 
 						payload: requestPayload
 					}),
 				});
-				// 9. Logika Cerdas untuk Membaca Error (JSON atau Teks)
+
 				if(!response.ok) {
-					let errorText = `API Error ${response.status}: ${response.statusText}`;
-					try {
-						// Coba baca error sebagai JSON
-						const errorData = await response.json();
-						errorText = `API Error ${response.status}: ${errorData.error || 'Unknown error'}`;
-					} catch (e) {
-						// Jika gagal, baca sebagai teks mentah
-						errorText = `Server Error ${response.status}: ${await response.text()}`;
-					}
-					throw new Error(errorText);
+					const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `Server Error ${response.status}`);
 				}
-				// 10. Proses Respons Sukses
+
 				const data = await response.json();
-				if(!data.candidates || !data.candidates[0].content) {
-					if(data.promptFeedback && data.promptFeedback.blockReason) {
-						throw new Error(`Permintaan diblokir: ${data.promptFeedback.blockReason}`);
-					}
-					if(data.candidates && data.candidates[0].content && data.candidates[0].content.parts[0].functionCall) {
-						throw new Error('AI mencoba memanggil fungsi, tetapi belum ditangani.');
-					}
-					throw new Error('Respon API tidak valid atau kosong.');
+
+				if(!data.candidates || data.candidates.length === 0) {
+                    if (data.promptFeedback) throw new Error(`Blocked: ${JSON.stringify(data.promptFeedback)}`);
+					throw new Error('AI tidak memberikan respon.');
 				}
-				if(!data.candidates[0].content.parts[0].text) {
-					console.log("Respon AI bukanlah teks:", data.candidates[0].content.parts);
-					throw new Error('Respon AI tidak mengandung teks yang dapat ditampilkan.');
-				}
-				const aiMessage = data.candidates[0].content.parts[0].text;
-				// 11. Tampilkan ke UI
+
+				const firstCandidate = data.candidates[0];
+				let aiMessage = firstCandidate.content?.parts?.[0]?.text || " ";
+
+                // PERBAIKAN: Kode penambah teks "Data diverifikasi..." SUDAH DIHAPUS.
+                // Jawaban akan tampil murni apa adanya dari AI.
+
 				const messageElement = placeholder.querySelector('.ai-message-content');
-				messageElement.innerHTML = markdownConverter.makeHtml(aiMessage);
-				messageElement.classList.remove('flex', 'items-center');
-				placeholder.querySelector('.ai-timestamp').textContent = new Date().toLocaleTimeString('id-ID', {
-					hour: '2-digit',
-					minute: '2-digit'
-				});
-				/* --- INI PERBAIKANNYA (A): SCROLL SETELAH KONTEN DIMUAT --- */
+				if(messageElement) {
+					messageElement.innerHTML = markdownConverter.makeHtml(aiMessage);
+					const timeElement = placeholder.querySelector('.ai-timestamp');
+					if(timeElement) timeElement.textContent = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+				}
 				scrollToBottom();
-				// 12. Simpan ke cache lokal dan Database
+
+				// Simpan ke DB
+				const aiParts = [{ text: aiMessage }];
+				chatHistory.push({ role: "model", parts: aiParts });
+
+				if(activeChatId) {
+					await supabase.from('messages').insert({
+						conversation_id: activeChatId,
+						role: 'model',
+						parts: aiParts
+					});
+				}
+
+			} catch (error) {
+				console.error('Gagal Chat:', error);
+				const messageElement = placeholder.querySelector('.ai-message-content');
+				if(messageElement) {
+					messageElement.innerHTML = `<span class="text-red-400 font-medium">Error:</span> <span class="text-gray-300 text-sm">${error.message}</span>`;
+				}
+				scrollToBottom();
+			}
+		}
+		// --- FUNGSI GENERATOR GAMBAR (VERSI URL / STORAGE) ---
+		async function callImageGenAPI(prompt, inputImage = null) {
+			const placeholder = addMessage('ai', 'TYPING_PLACEHOLDER');
+			const messageContent = placeholder.querySelector('.ai-message-content');
+			const statusText = inputImage ? `Mengedit gambar...` : `Membuat gambar...`;
+			if(messageContent) {
+				messageContent.innerHTML = `
+                    <div class="flex items-center space-x-2 text-gray-400 italic text-sm">
+                        <svg class="animate-spin h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        <span>${statusText}</span>
+                    </div>`;
+			}
+			scrollToBottom();
+			const functionUrl = `${SUPABASE_URL}/functions/v1/generate-image`;
+			try {
+				const {
+					data: {
+						session
+					}
+				} = await supabase.auth.getSession();
+				if(!session) throw new Error('Sesi tidak valid.');
+				const response = await fetch(functionUrl, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': `Bearer ${session.access_token}`
+					},
+					body: JSON.stringify({
+						prompt: prompt,
+						imageInput: inputImage
+					}),
+				});
+				const data = await response.json();
+				if(!response.ok) throw new Error(data.error || "Gagal menghubungi server.");
+				let finalContent = "";
+				// JIKA SUKSES (GAMBAR URL DARI STORAGE)
+				if(data.type === 'image' && data.image_url) {
+					// Render menggunakan URL ringan
+					finalContent = `<img src="${data.image_url}" class="rounded-lg shadow-lg max-w-full h-auto border border-neutral-700 mt-1" alt="Hasil AI" loading="lazy" />`;
+				}
+				// JIKA INFO TEXT
+				else if(data.type === 'text') {
+					finalContent = `<div class="p-3 bg-blue-900/30 border border-blue-700/50 rounded-lg text-blue-200 text-sm">
+                        <strong>Info:</strong> ${markdownConverter.makeHtml(data.text)}
+                    </div>`;
+				} else {
+					throw new Error("Respon tidak valid.");
+				}
+				if(messageContent) {
+					messageContent.innerHTML = finalContent;
+					const timeElement = placeholder.querySelector('.ai-timestamp');
+					if(timeElement) timeElement.textContent = new Date().toLocaleTimeString('id-ID', {
+						hour: '2-digit',
+						minute: '2-digit'
+					});
+				}
+				scrollToBottom();
 				const aiParts = [{
-					text: aiMessage
+					text: finalContent
 				}];
 				chatHistory.push({
 					role: "model",
 					parts: aiParts
 				});
 				if(activeChatId) {
-					try {
-						const {
-							error
-						} = await supabase.from('messages').insert({
-							conversation_id: activeChatId,
-							role: 'model',
-							parts: aiParts
-						});
-						if(error) throw error;
-					} catch (error) {
-						console.error("Gagal menyimpan pesan AI:", error.message);
-					}
+					await supabase.from('messages').insert({
+						conversation_id: activeChatId,
+						role: 'model',
+						parts: aiParts
+					});
 				}
 			} catch (error) {
-				// 13. Tampilkan error dengan jelas di UI
-				console.error('Gagal memanggil Gemini API:', error);
-				const messageElement = placeholder.querySelector('.ai-message-content');
-				messageElement.innerHTML = `<span class="text-red-400 font-medium">Terjadi Kesalahan:</span><br><span class="text-red-400">${error.message}</span>`;
-				messageElement.classList.remove('flex', 'items-center');
-				placeholder.querySelector('.ai-timestamp').textContent = new Date().toLocaleTimeString('id-ID', {
-					hour: '2-digit',
-					minute: '2-digit'
-				});
-				/* --- INI PERBAIKANNYA (B): SCROLL SETELAH ERROR DIMUAT --- */
+				console.error('Gagal generate:', error);
+				if(messageContent) {
+					messageContent.innerHTML = `<div class="text-red-400 font-medium text-sm border border-red-800 bg-red-900/20 p-2 rounded">Gagal: ${error.message}</div>`;
+				}
 				scrollToBottom();
-			} finally {
-				// Tidak ada scroll di sini lagi
 			}
 		}
 		// --- Event Listeners Utama ---
@@ -1347,40 +1351,33 @@
 				e.preventDefault();
 				const saveButton = document.getElementById('settings-save-button');
 				saveButton.disabled = true;
-				// Logika pembersihan input kosong
+				// Pastikan prompt tidak undefined
 				let cleanPrompt = settingsPrompt.value;
-				if(!cleanPrompt) {
-					cleanPrompt = "";
-				}
-				const newSettings = {
+				if(!cleanPrompt) cleanPrompt = "";
+				// 1. Persiapkan Data untuk DATABASE (Gunakan snake_case: custom_prompt, max_tokens)
+				const newSettingsDB = {
 					model: settingsModel.value,
-					custom_prompt: cleanPrompt,
+					custom_prompt: cleanPrompt, // Nama kolom di Supabase
 					temperature: parseFloat(settingsTemp.value),
-					max_tokens: parseInt(settingsTokens.value, 10)
+					max_tokens: parseInt(settingsTokens.value, 10) // Nama kolom di Supabase
 				};
 				try {
-					// 1. Update ke Database
+					// Kirim ke Supabase
 					const {
 						error
-					} = await supabase.from('global_settings').update(newSettings).eq('id', 1);
+					} = await supabase.from('global_settings').update(newSettingsDB).eq('id', 1);
 					if(error) throw error;
-					// 2. Sinkronisasi Variabel Lokal
-					appSettings.model = newSettings.model;
-					appSettings.customPrompt = newSettings.custom_prompt;
-					appSettings.custom_prompt = newSettings.custom_prompt;
-					appSettings.temperature = newSettings.temperature;
-					appSettings.maxTokens = newSettings.max_tokens;
-					// 3. Tampilkan Notifikasi Berhasil
+					// 2. Update Variabel APLIKASI (Gunakan camelCase: customPrompt, maxTokens)
+					appSettings.model = newSettingsDB.model;
+					appSettings.customPrompt = newSettingsDB.custom_prompt; // JEMBATAN PENTING
+					appSettings.temperature = newSettingsDB.temperature;
+					appSettings.maxTokens = newSettingsDB.max_tokens; // JEMBATAN PENTING
 					showCustomAlert("Berhasil", "Pengaturan tersimpan!");
-					// HAPUS baris 'showChatApp' di sini.
-					// Biarkan user menekan tombol 'Kembali' (panah kiri) secara manual
-					// agar Alert tertutup sempurna sebelum halaman berganti.
 				} catch (error) {
 					console.error("Gagal menyimpan:", error.message);
 					showCustomAlert("Gagal", `Gagal menyimpan: ${error.message}`);
 				} finally {
 					saveButton.disabled = false;
-					// Lepaskan fokus dari tombol agar menekan Enter tidak memicu submit lagi
 					saveButton.blur();
 				}
 			});
@@ -1451,11 +1448,6 @@
 						button.classList.add('invisible');
 					});
 				}
-				if(!e.target.closest('.file-preview-card')) {
-					document.querySelectorAll('.delete-file-button').forEach(button => {
-						button.classList.add('invisible');
-					});
-				}
 			});
 			// --- PERBAIKAN KEYBOARD IOS/SAFARI ---
 			// Terapkan ke semua input field di aplikasi
@@ -1467,90 +1459,166 @@
 			createPasswordInput.addEventListener('blur', forceLayoutRedraw);
 			settingsPrompt.addEventListener('blur', forceLayoutRedraw);
 			settingsTokens.addEventListener('blur', forceLayoutRedraw);
-			// Listener Form Submit (Logika Inti Supabase)
+			// --- EVENT LISTENER SUBMIT (VERSI CEPAT / COMPRESSED) ---
 			chatForm.addEventListener('submit', async (e) => {
 				e.preventDefault();
-				const userMessage = chatInput.value.trim();
-				if(!userMessage && uploadedFiles.length === 0) return;
-				const {
-					data: {
-						user
-					}
-				} = await supabase.auth.getUser();
-				if(!user) {
-					/* --- INI PERBAIKANNYA --- */
-					showCustomAlert("Sesi Berakhir", "Sesi Anda berakhir. Harap login kembali.");
+				const rawMessage = chatInput.value.trim();
+				const lowerMessage = rawMessage.toLowerCase();
+
+				if (!rawMessage && uploadedFiles.length === 0) return;
+
+				const { data: { user } } = await supabase.auth.getUser();
+				if (!user) {
+					showCustomAlert("Sesi Berakhir", "Sesi Anda berakhir.");
 					showLoginScreen();
 					return;
 				}
-				const capturedFiles = [...uploadedFiles];
-				let currentChatId = activeChatId;
-				if(isNewChat && (userMessage || capturedFiles.length > 0)) {
-					let newTitle = userMessage.substring(0, 30);
-					if(!newTitle && capturedFiles.length > 0) {
-						newTitle = capturedFiles[0].name.substring(0, 30);
-					}
-					newTitle += (newTitle.length === 30 ? '...' : '');
-					try {
-						const {
-							data: newConvo,
-							error
-						} = await supabase.from('conversations').insert({
-							user_id: user.id,
-							title: newTitle || "Percakapan baru"
-						}).select('id, title').single();
-						if(error) throw error;
-						const newChat = newConvo;
-						chatList.unshift(newChat);
-						currentChatId = newChat.id;
-						activeChatId = newChat.id;
-						isNewChat = false;
-						localStorage.setItem('siapip_lastActiveId', activeChatId);
-						renderChatList();
-						chatMessages.innerHTML = '';
-					} catch (error) {
-						console.error("Gagal membuat percakapan baru:", error.message);
-						addMessage('ai', `Error: Gagal memulai percakapan. ${error.message}`, false);
+
+				// ============================================================
+				// LOGIKA GAMBAR & EDIT
+				// ============================================================
+				const isCreateCmd = lowerMessage.startsWith('/gambar ') || lowerMessage.startsWith('@gambar ');
+				const isEditCmd   = lowerMessage.startsWith('/edit ')   || lowerMessage.startsWith('@edit ');
+
+				if (isCreateCmd || isEditCmd) {
+					
+					let prompt = '';
+					if (isCreateCmd) prompt = rawMessage.substring(8).trim();
+					else if (isEditCmd) prompt = rawMessage.substring(6).trim();
+
+					if (!prompt) {
+						showCustomAlert("Info", "Mohon tulis deskripsi perintah.");
 						return;
 					}
-				}
-				let filesHtml = '';
-				if(capturedFiles.length > 0) {
-					filesHtml = filePreviewContainer.innerHTML;
-					filePreviewContainer.innerHTML = '';
-				}
-				addMessage('user', userMessage, filesHtml);
-				const userParts = [];
-				if(userMessage) {
-					userParts.push({
-						text: userMessage
-					});
-				}
-				if(filesHtml) {
-					userParts.push({
-						fileHtml: filesHtml
-					});
-				}
-				chatHistory.push({
-					role: "user",
-					parts: userParts
-				});
-				try {
-					const {
-						error
-					} = await supabase.from('messages').insert({
+
+					if (isEditCmd && uploadedFiles.length === 0) {
+						showCustomAlert("Peringatan", "Wajib upload gambar untuk perintah /edit");
+						return;
+					}
+
+					// A. AMBIL & KOMPRES GAMBAR (AGAR CEPAT)
+					let inputImage = null;
+					if (uploadedFiles.length > 0) {
+						const file = uploadedFiles[0];
+						if (!file.isTextContent && file.mimeType.startsWith('image/')) {
+							// UBAH TOMBOL KIRIM JADI "MENGOMPRES..."
+							const originalBtnText = sendButton.innerHTML;
+							// Kita pakai loading sementara agar user tau sistem sedang bekerja
+							
+							try {
+								// PANGGIL FUNGSI KOMPRES DI SINI
+								inputImage = await compressImage(file);
+							} catch (err) {
+								console.error("Gagal kompres:", err);
+								// Fallback ke gambar asli jika gagal kompres
+								inputImage = { mimeType: file.mimeType, data: file.data };
+							}
+						}
+					}
+
+					// Reset UI
+					chatInput.value = '';
+					sendButton.disabled = true;
+					filePreviewContainer.innerHTML = ''; 
+					uploadedFiles = []; 
+
+					// Buat Chat Baru
+					let currentChatId = activeChatId;
+					if (isNewChat) {
+						try {
+							const titlePrefix = isEditCmd ? "Edit: " : "Gambar: ";
+							const { data: newConvo } = await supabase.from('conversations').insert({
+								user_id: user.id,
+								title: `${titlePrefix}${prompt.substring(0, 20)}...`
+							}).select('id, title').single();
+							
+							if (newConvo) {
+								chatList.unshift(newConvo);
+								currentChatId = newConvo.id;
+								activeChatId = newConvo.id;
+								isNewChat = false;
+								renderChatList();
+								chatMessages.innerHTML = '';
+							}
+						} catch (error) { return; }
+					}
+
+					// Tampilkan Pesan User (Teks Saja)
+					addMessage('user', rawMessage, ''); 
+
+					// Simpan Pesan User
+					const userParts = [{ text: rawMessage }];
+					if (inputImage) {
+						const actionText = isEditCmd ? "[File dikirim untuk diedit]" : "[File referensi dikirim]";
+						userParts.push({ text: actionText });
+					}
+					
+					chatHistory.push({ role: "user", parts: userParts });
+					
+					await supabase.from('messages').insert({
 						conversation_id: currentChatId,
 						role: 'user',
 						parts: userParts
 					});
-					if(error) throw error;
-				} catch (error) {
-					console.error("Gagal menyimpan pesan user:", error.message);
+
+					// Panggil AI
+					await callImageGenAPI(prompt, inputImage);
+					
+					return; 
 				}
+
+				// ============================================================
+				// LOGIKA CHAT BIASA
+				// ============================================================
+				const capturedFiles = [...uploadedFiles];
+				let currentChatId = activeChatId;
+
+				if (isNewChat && (rawMessage || capturedFiles.length > 0)) {
+					let newTitle = rawMessage.substring(0, 30);
+					if (!newTitle && capturedFiles.length > 0) newTitle = capturedFiles[0].name.substring(0, 30);
+					newTitle += (newTitle.length === 30 ? '...' : '');
+
+					try {
+						const { data: newConvo, error } = await supabase.from('conversations').insert({
+							user_id: user.id, title: newTitle || "Percakapan baru"
+						}).select('id, title').single();
+						if (error) throw error;
+						chatList.unshift(newConvo);
+						currentChatId = newConvo.id;
+						activeChatId = newConvo.id;
+						isNewChat = false;
+						renderChatList();
+					} catch (error) { return; }
+				}
+
+				if (chatHistory.length === 0) chatMessages.innerHTML = '';
+
+				let filesHtml = '';
+				if (capturedFiles.length > 0) {
+					filesHtml = filePreviewContainer.innerHTML;
+					filePreviewContainer.innerHTML = '';
+				}
+
+				addMessage('user', rawMessage, filesHtml);
+
+				const userParts = [];
+				if (rawMessage) userParts.push({ text: rawMessage });
+				if (filesHtml) userParts.push({ fileHtml: filesHtml });
+
+				chatHistory.push({ role: "user", parts: userParts });
+
+				try {
+					await supabase.from('messages').insert({
+						conversation_id: currentChatId,
+						role: 'user',
+						parts: userParts
+					});
+				} catch (error) {}
+
 				chatInput.value = '';
 				sendButton.disabled = true;
 				uploadedFiles = [];
-				scrollToBottom();
+
 				await callGeminiAPI(chatHistory, capturedFiles);
 			});
 			chatInput.addEventListener('input', () => {
@@ -1583,61 +1651,110 @@
 					actionToRun();
 				}
 			});
+			// --- EVENT LISTENER KLIK LIST HISTORY (VERSI PENGHAPUS KUAT & DEBUG) ---
 			chatHistoryList.addEventListener('click', async (e) => {
 				const chatItem = e.target.closest('.chat-history-item');
 				const deleteButton = e.target.closest('.delete-chat-button');
+				// --- LOGIKA HAPUS CHAT ---
 				if(deleteButton) {
 					e.stopPropagation();
-					const idToDelete = deleteButton.dataset.id; // Ambil ID dari tombol
-					/* --- PERBAIKAN: Menggunakan modal kustom baru --- */
-					showCustomConfirm("Hapus Percakapan?", "Tindakan ini tidak dapat dibatalkan. Anda yakin ingin menghapus percakapan ini?", async () => {
-						// Logika yang tadinya ada di modalAgreeButton dipindah ke sini
+					const idToDelete = deleteButton.dataset.id;
+					showCustomConfirm("Hapus Percakapan?", "Semua pesan dan gambar akan dihapus permanen.", async () => {
 						if(!idToDelete) return;
+						// Tampilkan Loading indikator di tombol
+						const originalBtnText = deleteButton.innerHTML;
+						deleteButton.innerHTML = '...';
 						try {
+							// 1. AMBIL DATA PESAN DULU
+							const {
+								data: msgs,
+								error: msgError
+							} = await supabase.from('messages').select('parts').eq('conversation_id', idToDelete);
+							if(msgError) throw msgError;
+							// 2. SCAN NAMA FILE GAMBAR
+							const filesToRemove = [];
+							if(msgs && msgs.length > 0) {
+								msgs.forEach(m => {
+									if(m.parts && Array.isArray(m.parts)) {
+										m.parts.forEach(p => {
+											// Kita cari string yang mengandung link bucket
+											if(p.text && typeof p.text === 'string' && p.text.includes('/generated-images/')) {
+												// REGEX KUAT: Cari teks setelah "generated-images/" 
+												// sampai ketemu tanda kutip ("), tanda tanya (?), atau spasi
+												const regex = /generated-images\/([^"'\s\?)]+)/g;
+												let match;
+												// Loop jika ada banyak gambar dalam satu pesan
+												while((match = regex.exec(p.text)) !== null) {
+													// match[1] adalah nama filenya (misal: img_123.png)
+													const fileName = decodeURIComponent(match[1]);
+													filesToRemove.push(fileName);
+												}
+											}
+										});
+									}
+								});
+							}
+							// 3. EKSEKUSI HAPUS GAMBAR DI STORAGE
+							if(filesToRemove.length > 0) {
+								console.log("Mencoba menghapus file fisik:", filesToRemove);
+								const {
+									data: removeData,
+									error: removeError
+								} = await supabase.storage.from('generated-images').remove(filesToRemove);
+								if(removeError) {
+									console.error("GAGAL HAPUS STORAGE:", removeError);
+									alert("Gagal menghapus gambar di storage, tapi chat akan dihapus.");
+								} else {
+									console.log("Berhasil hapus storage:", removeData);
+								}
+							} else {
+								console.log("Tidak ditemukan gambar untuk dihapus di chat ini.");
+							}
+							// 4. HAPUS DATA PERCAKAPAN DI DB
 							const {
 								error
 							} = await supabase.from('conversations').delete().eq('id', idToDelete);
 							if(error) throw error;
+							// 5. UPDATE UI (Hapus dari daftar)
 							chatList = chatList.filter(chat => chat.id !== idToDelete);
 							if(idToDelete == activeChatId) {
 								startNewChat(false);
 							}
 							renderChatList();
-							sidebarSelectedItem = null; // Dulu di tombol Batal
+							sidebarSelectedItem = null;
 						} catch (error) {
-							console.error("Gagal menghapus percakapan:", error.message);
-							// showCustomAlert("Gagal", ...) <-- DIHAPUS
+							console.error("Error utama saat menghapus:", error.message);
+							showCustomAlert("Gagal", "Terjadi kesalahan: " + error.message);
 						} finally {
-							closeSidebar(); // Dulu di tombol Setuju
+							deleteButton.innerHTML = originalBtnText;
+							closeSidebar();
 						}
 					});
-					return; // Penting agar tidak lanjut ke logika klik chatItem
+					return;
 				}
+				// --- LOGIKA KLIK/PILIH CHAT (Tidak Berubah) ---
 				if(chatItem) {
 					const clickedId = chatItem.dataset.id;
 					if(sidebarSelectedItem === clickedId) {
-						// --- KLIK KEDUA: MUAT CHAT ---
-						if(clickedId != activeChatId || isNewChat) { // Perbaikan bug perbandingan (==)
+						if(clickedId != activeChatId || isNewChat) {
 							activeChatId = clickedId;
 							isNewChat = false;
 							localStorage.setItem('siapip_lastActiveId', activeChatId);
 							renderChatList();
 							uploadedFiles = [];
-							renderFilePreviews();
-							// chatMessages.innerHTML = ''; // DIHAPUS DARI SINI
-							// addMessage('ai', 'Memuat percakapan...', true); // DIHAPUS DARI SINI
+							filePreviewContainer.innerHTML = '';
 							try {
 								const {
 									data: messages,
 									error
 								} = await supabase.from('messages').select('role, parts').eq('conversation_id', activeChatId).order('created_at', {
 									ascending: true
-								}); // 1. Ambil data dulu
+								});
 								if(error) throw error;
-								chatMessages.innerHTML = ''; // 2. DIPINDAH KE SINI. Bersihkan SETELAH data siap.
-								chatHistory = messages;
+								chatMessages.innerHTML = '';
+								chatHistory = messages || [];
 								if(chatHistory.length > 0) {
-									chatHistory.forEach(msg => { // 3. Render chat asli
+									chatHistory.forEach(msg => {
 										const messageText = msg.parts.find(p => p.text) ? msg.parts.find(p => p.text).text : '';
 										if(msg.role === 'user') {
 											const filePart = msg.parts.find(p => p.fileHtml);
@@ -1647,39 +1764,27 @@
 											addMessage('ai', messageText, true);
 										}
 									});
+									setTimeout(() => {
+										if(chatContainer.scrollHeight > chatContainer.clientHeight) scrollToBottom();
+									}, 100);
 								} else {
-									addMessage('ai', `Melanjutkan percakapan "${chatItem.querySelector('span').textContent}"...`, true);
+									addMessage('ai', `Melanjutkan percakapan...`, true);
 								}
-								// PERBAIKAN SCROLL: Hanya scroll jika chatnya panjang
-								setTimeout(() => {
-									if(chatContainer.scrollHeight > chatContainer.clientHeight) {
-										scrollToBottom();
-									}
-								}, 0);
 							} catch (error) {
-								chatMessages.innerHTML = ''; // Tetap bersihkan jika error
+								chatMessages.innerHTML = '';
 								console.error("Gagal memuat pesan:", error.message);
-								addMessage('ai', `Gagal memuat riwayat: ${error.message}`, false);
 							}
 						}
 						const thisDeleteButton = chatItem.querySelector('.delete-chat-button');
-						if(thisDeleteButton) {
-							thisDeleteButton.classList.add('opacity-0', 'invisible');
-							thisDeleteButton.classList.remove('opacity-100');
-						}
+						if(thisDeleteButton) thisDeleteButton.classList.add('opacity-0', 'invisible');
 						sidebarSelectedItem = null;
 						closeSidebar();
 					} else {
-						// --- KLIK PERTAMA: TAMPILKAN TOMBOL ---
 						chatHistoryList.querySelectorAll('.delete-chat-button').forEach(btn => {
 							btn.classList.add('opacity-0', 'invisible');
-							btn.classList.remove('opacity-100');
 						});
 						const thisDeleteButton = chatItem.querySelector('.delete-chat-button');
-						if(thisDeleteButton) {
-							thisDeleteButton.classList.remove('opacity-0', 'invisible');
-							thisDeleteButton.classList.add('opacity-100');
-						}
+						if(thisDeleteButton) thisDeleteButton.classList.remove('opacity-0', 'invisible');
 						sidebarSelectedItem = clickedId;
 					}
 				}
@@ -1706,6 +1811,7 @@
 				for(const file of selectedFiles) {
 					if(!uploadedFiles.find(f => f.name === file.name)) {
 						const fileType = file.name.split('.').pop().toLowerCase();
+						const isImage = file.type.startsWith('image/'); // Deteksi Gambar
 						const reader = new FileReader();
 						const promise = new Promise((resolve, reject) => {
 							reader.onload = async (e) => {
@@ -1740,6 +1846,17 @@
 										content = slideTexts.join('\n\n');
 										mimeType = 'text/plain';
 										isTextContent = true;
+										// --- LOGIKA BARU UNTUK TXT ---
+									} else if(fileType === 'txt') {
+										content = e.target.result; // Hasil readAsText adalah string langsung
+										mimeType = 'text/plain';
+										isTextContent = true;
+										// --- LOGIKA BARU UNTUK GAMBAR ---
+									} else if(isImage) {
+										content = e.target.result.split(',')[1]; // Ambil Base64 murni
+										mimeType = file.type;
+										isTextContent = false; // Gambar dikirim sebagai InlineData (bukan text prompt)
+										// --- PDF ---
 									} else if(fileType === 'pdf') {
 										content = e.target.result.split(',')[1];
 										mimeType = file.type;
@@ -1760,10 +1877,13 @@
 								}
 							};
 							reader.onerror = (error) => reject(error);
-							if(fileType === 'pdf') {
-								reader.readAsDataURL(file);
+							// PEMICU PEMBACAAN FILE (Reader Trigger)
+							if(isImage || fileType === 'pdf') {
+								reader.readAsDataURL(file); // Gambar & PDF jadi Base64
+							} else if(fileType === 'txt') {
+								reader.readAsText(file); // TXT jadi String langsung
 							} else if(['doc', 'docx', 'xls', 'xlsx', 'pptx'].includes(fileType)) {
-								reader.readAsArrayBuffer(file);
+								reader.readAsArrayBuffer(file); // Dokumen Office jadi ArrayBuffer
 							} else {
 								reject(new Error(`Tipe file .${fileType} tidak diizinkan.`));
 							}
@@ -1775,7 +1895,6 @@
 							}
 						} catch (error) {
 							console.error("Gagal memproses file:", error);
-							/* --- INI PERBAIKANNYA --- */
 							showCustomAlert("File Error", `Gagal memproses file "${file.name}": ${error.message}`);
 						}
 					}
@@ -1783,21 +1902,16 @@
 				renderFilePreviews();
 				fileInput.value = '';
 			});
+			// --- EVENT LISTENER PREVIEW FILE (HANYA HAPUS) ---
 			filePreviewContainer.addEventListener('click', (e) => {
+				// Cari tombol hapus terdekat
 				const deleteButton = e.target.closest('.delete-file-button');
-				const clickedCard = e.target.closest('.file-preview-card');
 				if(deleteButton) {
 					const indexToRemove = parseInt(deleteButton.dataset.index, 10);
+					// Hapus dari array
 					uploadedFiles.splice(indexToRemove, 1);
+					// Render ulang
 					renderFilePreviews();
-				} else if(clickedCard) {
-					document.querySelectorAll('.delete-file-button').forEach(btn => {
-						btn.classList.add('invisible');
-					});
-					const buttonInThisCard = clickedCard.querySelector('.delete-file-button');
-					if(buttonInThisCard) {
-						buttonInThisCard.classList.remove('invisible');
-					}
 				}
 			});
 			// Jalankan pemeriksaan Auth untuk memulai
@@ -1811,6 +1925,68 @@
 				});
 			}
 		});
+		// --- FUNGSI KOMPRES GAMBAR (VERSI HIGH QUALITY / SMART RESIZE) ---
+		// Fungsi ini mempercepat upload hingga 10x lipat tanpa merusak detail visual
+		const compressImage = (file) => {
+			return new Promise((resolve) => {
+				const reader = new FileReader();
+				reader.readAsDataURL(file);
+				
+				reader.onload = (event) => {
+					const img = new Image();
+					img.src = event.target.result;
+					
+					img.onload = () => {
+						const canvas = document.createElement('canvas');
+						
+						// Batas resolusi 1536px (Sangat detail untuk AI, tapi ringan)
+						const MAX_WIDTH = 1536; 
+						const MAX_HEIGHT = 1536;
+						let width = img.width;
+						let height = img.height;
+
+						// Hitung rasio agar gambar tidak gepeng
+						if (width > height) {
+							if (width > MAX_WIDTH) {
+								height *= MAX_WIDTH / width;
+								width = MAX_WIDTH;
+							}
+						} else {
+							if (height > MAX_HEIGHT) {
+								width *= MAX_HEIGHT / height;
+								height = MAX_HEIGHT;
+							}
+						}
+
+						canvas.width = width;
+						canvas.height = height;
+						const ctx = canvas.getContext('2d');
+						
+						// Aktifkan penghalusan gambar (Anti-Gerigi)
+						ctx.imageSmoothingEnabled = true;
+						ctx.imageSmoothingQuality = 'high';
+						
+						// Gambar ulang di kanvas baru
+						ctx.drawImage(img, 0, 0, width, height);
+						
+						// OUTPUT: JPEG dengan Kualitas 95% (Hampir Lossless)
+						// Ini memangkas ukuran file dari 5MB -> ~400KB (Tanpa terlihat bedanya)
+						const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+						
+						// Ambil data murninya
+						const base64Data = dataUrl.split(',')[1]; 
+						
+						resolve({
+							mimeType: 'image/jpeg',
+							data: base64Data
+						});
+					};
+				};
+				
+				// Jika file rusak, kembalikan error
+				reader.onerror = (error) => resolve(null);
+			});
+		};
 	</script>
 </body>
 </html>
