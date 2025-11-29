@@ -2500,48 +2500,86 @@
 				});
 			}
 		})();
-		
 		(function() {
 			// 1. Deteksi iOS 15
 			const isIOS15 = /iPhone/.test(navigator.userAgent) && /OS 15_/.test(navigator.userAgent);
 			if(isIOS15) {
-				console.log("⚠️ iOS 15 Detected: Mengganti Showdown Engine dengan Simple Parser");
-				// 2. TIMPA FUNGSI KONVERSI (Override converter.makeHtml)
-				// Kita bajak fungsi utamanya. Jika iOS 15, jangan pakai library berat.
-				// Pakai regex manual yang super ringan & aman.
+				console.log("⚠️ iOS 15 Detected: Mengaktifkan Parser Tampilan Rapi");
+				// 2. TIMPA FUNGSI KONVERSI (High Precision Manual Parser)
 				if(typeof converter !== 'undefined') {
 					converter.makeHtml = function(text) {
 						if(!text) return "";
 						try {
-							// --- MESIN RENDER RINGAN (SAFE MODE) ---
+							// --- TAHAP 1: AMANKAN KODE & FORMAT DASAR ---
 							let html = text
-								// 1. Amankan HTML Tags (XSS Prevention)
 								.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-								// 2. Bold (**teks**) -> <b>teks</b>
-								.replace(/\*\*(.*?)\*\*/g, '<b class="font-bold text-slate-800">$1</b>')
-								// 3. Italic (*teks*) -> <i>teks</i>
-								.replace(/\*(.*?)\*/g, '<i class="italic text-slate-600">$1</i>')
-								// 4. Code Block (```)
-								.replace(/```([\s\S]*?)```/g, '<pre class="bg-gray-100 p-2 rounded-lg text-xs my-2 overflow-x-auto border border-gray-200"><code>$1</code></pre>')
-								// 5. Inline Code (`)
-								.replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-1 rounded text-red-500 font-mono text-sm border border-gray-200">$1</code>')
-								// --- FIX UTAMA: LIST HANDLING MANUAL ---
-								// Mengubah "- Item" atau "* Item" menjadi tampilan bullet tanpa merusak memori
-								.replace(/^[\s\t]*[\*\-] +(.*)$/gm, '<div class="flex items-start ml-1 mb-1"><span class="mr-2 text-slate-400 text-lg leading-none">•</span><span class="flex-1">$1</span></div>')
-								// Mengubah "1. Item" menjadi tampilan nomor
-								.replace(/^[\s\t]*(\d+\.) +(.*)$/gm, '<div class="flex items-start ml-1 mb-1"><span class="mr-2 font-bold text-slate-500 text-sm mt-0.5">$1</span><span class="flex-1">$2</span></div>')
-								// 6. Header (### Judul)
-								.replace(/^### (.*$)/gm, '<h3 class="text-base font-bold text-slate-800 mt-3 mb-1">$1</h3>')
-								.replace(/^## (.*$)/gm, '<h2 class="text-lg font-bold text-slate-800 mt-4 mb-2 border-b pb-1">$1</h2>')
-								// 7. Line Breaks (Enter)
-								// Ganti enter ganda dengan jarak paragraf
-								.replace(/\n\n/g, '<div class="h-2"></div>')
-								// Ganti enter biasa dengan baris baru
-								.replace(/\n/g, '<br>');
-							return html;
+								// Bold & Italic
+								.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+								.replace(/\*(.*?)\*/g, '<i>$1</i>')
+								.replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-1 rounded text-red-600 font-mono text-sm border border-gray-200">$1</code>')
+								// Header
+								.replace(/^### (.*$)/gm, '<h3 class="text-base font-bold text-gray-900 mt-4 mb-1">$1</h3>')
+								.replace(/^## (.*$)/gm, '<h2 class="text-lg font-bold text-gray-900 mt-5 mb-2 border-b border-gray-300 pb-1">$1</h2>');
+							// --- TAHAP 2: PARSING LIST (NUMBERING & BULLET) ---
+							// Kita proses per baris untuk menghitung spasi (indentasi)
+							const lines = html.split('\n');
+							let output = [];
+							let inCodeBlock = false;
+							lines.forEach(line => {
+								// Handle Code Block (agar isi code tidak rusak)
+								if(line.trim().startsWith('```')) {
+									inCodeBlock = !inCodeBlock;
+									output.push(inCodeBlock ? '<pre class="bg-gray-100 p-2 rounded-lg text-xs my-2 overflow-x-auto border border-gray-200"><code>' : '</code></pre>');
+									return;
+								}
+								if(inCodeBlock) {
+									output.push(line + '\n');
+									return;
+								}
+								// DETEKSI LIST (Bullet atau Number)
+								// Regex: Menangkap (Spasi Awal), (Simbol), dan (Isi Teks)
+								const listMatch = line.match(/^(\s*)([-*]|\d+\.)\s+(.*)$/);
+								if(listMatch) {
+									const indent = listMatch[1].length; // Jumlah spasi di awal
+									const symbol = listMatch[2]; // Tanda * atau 1.
+									const content = listMatch[3]; // Isi teks
+									// Hitung Padding Kiri berdasarkan jumlah spasi (Hierarki)
+									// Setiap 1-2 spasi nambah kedalaman
+									let paddingClass = 'pl-0';
+									if(indent >= 2) paddingClass = 'pl-4';
+									if(indent >= 4) paddingClass = 'pl-8';
+									if(indent >= 6) paddingClass = 'pl-12';
+									// Tentukan Tampilan Bullet/Number
+									let markerHtml = '';
+									if(symbol.includes('.') || !isNaN(parseInt(symbol))) {
+										// NUMBERING (1., 2., dst) - Warna Hitam
+										markerHtml = `<span class="mr-2 font-bold text-black min-w-[1.2rem] text-right">${symbol}</span>`;
+									} else {
+										// BULLET (Titik Hitam Solid)
+										markerHtml = `<span class="mr-2 text-black text-lg leading-none mt-[-2px]">&bull;</span>`;
+									}
+									// RENDER BARIS LIST (Rapi, Hitam, Rapat)
+									// 'leading-snug' agar jarak antar baris teks tidak terlalu jauh
+									// 'mb-0.5' agar jarak antar item list rapat
+									const itemHtml = `
+                                <div class="flex items-start ${paddingClass} mb-1 leading-snug text-gray-900">
+                                    ${markerHtml}
+                                    <span class="flex-1">${content}</span>
+                                </div>`;
+									output.push(itemHtml);
+								} else {
+									// Baris Biasa (Bukan List)
+									if(line.trim() === '') {
+										output.push('<div class="h-2"></div>'); // Jarak antar paragraf (dikecilkan)
+									} else {
+										output.push(`<div class="mb-1 leading-relaxed text-gray-900">${line}</div>`);
+									}
+								}
+							});
+							return output.join('');
 						} catch (e) {
-							console.error("Safe Render Error:", e);
-							return text; // Jika gagal total, tampilkan teks polos saja (Anti Crash)
+							console.error("Manual Render Error:", e);
+							return text;
 						}
 					};
 				}
