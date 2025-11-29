@@ -2127,9 +2127,190 @@
 				console.error('Download error:', err);
 			}
 		}
-		// ==========================================
-		// SOLUSI FINAL IOS 15: TRUE PUSH UP + BOTTOM ANCHOR
-		// ==========================================
+		// ============================
+		// EVENT LISTENERS
+		// ============================
+		/**
+		 * Global click listener for copy buttons and chat bubbles
+		 */
+		document.addEventListener('click', async (e) => {
+			// 1. JIKA TOMBOL COPY DIKLIK
+			const copyBtn = e.target.closest('.copy-btn');
+			if(copyBtn) {
+				e.stopPropagation();
+				const card = copyBtn.closest('.ai-bubble');
+				const contentDiv = card.querySelector('.chat-content');
+				if(contentDiv) {
+					try {
+						// LOGIKA SMART COPY (OPTIMASI WORD)
+						const tempDiv = document.createElement('div');
+						tempDiv.innerHTML = contentDiv.innerHTML;
+						// A. STYLING DASAR KONTAINER (Arial untuk Dokumen Resmi)
+						tempDiv.style.fontFamily = 'Arial, sans-serif';
+						tempDiv.style.fontSize = '11pt'; // Standar surat dinas
+						tempDiv.style.lineHeight = '1.15'; // Jarak antar baris standar (Single/1.15)
+						tempDiv.style.color = '#000000';
+						// B. PEMBERSIHAN ELEMEN
+						const allElements = tempDiv.querySelectorAll('*');
+						allElements.forEach(el => {
+							el.removeAttribute('class');
+							el.style.fontFamily = 'Arial, sans-serif';
+							if(el.tagName === 'P') {
+								el.style.marginBottom = '6px'; // Jarak antar paragraf lebih rapat
+								el.style.textAlign = 'justify';
+							}
+							if(el.tagName === 'LI') {
+								el.style.marginBottom = '2px';
+								el.style.textAlign = 'justify';
+							}
+							if(el.tagName.startsWith('H')) {
+								el.style.fontWeight = 'bold';
+								el.style.marginTop = '12px';
+								el.style.marginBottom = '6px';
+								el.style.color = '#000000';
+								el.style.fontSize = '12pt'; // Judul sedikit lebih besar
+							}
+						});
+						// C. STYLING TABEL SPESIFIK (PADAT & 11pt)
+						const tables = tempDiv.querySelectorAll('table');
+						tables.forEach(table => {
+							// Reset Tabel
+							table.style.width = '100%';
+							table.style.borderCollapse = 'collapse';
+							table.style.marginTop = '6px';
+							table.style.marginBottom = '6px';
+							// UKURAN FONT 11pt (SESUAI PERMINTAAN)
+							table.style.fontSize = '11pt';
+							// Atribut Legacy
+							table.setAttribute('border', '1');
+							table.setAttribute('width', '100%');
+							table.setAttribute('cellpadding', '4'); // Padding HTML attribute diperkecil
+							// Styling Header (TH)
+							const headers = table.querySelectorAll('th');
+							headers.forEach(th => {
+								th.style.backgroundColor = '#f1f5f9'; // Abu Tipis
+								th.style.color = '#000000';
+								th.style.fontWeight = 'bold';
+								th.style.border = '1px solid #cbd5e1';
+								// PADDING RAPAT (PADAT)
+								th.style.padding = '4px';
+								th.style.textAlign = 'center';
+								th.style.verticalAlign = 'middle';
+							});
+							// Styling Sel Isi (TD)
+							const cells = table.querySelectorAll('td');
+							cells.forEach(td => {
+								td.style.border = '1px solid #cbd5e1';
+								// PADDING RAPAT (PADAT)
+								td.style.padding = '4px';
+								td.style.verticalAlign = 'top';
+								td.style.color = '#000000';
+								td.style.textAlign = 'left';
+								td.style.whiteSpace = 'normal';
+							});
+						});
+						// D. COPY KE CLIPBOARD
+						const finalHtml = `<div style="font-family: Arial, sans-serif; font-size: 11pt;">${tempDiv.innerHTML}</div>`;
+						const plainText = contentDiv.innerText;
+						const htmlBlob = new Blob([finalHtml], {
+							type: 'text/html'
+						});
+						const textBlob = new Blob([plainText], {
+							type: 'text/plain'
+						});
+						const item = new ClipboardItem({
+							'text/html': htmlBlob,
+							'text/plain': textBlob
+						});
+						await navigator.clipboard.write([item]);
+						// VISUAL FEEDBACK
+						if(copyBtn.dataset.copied === "true") return;
+						const originalIcon = copyBtn.innerHTML;
+						copyBtn.dataset.copied = "true";
+						copyBtn.innerHTML = `
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        `;
+						setTimeout(() => {
+							copyBtn.innerHTML = originalIcon;
+							copyBtn.dataset.copied = "false";
+						}, 2000);
+					} catch (err) {
+						console.error("Gagal copy Smart Text:", err);
+						try {
+							await navigator.clipboard.writeText(contentDiv.innerText);
+						} catch (e) {
+							// Fallback jika clipboard gagal
+						}
+					}
+				}
+				return;
+			}
+			// 2. RESET TAMPILAN TOMBOL
+			document.querySelectorAll('.copy-container').forEach(el => {
+				const btn = el.querySelector('.copy-btn');
+				if(btn && btn.dataset.copied === "true") return;
+				el.classList.add('hidden');
+			});
+			// 3. KLIK GELEMBUNG
+			const clickedBubble = e.target.closest('.ai-bubble');
+			if(clickedBubble) {
+				const btn = clickedBubble.querySelector('.copy-container');
+				if(btn) {
+					btn.classList.remove('hidden');
+				}
+			}
+		});
+		/**
+		 * Handle send button click
+		 */
+		function handleSend(e) {
+			e.preventDefault();
+			if(!sendBtn.disabled) {
+				sendMessage();
+			}
+		}
+		// Modal event listeners
+		document.getElementById('modal-cancel-button').addEventListener('click', hideConfirmModal);
+		document.getElementById('modal-agree-button').addEventListener('click', async () => {
+			if(currentConfirmAction) await currentConfirmAction();
+			hideConfirmModal();
+		});
+		// Dropdown click outside listener
+		document.addEventListener('click', function(e) {
+			if(!dropdownWrapper.contains(e.target)) closeDropdown();
+		});
+		// Input/textarea blur listeners for scroll reset
+		document.querySelectorAll('input, textarea').forEach(el => {
+			el.addEventListener('blur', resetScroll);
+		});
+		// User input listener for auto-resize
+		userInput.addEventListener('input', function() {
+			adjustHeight(this);
+		});
+		// Send button event listeners
+		sendBtn.addEventListener('click', handleSend);
+		sendBtn.addEventListener('touchend', handleSend);
+		// Prevent double-tap zoom
+		let lastTouchEnd = 0;
+		document.addEventListener('touchend', (e) => {
+			const now = (new Date()).getTime();
+			if(now - lastTouchEnd <= 300) e.preventDefault();
+			lastTouchEnd = now;
+		}, false);
+		// Enable send button initially
+		sendBtn.disabled = false;
+		// ============================
+		// INITIALIZATION
+		// ============================
+		// Check session on app start
+		checkSession();
+	</script>
+	<script>
+		// ============
+		// PATCH IOS 15
+		// ============
 		(function() {
 			const ua = navigator.userAgent;
 			const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
@@ -2319,185 +2500,53 @@
 				});
 			}
 		})();
-		// ============================
-		// EVENT LISTENERS
-		// ============================
-		/**
-		 * Global click listener for copy buttons and chat bubbles
-		 */
-		document.addEventListener('click', async (e) => {
-			// 1. JIKA TOMBOL COPY DIKLIK
-			const copyBtn = e.target.closest('.copy-btn');
-			if(copyBtn) {
-				e.stopPropagation();
-				const card = copyBtn.closest('.ai-bubble');
-				const contentDiv = card.querySelector('.chat-content');
-				if(contentDiv) {
-					try {
-						// LOGIKA SMART COPY (OPTIMASI WORD)
-						const tempDiv = document.createElement('div');
-						tempDiv.innerHTML = contentDiv.innerHTML;
-						// A. STYLING DASAR KONTAINER (Arial untuk Dokumen Resmi)
-						tempDiv.style.fontFamily = 'Arial, sans-serif';
-						tempDiv.style.fontSize = '11pt'; // Standar surat dinas
-						tempDiv.style.lineHeight = '1.15'; // Jarak antar baris standar (Single/1.15)
-						tempDiv.style.color = '#000000';
-						// B. PEMBERSIHAN ELEMEN
-						const allElements = tempDiv.querySelectorAll('*');
-						allElements.forEach(el => {
-							el.removeAttribute('class');
-							el.style.fontFamily = 'Arial, sans-serif';
-							if(el.tagName === 'P') {
-								el.style.marginBottom = '6px'; // Jarak antar paragraf lebih rapat
-								el.style.textAlign = 'justify';
-							}
-							if(el.tagName === 'LI') {
-								el.style.marginBottom = '2px';
-								el.style.textAlign = 'justify';
-							}
-							if(el.tagName.startsWith('H')) {
-								el.style.fontWeight = 'bold';
-								el.style.marginTop = '12px';
-								el.style.marginBottom = '6px';
-								el.style.color = '#000000';
-								el.style.fontSize = '12pt'; // Judul sedikit lebih besar
-							}
-						});
-						// C. STYLING TABEL SPESIFIK (PADAT & 11pt)
-						const tables = tempDiv.querySelectorAll('table');
-						tables.forEach(table => {
-							// Reset Tabel
-							table.style.width = '100%';
-							table.style.borderCollapse = 'collapse';
-							table.style.marginTop = '6px';
-							table.style.marginBottom = '6px';
-							// UKURAN FONT 11pt (SESUAI PERMINTAAN)
-							table.style.fontSize = '11pt';
-							// Atribut Legacy
-							table.setAttribute('border', '1');
-							table.setAttribute('width', '100%');
-							table.setAttribute('cellpadding', '4'); // Padding HTML attribute diperkecil
-							// Styling Header (TH)
-							const headers = table.querySelectorAll('th');
-							headers.forEach(th => {
-								th.style.backgroundColor = '#f1f5f9'; // Abu Tipis
-								th.style.color = '#000000';
-								th.style.fontWeight = 'bold';
-								th.style.border = '1px solid #cbd5e1';
-								// PADDING RAPAT (PADAT)
-								th.style.padding = '4px';
-								th.style.textAlign = 'center';
-								th.style.verticalAlign = 'middle';
-							});
-							// Styling Sel Isi (TD)
-							const cells = table.querySelectorAll('td');
-							cells.forEach(td => {
-								td.style.border = '1px solid #cbd5e1';
-								// PADDING RAPAT (PADAT)
-								td.style.padding = '4px';
-								td.style.verticalAlign = 'top';
-								td.style.color = '#000000';
-								td.style.textAlign = 'left';
-								td.style.whiteSpace = 'normal';
-							});
-						});
-						// D. COPY KE CLIPBOARD
-						const finalHtml = `<div style="font-family: Arial, sans-serif; font-size: 11pt;">${tempDiv.innerHTML}</div>`;
-						const plainText = contentDiv.innerText;
-						const htmlBlob = new Blob([finalHtml], {
-							type: 'text/html'
-						});
-						const textBlob = new Blob([plainText], {
-							type: 'text/plain'
-						});
-						const item = new ClipboardItem({
-							'text/html': htmlBlob,
-							'text/plain': textBlob
-						});
-						await navigator.clipboard.write([item]);
-						// VISUAL FEEDBACK
-						if(copyBtn.dataset.copied === "true") return;
-						const originalIcon = copyBtn.innerHTML;
-						copyBtn.dataset.copied = "true";
-						copyBtn.innerHTML = `
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500">
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                        `;
-						setTimeout(() => {
-							copyBtn.innerHTML = originalIcon;
-							copyBtn.dataset.copied = "false";
-						}, 2000);
-					} catch (err) {
-						console.error("Gagal copy Smart Text:", err);
+		
+		(function() {
+			// 1. Deteksi iOS 15
+			const isIOS15 = /iPhone/.test(navigator.userAgent) && /OS 15_/.test(navigator.userAgent);
+			if(isIOS15) {
+				console.log("⚠️ iOS 15 Detected: Mengganti Showdown Engine dengan Simple Parser");
+				// 2. TIMPA FUNGSI KONVERSI (Override converter.makeHtml)
+				// Kita bajak fungsi utamanya. Jika iOS 15, jangan pakai library berat.
+				// Pakai regex manual yang super ringan & aman.
+				if(typeof converter !== 'undefined') {
+					converter.makeHtml = function(text) {
+						if(!text) return "";
 						try {
-							await navigator.clipboard.writeText(contentDiv.innerText);
+							// --- MESIN RENDER RINGAN (SAFE MODE) ---
+							let html = text
+								// 1. Amankan HTML Tags (XSS Prevention)
+								.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+								// 2. Bold (**teks**) -> <b>teks</b>
+								.replace(/\*\*(.*?)\*\*/g, '<b class="font-bold text-slate-800">$1</b>')
+								// 3. Italic (*teks*) -> <i>teks</i>
+								.replace(/\*(.*?)\*/g, '<i class="italic text-slate-600">$1</i>')
+								// 4. Code Block (```)
+								.replace(/```([\s\S]*?)```/g, '<pre class="bg-gray-100 p-2 rounded-lg text-xs my-2 overflow-x-auto border border-gray-200"><code>$1</code></pre>')
+								// 5. Inline Code (`)
+								.replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-1 rounded text-red-500 font-mono text-sm border border-gray-200">$1</code>')
+								// --- FIX UTAMA: LIST HANDLING MANUAL ---
+								// Mengubah "- Item" atau "* Item" menjadi tampilan bullet tanpa merusak memori
+								.replace(/^[\s\t]*[\*\-] +(.*)$/gm, '<div class="flex items-start ml-1 mb-1"><span class="mr-2 text-slate-400 text-lg leading-none">•</span><span class="flex-1">$1</span></div>')
+								// Mengubah "1. Item" menjadi tampilan nomor
+								.replace(/^[\s\t]*(\d+\.) +(.*)$/gm, '<div class="flex items-start ml-1 mb-1"><span class="mr-2 font-bold text-slate-500 text-sm mt-0.5">$1</span><span class="flex-1">$2</span></div>')
+								// 6. Header (### Judul)
+								.replace(/^### (.*$)/gm, '<h3 class="text-base font-bold text-slate-800 mt-3 mb-1">$1</h3>')
+								.replace(/^## (.*$)/gm, '<h2 class="text-lg font-bold text-slate-800 mt-4 mb-2 border-b pb-1">$1</h2>')
+								// 7. Line Breaks (Enter)
+								// Ganti enter ganda dengan jarak paragraf
+								.replace(/\n\n/g, '<div class="h-2"></div>')
+								// Ganti enter biasa dengan baris baru
+								.replace(/\n/g, '<br>');
+							return html;
 						} catch (e) {
-							// Fallback jika clipboard gagal
+							console.error("Safe Render Error:", e);
+							return text; // Jika gagal total, tampilkan teks polos saja (Anti Crash)
 						}
-					}
-				}
-				return;
-			}
-			// 2. RESET TAMPILAN TOMBOL
-			document.querySelectorAll('.copy-container').forEach(el => {
-				const btn = el.querySelector('.copy-btn');
-				if(btn && btn.dataset.copied === "true") return;
-				el.classList.add('hidden');
-			});
-			// 3. KLIK GELEMBUNG
-			const clickedBubble = e.target.closest('.ai-bubble');
-			if(clickedBubble) {
-				const btn = clickedBubble.querySelector('.copy-container');
-				if(btn) {
-					btn.classList.remove('hidden');
+					};
 				}
 			}
-		});
-		/**
-		 * Handle send button click
-		 */
-		function handleSend(e) {
-			e.preventDefault();
-			if(!sendBtn.disabled) {
-				sendMessage();
-			}
-		}
-		// Modal event listeners
-		document.getElementById('modal-cancel-button').addEventListener('click', hideConfirmModal);
-		document.getElementById('modal-agree-button').addEventListener('click', async () => {
-			if(currentConfirmAction) await currentConfirmAction();
-			hideConfirmModal();
-		});
-		// Dropdown click outside listener
-		document.addEventListener('click', function(e) {
-			if(!dropdownWrapper.contains(e.target)) closeDropdown();
-		});
-		// Input/textarea blur listeners for scroll reset
-		document.querySelectorAll('input, textarea').forEach(el => {
-			el.addEventListener('blur', resetScroll);
-		});
-		// User input listener for auto-resize
-		userInput.addEventListener('input', function() {
-			adjustHeight(this);
-		});
-		// Send button event listeners
-		sendBtn.addEventListener('click', handleSend);
-		sendBtn.addEventListener('touchend', handleSend);
-		// Prevent double-tap zoom
-		let lastTouchEnd = 0;
-		document.addEventListener('touchend', (e) => {
-			const now = (new Date()).getTime();
-			if(now - lastTouchEnd <= 300) e.preventDefault();
-			lastTouchEnd = now;
-		}, false);
-		// Enable send button initially
-		sendBtn.disabled = false;
-		// ============================
-		// INITIALIZATION
-		// ============================
-		// Check session on app start
-		checkSession();
+		})();
 	</script>
 </body>
 </html>
