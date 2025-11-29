@@ -1,2211 +1,401 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-	<meta name="apple-mobile-web-app-capable" content="yes">
-	<meta name="apple-mobile-web-app-status-bar-style" content="default">
-	<meta name="apple-mobile-web-app-title" content="AI ASISTEN">
-	<link rel="apple-touch-icon" href="./icon-512.png">
-	<link rel="icon" type="image/png" href="./icon-512.png">
-	<title>AI ASISTEN</title>
-	<script src="https://cdn.tailwindcss.com"></script>
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
-	<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.7.0/mammoth.browser.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-	<script>
-		const converter = new showdown.Converter({
-			tables: true,
-			strikethrough: true,
-			tasklists: true,
-			ghCodeBlocks: true,
-			openLinksInNewWindow: true,
-			emoji: true
-		});
-		tailwind.config = {
-			theme: {
-				extend: {
-					fontFamily: {
-						sans: ['Inter', 'sans-serif'],
-						orbitron: ['Orbitron', 'sans-serif']
-					}
-				}
-			}
-		}
-	</script>
-	<style>
-		/* === CORE & IOS RESETS === */
-		*, *::before, *::after {
-			touch-action: manipulation;
-		}
-		html, body {
-			width: 100%;
-			height: 100%;
-			overflow: hidden;
-			background-color: #ffffff;
-			overscroll-behavior: none;
-			-webkit-overflow-scrolling: touch;
-			-webkit-user-select: none;
-			user-select: none;
-			-webkit-tap-highlight-color: transparent;
-		}
-		#chat-container, #settings-content, input, textarea, select {
-			-webkit-user-select: text;
-			user-select: text;
-		}
-		*:focus {
-			outline: none;
-			box-shadow: none;
-		}
-		#chat-container, #settings-content {
-			-webkit-overflow-scrolling: touch;
-			overscroll-behavior-y: contain;
-		}
-		.no-scrollbar::-webkit-scrollbar, #user-input::-webkit-scrollbar, #settings-content::-webkit-scrollbar {
-			display: none;
-		}
-		.no-scrollbar {
-			-ms-overflow-style: none;
-			scrollbar-width: none;
-		}
-		.safe-pt {
-			padding-top: env(safe-area-inset-top);
-		}
-		.safe-pb {
-			padding-bottom: env(safe-area-inset-bottom);
-		}
-		/* === TYPOGRAPHY & SPACING === */
-		/* 1. Pengaturan Dasar Teks */
-		.markdown-body {
-			font-size: 0.95rem;
-			line-height: 1.6;
-			color: #334155;
-			word-wrap: break-word;
-			/* Support Browser Lama */
-			overflow-wrap: break-word;
-			/* Standar Modern */
-			word-break: break-word;
-		}
-		/* 2. Paragraf */
-		.markdown-body p {
-			margin-bottom: 0.75rem;
-			margin-top: 0;
-		}
-		/* 3. Heading (Judul H1, H2, dll) */
-		.markdown-body h1,
-		.markdown-body h2,
-		.markdown-body h3,
-		.markdown-body h4 {
-			color: #0f172a;
-			font-weight: 700;
-			margin-top: 1.25rem;
-			margin-bottom: 0.5rem;
-			line-height: 1.3;
-		}
-		/* Hapus margin top jika heading ada di paling atas */
-		.markdown-body>*:first-child {
-			margin-top: 0 !important;
-		}
-		/* 4. List (Bullet & Numbering) */
-		.markdown-body ul {
-			list-style-type: disc;
-			margin-top: 0.25rem;
-			margin-bottom: 0.75rem;
-			padding-left: 1.6rem;
-		}
-		.markdown-body ol {
-			list-style-type: decimal;
-			margin-top: 0.25rem;
-			margin-bottom: 0.75rem;
-			padding-left: 1.6rem;
-		}
-		.markdown-body li {
-			margin-bottom: 0.25rem;
-			padding-left: 0.25rem;
-		}
-		.markdown-body li>p {
-			margin-bottom: 0.25rem;
-		}
-		/* 5. Garis Pemisah (HR) */
-		.markdown-body hr {
-			border: 0;
-			border-top: 1px solid #e2e8f0;
-			margin-top: 0.75rem;
-			margin-bottom: 0.75rem;
-		}
-		/* 6. Blockquote (Kutipan) */
-		.markdown-body blockquote {
-			border-left: 3px solid #cbd5e1;
-			padding-left: 1rem;
-			color: #64748b;
-			margin-left: 0;
-			margin-bottom: 0.75rem;
-			font-style: italic;
-		}
-		/* 7. Link */
-		.markdown-body a {
-			color: #2563eb;
-			text-decoration: none;
-			font-weight: 500;
-		}
-		.markdown-body a:hover {
-			text-decoration: underline;
-		}
-		/* Bold */
-		.markdown-body strong {
-			font-weight: 700;
-			color: #1e293b;
-		}
-		/* PENTING: Elemen Terakhir tidak boleh punya margin bawah */
-		.markdown-body>*:last-child {
-			margin-bottom: 0 !important;
-		}
-		/* === STYLE TABEL FINAL (ROUNDED & SERAGAM) === */
-		/* Wrapper (Wadah Scroll) */
-		.overflow-x-auto {
-			width: 100%;
-			overflow-x: auto;
-			-webkit-overflow-scrolling: touch;
-			margin-bottom: 1rem;
-			border: none;
-			padding: 0;
-		}
-		/* Tabel Utama */
-		.markdown-body table {
-			width: 100%;
-			border-collapse: separate;
-			/* Agar radius jalan */
-			border-spacing: 0;
-			background-color: transparent;
-			font-size: 0.9rem;
-			border: 1px solid #cbd5e1;
-			border-radius: 0.75rem;
-			overflow: hidden;
-		}
-		/* Header & Sel */
-		.markdown-body th,
-		.markdown-body td {
-			padding: 12px 16px;
-			border-bottom: 1px solid #cbd5e1;
-			border-right: 1px solid #cbd5e1;
-			vertical-align: top;
-			text-align: left;
-			color: #334155;
-			line-height: 1.5;
-			white-space: normal;
-			word-wrap: break-word;
-			min-width: 100px;
-		}
-		/* Hapus garis kanan di kolom terakhir */
-		.markdown-body th:last-child,
-		.markdown-body td:last-child {
-			border-right: none;
-		}
-		/* Hapus garis bawah di baris terakhir */
-		.markdown-body tr:last-child td {
-			border-bottom: none;
-		}
-		/* Header Styling */
-		.markdown-body th {
-			background-color: #f1f5f9;
-			color: #0f172a;
-			font-weight: 700;
-			font-size: 0.85rem;
-			letter-spacing: 0.02em;
-			border-bottom: 1px solid #cbd5e1;
-		}
-		/* === STYLING CODE BLOCK (GABUNGAN FINAL) === */
-		/* Wadah utama blok kode (Pre) */
-		.markdown-body pre {
-			background-color: #f8fafc;
-			color: #334155;
-			padding: 1rem;
-			border-radius: 0.75rem;
-			margin: 0.75rem 0;
-			overflow-x: auto;
-			/* Scroll horizontal */
-			width: 100%;
-			max-width: 100%;
-			white-space: pre;
-			-webkit-overflow-scrolling: touch;
-			border: 1px solid #e2e8f0;
-			font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-			font-size: 0.85rem;
-			line-height: 1.6;
-		}
-		/* Styling teks di dalam blok */
-		.markdown-body pre code {
-			background-color: transparent;
-			color: inherit;
-			padding: 0;
-			border-radius: 0;
-			font-family: inherit;
-		}
-		/* Styling Inline Code (Kode pendek di tengah kalimat) */
-		.markdown-body :not(pre)>code {
-			background-color: #f1f5f9;
-			color: #ef4444;
-			padding: 0.2rem 0.4rem;
-			border-radius: 0.375rem;
-			font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-			font-size: 0.875em;
-			font-weight: 500;
-			border: 1px solid #e2e8f0;
-			word-break: break-word;
-		}
-		/* === UI COMPONENTS & ANIMATIONS === */
-		/* Loading Animation */
-		.dot-flashing {
-			position: relative;
-			width: 6px;
-			height: 6px;
-			border-radius: 50%;
-			background-color: #94a3b8;
-			animation: dot-flashing 1s infinite linear alternate;
-			animation-delay: 0.5s;
-		}
-		.dot-flashing::before, .dot-flashing::after {
-			content: '';
-			display: inline-block;
-			position: absolute;
-			top: 0;
-			width: 6px;
-			height: 6px;
-			border-radius: 50%;
-			background-color: #94a3b8;
-			animation: dot-flashing 1s infinite alternate;
-		}
-		.dot-flashing::before {
-			left: -10px;
-			animation-delay: 0s;
-		}
-		.dot-flashing::after {
-			left: 10px;
-			animation-delay: 1s;
-		}
-		@keyframes dot-flashing {
-			0% {
-				background-color: #94a3b8;
-			}
-			50%, 100% {
-				background-color: #cbd5e1;
-			}
-		}
-		@keyframes fadeIn {
-			from {
-				opacity: 0;
-				transform: translateY(10px);
-			}
-			to {
-				opacity: 1;
-				transform: translateY(0);
-			}
-		}
-		/* Custom Slider */
-		.custom-range {
-			-webkit-appearance: none;
-			appearance: none;
-			width: 100%;
-			height: 2.5rem;
-			background-color: transparent;
-			cursor: pointer;
-			position: relative;
-			z-index: 20;
-		}
-		.custom-range::-webkit-slider-runnable-track {
-			width: 100%;
-			height: 2.5rem;
-			background-color: #f3f4f6;
-			border-radius: 4px;
-			border: 1px solid #e5e7eb;
-		}
-		.custom-range::-webkit-slider-thumb {
-			-webkit-appearance: none;
-			appearance: none;
-			height: 2.4rem;
-			width: 1rem;
-			background-color: #9ca3af;
-			/* Abu-abu (Gray-400) */
-			border: 1px solid #9ca3af;
-			/* Border Abu Tua (Gray-500) */
-			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-			border-radius: 4px;
-			margin-top: -1px;
-		}
-		/* Dropdown Animations */
-		.dropdown-open {
-			opacity: 1;
-			transform: scale(100%);
-			pointer-events: auto;
-		}
-		.dropdown-closed {
-			opacity: 0;
-			transform: scale(95%);
-			pointer-events: none;
-		}
-		.rotate-180 {
-			transform: rotate(180deg);
-		}
-		/* Typying Dots Animation */
-		.typing-dots::after {
-			content: ' .';
-			animation: dots 1.5s steps(5, end) infinite;
-		}
-		@keyframes dots {
-			0%, 20% {
-				content: ' .';
-			}
-			40% {
-				content: ' ..';
-			}
-			60% {
-				content: ' ...';
-			}
-			80%, 100% {
-				content: '';
-			}
-		}
-		/* Process Status */
-		.process-status {
-			font-size: 0.75rem;
-			color: #94a3b8;
-			margin-left: 1rem;
-			margin-top: -0.5rem;
-			margin-bottom: 1rem;
-			font-family: 'Inter', sans-serif;
-			font-style: italic;
-			display: flex;
-			align-items: center;
-			gap: 6px;
-			opacity: 0;
-			animation: fadeIn 0.3s forwards;
-		}
-		/* === YOUTUBE EMBED STYLE (RESPONSIF PENUH) === */
-		.yt-embed-grid {
-			display: grid;
-			/* DEFAULT (HP): 1 Kolom saja agar video besar */
-			grid-template-columns: 1fr;
-			gap: 0.75rem;
-			/* Jarak antar video di HP sedikit lebih rapat */
-			margin-top: 0.5rem;
-			width: 100%;
-		}
-		/* KHUSUS LAYAR LEBAR (iPad/Laptop > 768px) */
-		@media (min-width: 768px) {
-			.yt-embed-grid {
-				/* Ubah jadi 2 kolom rapi */
-				grid-template-columns: repeat(2, 1fr);
-				gap: 1rem;
-				/* Jarak lebih lega */
-			}
-		}
-		.yt-container {
-			position: relative;
-			width: 100%;
-			padding-bottom: 56.25%;
-			/* Rasio Layar 16:9 */
-			height: 0;
-			background-color: #000;
-			/* Hitam saat loading */
-			border-radius: 0.75rem;
-			/* Melengkung manis */
-			overflow: hidden;
-			/* Shadow halus agar terlihat timbul sedikit */
-			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-		}
-		.yt-container iframe {
-			position: absolute;
-			top: 0;
-			left: 0;
-			width: 100%;
-			height: 100%;
-			border: 0;
-		}
-	</style>
-</head>
-<body class="flex flex-col relative">
-	<div id="initial-loader" class="fixed inset-0 z-[100] bg-white flex items-center justify-center transition-opacity duration-500">
-		<div class="w-8 h-8 border-8 border-gray-200 border-t-gray-400 rounded-full animate-spin"></div>
-	</div>
-	<div id="global-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/20 z-50 hidden transition-opacity opacity-0 backdrop-blur-sm"></div>
-	<div id="sidebar" class="fixed inset-y-0 left-0 z-[60] w-72 bg-white shadow-2xl transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
-		<div class="flex-none safe-pt bg-white z-10 w-full">
-			<div class="h-20 flex items-center px-4 w-full">
-				<button onclick="startNewChat()" class="w-full py-3.5 bg-slate-100 hover:bg-slate-300 text-slate-500 font-bold text-sm md:text-base rounded-xl transition-all active:scale-95 shadow-sm flex items-center justify-center gap-2 group">
-					<svg class="w-5 h-5 text-slate-500 group-hover:text-slate-800 transition-colors" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-						<path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"></path>
-						<path d="M8 12h8"></path>
-						<path d="M12 8v8"></path>
-					</svg>
-					<span>Percakapan Baru</span>
-				</button>
-			</div>
-			<div class="mx-4 border-b border-gray-100 mb-2 -mt-1 relative z-10"></div>
-		</div>
-		<div class="flex-1 overflow-y-auto bg-white" id="sidebar-content"></div>
-	</div>
-	<div id="login-page" class="absolute inset-0 z-[40] flex items-center justify-center bg-gray-100 p-4 transition-all duration-300 transform hidden">
-		<div class="bg-white w-full max-w-sm p-8 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-center gap-6">
-			<div class="flex flex-col items-center justify-center text-center">
-				<img src="logo.png" alt="AI Logo" class="w-24 h-24 object-contain -mt-2 mb-0 drop-shadow-sm">
-				<h1 class="font-orbitron text-xl font-extrabold text-slate-800 tracking-wide">AI ASISTEN</h1>
-			</div>
-			<form id="login-form" class="w-full space-y-3" onsubmit="handleLogin(event)">
-				<input type="email" id="email-input" placeholder="Email" required class="login-input w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-slate-300 transition-all">
-				<input type="password" id="password-input" placeholder="Password" required class="login-input w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-slate-300 transition-all">
-				<p id="login-error" class="text-red-500 text-xs text-center hidden"></p>
-				<button type="submit" id="login-btn" class="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm tracking-wide rounded-xl shadow-sm transition-transform active:scale-95 uppercase mt-2">Masuk</button>
-			</form>
-		</div>
-	</div>
-	<div id="chat-page" class="flex-1 flex flex-col h-full hidden opacity-0 relative bg-white w-full z-10">
-		<header class="flex-none h-20 safe-pt flex items-center justify-between px-3 border-b border-gray-100 bg-white z-20 select-none box-content">
-			<div class="flex items-center gap-0 h-full -ml-2">
-				<img src="logo.png" alt="AI Icon" class="w-16 h-16 object-contain drop-shadow-sm">
-				<div>
-					<h2 class="font-orbitron font-extrabold text-xl text-slate-800 tracking-wide leading-tight">AI ASISTEN</h2>
-					<p class="text-[11px] text-slate-500 font-medium font-sans leading-tight">ARTIFICIAL INTELLIGENCE</p>
-				</div>
-			</div>
-			<div class="flex items-center gap-1">
-				<button id="settings-btn" onclick="openSettings()" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-full transition-colors hidden">
-					<svg class="w-6 h-6" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-						<path fill="none" d="M0 0h24v24H0z"></path>
-						<path d="M12 14v2a6 6 0 0 0-6 6H4a8 8 0 0 1 8-8zm0-1c-3.315 0-6-2.685-6-6s2.685-6 6-6 6 2.685 6 6-2.685 6-6 6zm0-2c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm9 6h1v5h-8v-5h1v-1a3 3 0 0 1 6 0v1zm-2 0v-1a1 1 0 0 0-2 0v1h2z"></path>
-					</svg>
-				</button>
-				<button onclick="toggleSidebar()" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-full transition-colors">
-					<svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-						<path d="M5 7H19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
-						<path d="M5 12L19 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
-						<path d="M5 17L19 17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
-					</svg>
-				</button>
-			</div>
-		</header>
-		<main id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"></main>
-		<div class="flex-none bg-white border-t border-gray-100 px-4 pt-2 pb-6 safe-pb z-30 w-full select-none">
-			<div id="file-preview-container" class="w-full max-w-3xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-2 mb-2 empty:hidden"></div>
-			<input type="file" id="file-input" accept=".pdf,.docx,.xls,.xlsx,.pptx,.txt,image/*" multiple class="absolute opacity-0 w-0 h-0 overflow-hidden pointer-events-none" />
-			<div class="w-full max-w-3xl mx-auto relative flex items-end bg-gray-100 rounded-[2rem] border border-transparent transition-all">
-				<button onclick="document.getElementById('file-input').click()" class="absolute left-2 bottom-2 w-10 h-10 flex items-center justify-center rounded-full text-slate-400 z-10">
-					<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-						<line x1="12" y1="5" x2="12" y2="19"></line>
-						<line x1="5" y1="12" x2="19" y2="12"></line>
-					</svg>
-				</button>
-				<textarea id="user-input" rows="1" placeholder="Ketik pesan..." class="w-full py-4 pl-14 pr-14 bg-transparent text-slate-800 text-base placeholder:text-slate-400 resize-none max-h-32 rounded-[2rem] focus:outline-none focus:ring-0" style="min-height: 56px;" oninput="adjustHeight(this)" onkeydown="handleEnter(event)"></textarea>
-				<button id="send-btn" class="group absolute right-2 bottom-2 w-10 h-10 flex items-center justify-center transition-transform active:scale-90 disabled:cursor-not-allowed">
-					<svg class="w-6 h-6 ml-1" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-						<defs>
-							<linearGradient id="send-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-								<stop offset="0%" stop-color="#2563eb" />
-								<stop offset="100%" stop-color="#06b6d4" />
-							</linearGradient>
-						</defs>
-						<path class="hidden group-disabled:block" fill="#cbd5e1" fill-rule="evenodd" d="M2.345 2.245a1 1 0 0 1 1.102-.14l18 9a1 1 0 0 1 0 1.79l-18 9a1 1 0 0 1-1.396-1.211L4.613 13H10a1 1 0 1 0 0-2H4.613L2.05 3.316a1 1 0 0 1 .294-1.071z" clip-rule="evenodd"></path>
-						<path class="block group-disabled:hidden" fill="url(#send-gradient)" fill-rule="evenodd" d="M2.345 2.245a1 1 0 0 1 1.102-.14l18 9a1 1 0 0 1 0 1.79l-18 9a1 1 0 0 1-1.396-1.211L4.613 13H10a1 1 0 1 0 0-2H4.613L2.05 3.316a1 1 0 0 1 .294-1.071z" clip-rule="evenodd"></path>
-					</svg>
-				</button>
-			</div>
-		</div>
-	</div>
-	<div id="settings-page" class="absolute inset-0 z-[50] bg-white flex flex-col transition-all duration-300 opacity-0 invisible">
-		<header class="flex-none h-20 safe-pt flex items-center justify-between px-3 border-b border-gray-100 bg-white z-20 select-none box-content relative">
-			<button onclick="closeSettings()" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-full transition-colors relative z-30">
-				<svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-					<path d="M15 19l-7-7 7-7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
-				</svg>
-			</button>
-			<div class="absolute inset-0 safe-pt flex items-center justify-center pointer-events-none z-20">
-				<h2 class="font-sans font-bold text-lg text-slate-800 tracking-wide whitespace-nowrap">ADMIN MENU</h2>
-			</div>
-			<button onclick="saveSettings()" class="w-10 h-10 flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-gray-100 rounded-full transition-colors relative z-30">
-				<svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-					<g stroke-width="0"></g>
-					<g stroke-linecap="round" stroke-linejoin="round"></g>
-					<g>
-						<path d="M5.75 3C4.23122 3 3 4.23122 3 5.75V18.25C3 19.7688 4.23122 21 5.75 21H9.99852C9.99129 20.8075 10.011 20.6088 10.0613 20.4075L10.2882 19.5H7.5V14.25C7.5 13.8358 7.83579 13.5 8.25 13.5H14.8531L16.2883 12.0648C16.1158 12.0225 15.9355 12 15.75 12H8.25C7.00736 12 6 13.0074 6 14.25V19.5H5.75C5.05964 19.5 4.5 18.9404 4.5 18.25V5.75C4.5 5.05964 5.05964 4.5 5.75 4.5H7V7.25C7 8.49264 8.00736 9.5 9.25 9.5H13.75C14.9926 9.5 16 8.49264 16 7.25V4.52344C16.3582 4.58269 16.6918 4.75246 16.9519 5.01256L18.9874 7.0481C19.3156 7.37629 19.5 7.8214 19.5 8.28553V10.007C19.5709 10.0024 19.642 10 19.713 10H19.7151C20.1521 10.0002 20.59 10.0874 21 10.2615V8.28553C21 7.42358 20.6576 6.59693 20.0481 5.98744L18.0126 3.9519C17.4031 3.34241 16.5764 3 15.7145 3H5.75ZM8.5 7.25V4.5H14.5V7.25C14.5 7.66421 14.1642 8 13.75 8H9.25C8.83579 8 8.5 7.66421 8.5 7.25Z" fill="currentColor"></path>
-						<path d="M19.7152 11H19.7131C19.1285 11.0003 18.5439 11.2234 18.0979 11.6695L12.1955 17.5719C11.8513 17.916 11.6072 18.3472 11.4892 18.8194L11.0315 20.6501C10.8325 21.4462 11.5536 22.1674 12.3497 21.9683L14.1804 21.5106C14.6526 21.3926 15.0838 21.1485 15.4279 20.8043L21.3303 14.9019C22.223 14.0093 22.223 12.5621 21.3303 11.6695C20.8843 11.2234 20.2998 11.0003 19.7152 11Z" fill="currentColor"></path>
-					</g>
-				</svg>
-			</button>
-		</header>
-		<main id="settings-content" class="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-6">
-			<div class="max-w-3xl mx-auto space-y-6 pb-12 mt-2">
-				<fieldset class="bg-white rounded-2xl border border-gray-300 p-6 shadow-sm mt-6">
-					<legend class="px-2 text-sm md:text-base font-black text-slate-500 uppercase tracking-wide">KONFIGURASI AI</legend>
-					<div class="mb-4 relative" id="dropdown-wrapper">
-						<label class="block text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">Model Gemini</label>
-						<button type="button" onclick="toggleDropdown()" id="dropdown-trigger" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl flex justify-between items-center transition-all duration-200 hover:bg-gray-100 active:scale-[0.99]">
-							<span id="selected-model-text" class="text-sm md:text-base font-medium text-slate-700">Gemini 2.5 Flash (Cepat)</span>
-							<i id="dropdown-arrow" class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-300"></i>
-						</button>
-						<div id="dropdown-menu" class="dropdown-closed absolute left-0 right-0 top-full mt-2 bg-white border border-gray-100 rounded-xl shadow-[0_10px_30px_-10px_rgba(0,0,0,0.1)] z-30 overflow-hidden transition-all duration-200 origin-top">
-							<div onclick="selectOption('gemini-2.5-flash', 'Gemini 2.5 Flash (Cepat)')" class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center justify-between group border-b border-gray-50 last:border-0">
-								<span class="text-sm md:text-base text-slate-600 group-hover:text-blue-700 font-medium">Gemini 2.5 Flash (Cepat)</span>
-							</div>
-							<div onclick="selectOption('gemini-2.5-pro', 'Gemini 2.5 Pro (Pintar)')" class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center justify-between group border-b border-gray-50 last:border-0">
-								<span class="text-sm md:text-base text-slate-600 group-hover:text-blue-700 font-medium">Gemini 2.5 Pro (Pintar)</span>
-							</div>
-							<div onclick="selectOption('gemini-3-pro-preview', 'Gemini 3 Pro (Preview)')" class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center justify-between group border-b border-gray-50 last:border-0">
-								<span class="text-sm md:text-base text-slate-600 group-hover:text-blue-700 font-medium">Gemini 3 Pro (Preview)</span>
-							</div>
-						</div>
-						<select id="setting-model" class="hidden">
-							<option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (Cepat)</option>
-							<option value="gemini-2.5-pro">Gemini 2.5 Pro (Pintar)</option>
-							<option value="gemini-3-pro-preview">Gemini 3 Pro (Preview)</option>
-						</select>
-					</div>
-					<div class="mb-4">
-						<label class="block text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">System Instruction</label>
-						<div class="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
-							<textarea id="setting-prompt" rows="3" class="w-full bg-transparent border-none focus:ring-0 p-0 text-sm md:text-base text-slate-700 resize-none placeholder:text-slate-400" placeholder="Contoh: Kamu adalah asisten yang ramah..."></textarea>
-						</div>
-					</div>
-					<div class="mb-2">
-						<div class="flex justify-between mb-1 ml-1"><label class="text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wide">Kreativitas</label></div>
-						<div class="relative w-full h-10 flex items-center mt-1">
-							<span id="temp-label" class="absolute left-1/2 -translate-x-1/2 text-xs md:text-sm font-mono font-bold text-slate-500 z-30 pointer-events-none select-none">0.7</span>
-							<input type="range" id="setting-temp" min="0" max="1" step="0.1" value="0.7" class="custom-range w-full" oninput="updateTempLabel(this.value)">
-						</div>
-						<div class="flex justify-between text-[10px] md:text-xs text-slate-400 mt-2 px-1 font-medium"><span>Fokus (0.0)</span><span>Kreatif (1.0)</span></div>
-					</div>
-				</fieldset>
-				<fieldset class="bg-white rounded-2xl border border-gray-300 p-6 shadow-sm mt-6">
-					<legend class="px-2 text-sm md:text-base font-black text-slate-500 uppercase tracking-wide">MANAJEMEN USER</legend>
-					<div class="mb-4">
-						<label class="block text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">Email Baru</label>
-						<div class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
-							<input type="email" id="create-email" placeholder="user@email.com" class="w-full bg-transparent border-none focus:ring-0 p-0 text-sm md:text-base text-slate-700 placeholder:text-slate-400 h-5">
-						</div>
-					</div>
-					<div class="mb-6">
-						<label class="block text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">Password</label>
-						<div class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
-							<input type="password" id="create-password" placeholder="Minimal 6 karakter" class="w-full bg-transparent border-none focus:ring-0 p-0 text-sm md:text-base text-slate-700 placeholder:text-slate-400 h-5">
-						</div>
-					</div>
-					<button onclick="handleAddUser()" id="btn-add-user" class="w-full py-3.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm md:text-base rounded-xl transition-all active:scale-95 shadow-md flex items-center justify-center gap-2 group mb-8">
-						<i class="fa-solid fa-user-plus text-slate-300 group-hover:text-white transition-colors"></i><span>TAMBAH USER</span>
-					</button>
-					<div class="border-t border-gray-200 mb-6"></div>
-					<div class="flex justify-between items-center mb-4 ml-1">
-						<h4 class="text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wide">Daftar Pengguna</h4>
-						<button onclick="loadUsers()" class="w-8 h-8 flex items-center justify-center rounded-lg text-green-600 hover:text-green-800 hover:bg-green-50 transition-colors" title="Refresh Data">
-							<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-								<g stroke-width="0"></g>
-								<g stroke-linecap="round" stroke-linejoin="round"></g>
-								<g>
-									<path d="M7.37756 11.6296H6.62756H7.37756ZM7.37756 12.5556L6.81609 13.0528C6.95137 13.2056 7.14306 13.2966 7.34695 13.3049C7.55084 13.3133 7.74932 13.2382 7.89662 13.0969L7.37756 12.5556ZM9.51905 11.5414C9.81805 11.2547 9.82804 10.7799 9.54137 10.4809C9.2547 10.182 8.77994 10.172 8.48095 10.4586L9.51905 11.5414ZM6.56148 10.5028C6.28686 10.1927 5.81286 10.1639 5.50277 10.4385C5.19267 10.7131 5.16391 11.1871 5.43852 11.4972L6.56148 10.5028ZM14.9317 9.0093C15.213 9.31337 15.6875 9.33184 15.9915 9.05055C16.2956 8.76927 16.3141 8.29476 16.0328 7.9907L14.9317 9.0093ZM12.0437 6.25C9.05802 6.25 6.62756 8.653 6.62756 11.6296H8.12756C8.12756 9.49251 9.87531 7.75 12.0437 7.75V6.25ZM6.62756 11.6296L6.62756 12.5556H8.12756L8.12756 11.6296H6.62756ZM7.89662 13.0969L9.51905 11.5414L8.48095 10.4586L6.85851 12.0142L7.89662 13.0969ZM7.93904 12.0583L6.56148 10.5028L5.43852 11.4972L6.81609 13.0528L7.93904 12.0583ZM16.0328 7.9907C15.0431 6.9209 13.6212 6.25 12.0437 6.25V7.75C13.1879 7.75 14.2154 8.23504 14.9317 9.0093L16.0328 7.9907Z" fill="currentColor"></path>
-									<path d="M16.6188 11.4443L17.1795 10.9462C17.044 10.7937 16.8523 10.703 16.6485 10.6949C16.4447 10.6868 16.2464 10.7621 16.0993 10.9034L16.6188 11.4443ZM14.4805 12.4581C14.1817 12.745 14.1722 13.2198 14.4591 13.5185C14.746 13.8173 15.2208 13.8269 15.5195 13.54L14.4805 12.4581ZM17.4393 13.4972C17.7144 13.8068 18.1885 13.8348 18.4981 13.5597C18.8078 13.2846 18.8358 12.8106 18.5607 12.5009L17.4393 13.4972ZM9.04688 15.0047C8.76342 14.7027 8.28879 14.6876 7.98675 14.9711C7.68472 15.2545 7.66966 15.7292 7.95312 16.0312L9.04688 15.0047ZM11.9348 17.7499C14.9276 17.7499 17.3688 15.3496 17.3688 12.3703H15.8688C15.8688 14.5047 14.1158 16.2499 11.9348 16.2499V17.7499ZM17.3688 12.3703V11.4443H15.8688V12.3703H17.3688ZM16.0993 10.9034L14.4805 12.4581L15.5195 13.54L17.1383 11.9853L16.0993 10.9034ZM16.0581 11.9425L17.4393 13.4972L18.5607 12.5009L17.1795 10.9462L16.0581 11.9425ZM7.95312 16.0312C8.94543 17.0885 10.3635 17.7499 11.9348 17.7499V16.2499C10.792 16.2499 9.76546 15.7704 9.04688 15.0047L7.95312 16.0312Z" fill="currentColor"></path>
-									<path d="M7 3.33782C8.47087 2.48697 10.1786 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 10.1786 2.48697 8.47087 3.33782 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-								</g>
-							</svg>
-						</button>
-					</div>
-					<div id="user-list-container" class="space-y-3">
-						<p class="text-xs md:text-sm text-slate-400 text-center py-4 italic">Memuat data pengguna...</p>
-					</div>
-				</fieldset>
-			</div>
-		</main>
-	</div>
-	<div id="confirm-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
-		<div class="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity"></div>
-		<div class="relative bg-gray-50 w-full max-w-[18rem] rounded-2xl shadow-2xl overflow-hidden transform scale-100 transition-all">
-			<div class="p-4 text-center">
-				<h2 id="confirm-title" class="text-lg font-bold text-slate-800 mb-0.5 tracking-wide">KONFIRMASI</h2>
-				<p id="confirm-message" class="text-sm text-slate-500 leading-tight px-1">...</p>
-			</div>
-			<div class="border-t border-gray-200 flex bg-gray-50">
-				<button id="modal-cancel-button" class="w-1/2 py-2.5 text-center text-sm md:text-base font-semibold text-blue-600 hover:bg-gray-200 border-r border-gray-200 transition-colors">BATAL</button>
-				<button id="modal-agree-button" class="w-1/2 py-2.5 text-center text-sm md:text-base font-semibold hover:bg-gray-200 transition-colors">YA</button>
-			</div>
-		</div>
-	</div>
-	<script>
-		const SUPABASE_URL = 'https://xdrqauwxvwooojufzndv.supabase.co';
-		const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkcnFhdXd4dndvb29qdWZ6bmR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1MDQyNDgsImV4cCI6MjA3ODA4MDI0OH0.mH7MEeAggksdAlandZpwuyGPYo08SuuWkXoMXVvwSiI';
-		const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-		// --- AUTO PWA MANIFEST (NATIVE BROWSER INSTALL) ---
-		const pwaManifest = {
-			"name": "AI ASISTEN",
-			"short_name": "AI ASISTEN",
-			"description": "Aplikasi Asisten AI Cerdas",
-			"start_url": window.location.href,
-			"display": "standalone",
-			"background_color": "#ffffff",
-			"theme_color": "#ffffff",
-			"orientation": "portrait-primary",
-			"icons": [{
-					"src": "./icon-192.png",
-					"sizes": "192x192",
-					"type": "image/png"
-				},
-				{
-					"src": "./icon-512.png",
-					"sizes": "512x512",
-					"type": "image/png"
-				}
-			]
-		};
-		try {
-			const stringManifest = JSON.stringify(pwaManifest);
-			const blob = new Blob([stringManifest], {
-				type: 'application/json'
-			});
-			const manifestURL = URL.createObjectURL(blob);
-			const link = document.createElement('link');
-			link.rel = 'manifest';
-			link.href = manifestURL;
-			document.head.appendChild(link);
-			console.log("PWA Manifest berhasil di-inject (Root Icon).");
-		} catch (e) {
-			console.error("Gagal inject PWA:", e);
-		}
-		let currentUser = null;
-		// --- VARIABEL FILE ---
-		let uploadedFiles = [];
-		// --- HELPER FUNCTIONS ---
-		const formatFileSize = (bytes) => {
-			if(bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-			return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-		};
-		const extractTextFromSlideXML = (xmlString) => {
-			try {
-				const parser = new DOMParser();
-				const xmlDoc = parser.parseFromString(xmlString, "application/xml");
-				const textNodes = xmlDoc.getElementsByTagName("a:t");
-				return Array.from(textNodes).map(node => node.textContent).join(' ');
-			} catch (e) {
-				console.error(e);
-				return '';
-			}
-		};
-		const renderFilePreviews = () => {
-    const container = document.getElementById('file-preview-container');
-    container.innerHTML = '';
-    uploadedFiles.forEach((file, index) => {
-        const iconHtml = getFileIcon(file);
-        const card = document.createElement('div');
-        
-        // Card Body
-        card.className = "relative flex items-center p-2 bg-gray-100 rounded-xl transition-all select-none h-16 visible";
-        
-        card.innerHTML = `
-        <div class="w-10 h-10 mr-3 shrink-0 rounded-lg overflow-hidden flex items-center justify-center">
-            ${iconHtml}
-        </div>
-        
-        <div class="overflow-hidden min-w-0 flex-1 flex flex-col justify-center">
-            <div class="text-sm font-medium text-slate-700 truncate leading-tight">${file.name}</div>
-            <div class="text-[11px] font-medium text-slate-500 uppercase leading-none mt-0.5">${formatFileSize(file.size)}</div>
-        </div>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- PWA / iOS Configuration -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="AI Assistant">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/4712/4712027.png">
 
-        <button onclick="removeFile(${index})" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-300 text-grey-400 rounded-full flex items-center justify-center shadow-sm transition-transform active:scale-90 z-20 cursor-pointer">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-        </button>
-    `;
-        container.appendChild(card);
-    });
-			const sendBtn = document.getElementById('send-btn');
-			const userInput = document.getElementById('user-input');
-		};
-		const removeFile = (index) => {
-			uploadedFiles.splice(index, 1);
-			renderFilePreviews();
-		};
-		// --- HELPER IKON PROFESIONAL (SVG) ---
-		const getFileIcon = (file) => {
-			const mime = file.mimeType;
-			const type = file.type;
-			// 1. Image Preview
-			if(mime.startsWith('image/')) {
-				return `<img src="data:${mime};base64,${file.data}" class="w-full h-full object-cover rounded-md" alt="preview" />`;
-			}
-			// 2. PDF Icon (Merah)
-			if(mime.includes('pdf') || type === 'pdf') {
-				return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#EF4444" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2 -2V4a2 2 0 012-2h8l6 6z"/><path fill="#DC2626" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="7" font-family="sans-serif" font-weight="bold">PDF</text></svg>`;
-			}
-			// 3. Word Icon (Biru)
-			if(mime.includes('word') || type === 'doc' || type === 'docx') {
-				return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#3B82F6" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#2563EB" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-family="sans-serif" font-weight="bold">W</text></svg>`;
-			}
-			// 4. Excel Icon (Hijau)
-			if(mime.includes('excel') || mime.includes('spreadsheet') || type === 'xls' || type === 'xlsx') {
-				return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#22C55E" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#16A34A" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-family="sans-serif" font-weight="bold">X</text></svg>`;
-			}
-			// 5. PowerPoint Icon (Oranye)
-			if(mime.includes('powerpoint') || mime.includes('presentation') || type === 'ppt' || type === 'pptx') {
-				return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#F97316" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#EA580C" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-family="sans-serif" font-weight="bold">P</text></svg>`;
-			}
-			// 6. Text/Lainnya (Abu-abu)
-			return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#94a3b8" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#64748b" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="7" font-family="sans-serif" font-weight="bold">FILE</text></svg>`;
-		};
-		let chatHistory = [];
-		let currentChatId = null;
-		let currentConfirmAction = null;
-		const loginPage = document.getElementById('login-page');
-		const chatPage = document.getElementById('chat-page');
-		const sidebar = document.getElementById('sidebar');
-		const overlay = document.getElementById('global-overlay');
-		const chatContainer = document.getElementById('chat-container');
-		const userInput = document.getElementById('user-input');
-		const sendBtn = document.getElementById('send-btn');
-		const settingsPage = document.getElementById('settings-page');
-		const confirmModal = document.getElementById('confirm-modal');
-		async function handleLogin(e) {
-			e.preventDefault();
-			const email = document.getElementById('email-input').value;
-			const password = document.getElementById('password-input').value;
-			const btn = document.getElementById('login-btn');
-			const errorMsg = document.getElementById('login-error');
-			btn.disabled = true;
-			btn.textContent = "MEMPROSES...";
-			errorMsg.classList.add('hidden');
-			try {
-				const {
-					data,
-					error
-				} = await supabase.auth.signInWithPassword({
-					email,
-					password
-				});
-				if(error) throw error;
-				currentUser = data.user;
-				await initializeSettings();
-				await checkAdminVisibility();
-				enterApp();
-			} catch (error) {
-				console.error("Login Error:", error);
-				errorMsg.textContent = "Email atau Password salah!";
-				errorMsg.classList.remove('hidden');
-			} finally {
-				btn.disabled = false;
-				btn.textContent = "MASUK";
-			}
-		}
-		// Listener Global untuk Klik (Smart Copy Fix Word Layout & Tampilan)
-		document.addEventListener('click', async (e) => {
-			// --- 1. JIKA TOMBOL COPY DIKLIK ---
-			const copyBtn = e.target.closest('.copy-btn');
-			if(copyBtn) {
-				e.stopPropagation();
-				const card = copyBtn.closest('.ai-bubble');
-				const contentDiv = card.querySelector('.chat-content');
-				if(contentDiv) {
-					try {
-						// --- LOGIKA SMART COPY (OPTIMASI WORD) ---
-						const tempDiv = document.createElement('div');
-						tempDiv.innerHTML = contentDiv.innerHTML;
-						// A. STYLING DASAR KONTAINER (Arial untuk Dokumen Resmi)
-						tempDiv.style.fontFamily = 'Arial, sans-serif';
-						tempDiv.style.fontSize = '11pt'; // Standar surat dinas
-						tempDiv.style.lineHeight = '1.15'; // Jarak antar baris standar (Single/1.15)
-						tempDiv.style.color = '#000000';
-						// B. PEMBERSIHAN ELEMEN
-						const allElements = tempDiv.querySelectorAll('*');
-						allElements.forEach(el => {
-							el.removeAttribute('class');
-							el.style.fontFamily = 'Arial, sans-serif';
-							if(el.tagName === 'P') {
-								el.style.marginBottom = '6px'; // Jarak antar paragraf lebih rapat
-								el.style.textAlign = 'justify';
-							}
-							if(el.tagName === 'LI') {
-								el.style.marginBottom = '2px';
-								el.style.textAlign = 'justify';
-							}
-							if(el.tagName.startsWith('H')) {
-								el.style.fontWeight = 'bold';
-								el.style.marginTop = '12px';
-								el.style.marginBottom = '6px';
-								el.style.color = '#000000';
-								el.style.fontSize = '12pt'; // Judul sedikit lebih besar
-							}
-						});
-						// C. STYLING TABEL SPESIFIK (PADAT & 11pt)
-						const tables = tempDiv.querySelectorAll('table');
-						tables.forEach(table => {
-							// Reset Tabel
-							table.style.width = '100%';
-							table.style.borderCollapse = 'collapse';
-							table.style.marginTop = '6px';
-							table.style.marginBottom = '6px';
-							// --- UKURAN FONT 11pt (SESUAI PERMINTAAN) ---
-							table.style.fontSize = '11pt';
-							// Atribut Legacy
-							table.setAttribute('border', '1');
-							table.setAttribute('width', '100%');
-							table.setAttribute('cellpadding', '4'); // Padding HTML attribute diperkecil
-							// Styling Header (TH)
-							const headers = table.querySelectorAll('th');
-							headers.forEach(th => {
-								th.style.backgroundColor = '#f1f5f9'; // Abu Tipis
-								th.style.color = '#000000';
-								th.style.fontWeight = 'bold';
-								th.style.border = '1px solid #cbd5e1';
-								// --- PADDING RAPAT (PADAT) ---
-								th.style.padding = '4px';
-								th.style.textAlign = 'center';
-								th.style.verticalAlign = 'middle';
-							});
-							// Styling Sel Isi (TD)
-							const cells = table.querySelectorAll('td');
-							cells.forEach(td => {
-								td.style.border = '1px solid #cbd5e1';
-								// --- PADDING RAPAT (PADAT) ---
-								td.style.padding = '4px';
-								td.style.verticalAlign = 'top';
-								td.style.color = '#000000';
-								td.style.textAlign = 'left';
-								td.style.whiteSpace = 'normal';
-							});
-						});
-						// D. COPY KE CLIPBOARD
-						const finalHtml = `<div style="font-family: Arial, sans-serif; font-size: 11pt;">${tempDiv.innerHTML}</div>`;
-						const plainText = contentDiv.innerText;
-						const htmlBlob = new Blob([finalHtml], {
-							type: 'text/html'
-						});
-						const textBlob = new Blob([plainText], {
-							type: 'text/plain'
-						});
-						const item = new ClipboardItem({
-							'text/html': htmlBlob,
-							'text/plain': textBlob
-						});
-						await navigator.clipboard.write([item]);
-						// --- VISUAL FEEDBACK ---
-						if(copyBtn.dataset.copied === "true") return;
-						const originalIcon = copyBtn.innerHTML;
-						copyBtn.dataset.copied = "true";
-						copyBtn.innerHTML = `
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                            `;
-						setTimeout(() => {
-							copyBtn.innerHTML = originalIcon;
-							copyBtn.dataset.copied = "false";
-						}, 2000);
-					} catch (err) {
-						console.error("Gagal copy Smart Text:", err);
-						try {
-							await navigator.clipboard.writeText(contentDiv.innerText);
-						} catch (e) {}
-					}
-				}
-				return;
-			}
-			// --- 2. RESET TAMPILAN TOMBOL ---
-			document.querySelectorAll('.copy-container').forEach(el => {
-				const btn = el.querySelector('.copy-btn');
-				if(btn && btn.dataset.copied === "true") return;
-				el.classList.add('hidden');
-			});
-			// --- 3. KLIK GELEMBUNG ---
-			const clickedBubble = e.target.closest('.ai-bubble');
-			if(clickedBubble) {
-				const btn = clickedBubble.querySelector('.copy-container');
-				if(btn) {
-					btn.classList.remove('hidden');
-				}
-			}
-		});
-		async function checkSession() {
-			const loader = document.getElementById('initial-loader');
-			try {
-				const {
-					data: {
-						session
-					}
-				} = await supabase.auth.getSession();
-				if(session) {
-					currentUser = session.user;
-					await initializeSettings();
-					await checkAdminVisibility();
-					// Siapkan UI Chat (tapi jangan tampilkan dulu, tunggu loader selesai)
-					loginPage.classList.add('hidden');
-					chatPage.classList.remove('hidden');
-					chatPage.classList.add('flex');
-					loadChatList();
-					if(!currentChatId) startNewChat(false);
-				} else {
-					// Siapkan UI Login
-					loginPage.classList.remove('hidden');
-				}
-			} catch (err) {
-				console.error("Session check error:", err);
-				loginPage.classList.remove('hidden');
-			} finally {
-				// === UPDATE: JEDA 2 DETIK ===
-				if(loader) {
-					// Tunggu 2 detik (2000ms) dulu
-					setTimeout(() => {
-						// 1. Mulai efek menghilang (fade out)
-						loader.style.opacity = '0';
-						// 2. Hapus elemen dari HTML setelah animasi fade-out selesai (0.5 detik)
-						setTimeout(() => {
-							loader.classList.add('hidden');
-							loader.remove();
-							// Efek halus: Munculkan chat page perlahan setelah loader hilang
-							if(document.getElementById('chat-page').classList.contains('flex')) {
-								document.getElementById('chat-page').style.opacity = '1';
-							}
-						}, 500);
-					}, 1000); // <--- Angka 2000 ini adalah durasi jeda 2 detik
-				}
-			}
-		}
-		// --- EVENT LISTENER UNTUK INPUT FILE ---
-		document.getElementById('file-input').addEventListener('change', async (e) => {
-			const files = e.target.files;
-			if(!files.length) return;
-			for(const file of files) {
-				// Cek duplikasi
-				if(uploadedFiles.find(f => f.name === file.name)) continue;
-				const fileType = file.name.split('.').pop().toLowerCase();
-				const reader = new FileReader();
-				const processFile = new Promise((resolve, reject) => {
-					reader.onload = async (event) => {
-						try {
-							let content, mimeType, isTextContent = false;
-							// Logika Ekstraksi (Mammoth, XLSX, JSZip)
-							if(['doc', 'docx'].includes(fileType)) {
-								const result = await mammoth.extractRawText({
-									arrayBuffer: event.target.result
-								});
-								content = result.value;
-								mimeType = 'text/plain';
-								isTextContent = true;
-							} else if(['xls', 'xlsx'].includes(fileType)) {
-								const workbook = XLSX.read(event.target.result, {
-									type: 'buffer'
-								});
-								content = workbook.SheetNames.map(name => XLSX.utils.sheet_to_txt(workbook.Sheets[name])).join('\n\n');
-								mimeType = 'text/plain';
-								isTextContent = true;
-							} else if(fileType === 'pptx') {
-								const zip = await JSZip.loadAsync(event.target.result);
-								const slidePromises = [];
-								zip.folder("ppt/slides").forEach((path, f) => {
-									if(path.startsWith("slide") && path.endsWith(".xml")) {
-										slidePromises.push(f.async("string").then(extractTextFromSlideXML));
-									}
-								});
-								content = (await Promise.all(slidePromises)).join('\n\n');
-								mimeType = 'text/plain';
-								isTextContent = true;
-							} else if(fileType === 'txt') {
-								content = event.target.result;
-								mimeType = 'text/plain';
-								isTextContent = true;
-							} else if(fileType === 'pdf') {
-								// PDF dikirim sebagai Base64 (Inline Data) untuk Gemini
-								content = event.target.result.split(',')[1];
-								mimeType = 'application/pdf';
-								isTextContent = false;
-							} else if(file.type.startsWith('image/')) {
-								content = event.target.result.split(',')[1];
-								mimeType = file.type;
-								isTextContent = false;
-							} else {
-								reject(new Error("Format tidak didukung"));
-								return;
-							}
-							resolve({
-								name: file.name,
-								size: file.size,
-								type: fileType,
-								data: content, // Teks mentah (dokumen) atau Base64 (gambar/pdf)
-								mimeType: mimeType,
-								isTextContent: isTextContent
-							});
-						} catch (err) {
-							reject(err);
-						}
-					};
-					// Cara membaca file
-					if(['doc', 'docx', 'xls', 'xlsx', 'pptx'].includes(fileType)) reader.readAsArrayBuffer(file);
-					else if(fileType === 'txt') reader.readAsText(file);
-					else reader.readAsDataURL(file); // PDF & Image
-				});
-				try {
-					const processed = await processFile;
-					uploadedFiles.push(processed);
-				} catch (err) {
-					console.error("Gagal baca file:", err);
-					alert("Gagal membaca file: " + file.name);
-				}
-			}
-			renderFilePreviews();
-			e.target.value = ''; // Reset input
-		});
-		async function checkAdminVisibility() {
-			const settingsBtn = document.getElementById('settings-btn');
-			if(!currentUser || !settingsBtn) return;
-			const isAppAdmin = currentUser.app_metadata?.role === 'admin';
-			const isUserAdmin = currentUser.user_metadata?.role === 'admin';
-			if(isAppAdmin || isUserAdmin) {
-				settingsBtn.classList.remove('hidden');
-				return;
-			}
-			try {
-				const {
-					data
-				} = await supabase.from('profiles').select('role').eq('id', currentUser.id).single();
-				if(data && data.role === 'admin') {
-					settingsBtn.classList.remove('hidden');
-				} else {
-					settingsBtn.classList.add('hidden');
-				}
-			} catch (err) {
-				console.error("Gagal cek role admin:", err);
-				settingsBtn.classList.add('hidden');
-			}
-		}
-		
-		function enterApp() {
-			loginPage.style.pointerEvents = 'none';
-			loginPage.style.opacity = '0';
-			setTimeout(() => {
-				loginPage.classList.add('hidden');
-				chatPage.classList.remove('hidden');
-				chatPage.classList.add('flex');
-				void chatPage.offsetWidth;
-				chatPage.style.opacity = '1';
-				userInput.focus();
-				startNewChat();
-			}, 300);
-		}
-		
-		function toggleSidebar() {
-			const isClosed = sidebar.classList.contains('-translate-x-full');
-			if(isClosed) {
-				sidebar.classList.remove('-translate-x-full');
-				overlay.classList.remove('hidden');
-				setTimeout(() => overlay.classList.remove('opacity-0'), 10);
-			} else {
-				sidebar.classList.add('-translate-x-full');
-				overlay.classList.add('opacity-0');
-				setTimeout(() => overlay.classList.add('hidden'), 300);
-			}
-		}
-		
-		function forceCloseSidebar() {
-			sidebar.classList.add('-translate-x-full');
-			overlay.classList.add('opacity-0');
-			setTimeout(() => overlay.classList.add('hidden'), 300);
-		}
-		async function initializeSettings() {
-			try {
-				const {
-					data
-				} = await supabase.from('global_settings').select('*').eq('id', 1).single();
-				if(data) {
-					const modelSelect = document.getElementById('setting-model');
-					const modelText = document.getElementById('selected-model-text');
-					const promptInput = document.getElementById('setting-prompt');
-					const tempInput = document.getElementById('setting-temp');
-					if(modelSelect) modelSelect.value = data.model;
-					if(promptInput) promptInput.value = data.custom_prompt || '';
-					if(tempInput) {
-						tempInput.value = data.temperature;
-						updateTempLabel(data.temperature);
-					}
-					// Update tampilan teks dropdown
-					if(modelText) {
-						if(data.model === 'gemini-2.5-flash') modelText.innerText = 'Gemini 2.5 Flash (Cepat)';
-						else if(data.model === 'gemini-2.5-pro') modelText.innerText = 'Gemini 2.5 Pro (Pintar)';
-						else modelText.innerText = 'Gemini 3 Pro (Preview)';
-					}
-				}
-			} catch (err) {
-				console.error("Gagal memuat konfigurasi awal:", err);
-			}
-		}
-		async function openSettings() {
-			// Hapus class invisible/opacity-0 agar muncul perlahan
-			settingsPage.classList.remove('opacity-0', 'invisible');
-			try {
-				const {
-					data
-				} = await supabase.from('global_settings').select('*').eq('id', 1).single();
-				if(data) {
-					const modelSelect = document.getElementById('setting-model');
-					const modelText = document.getElementById('selected-model-text');
-					const promptInput = document.getElementById('setting-prompt');
-					const tempInput = document.getElementById('setting-temp');
-					modelSelect.value = data.model;
-					promptInput.value = data.custom_prompt || '';
-					tempInput.value = data.temperature;
-					updateTempLabel(data.temperature);
-					if(modelText) {
-						if(data.model === 'gemini-2.5-flash') modelText.innerText = 'Gemini 2.5 Flash (Cepat)';
-						else if(data.model === 'gemini-2.5-pro') modelText.innerText = 'Gemini 2.5 Pro (Pintar)';
-						else modelText.innerText = 'Gemini 3 Pro (Preview)';
-					}
-				}
-			} catch (err) {
-				console.error(err);
-			}
-			loadUsers();
-		}
-		async function saveSettings() {
-			const model = document.getElementById('setting-model').value;
-			const prompt = document.getElementById('setting-prompt').value;
-			const temp = document.getElementById('setting-temp').value;
-			try {
-				const {
-					error
-				} = await supabase.from('global_settings').update({
-					model: model,
-					custom_prompt: prompt,
-					temperature: parseFloat(temp)
-				}).eq('id', 1);
-				if(error) throw error;
-				closeSettings();
-			} catch (error) {
-				alert("Gagal menyimpan: " + error.message);
-			}
-		}
-		
-		function closeSettings() {
-			// Tambahkan class agar menghilang perlahan
-			settingsPage.classList.add('opacity-0', 'invisible');
-		}
-		const dropdownMenu = document.getElementById('dropdown-menu');
-		const dropdownArrow = document.getElementById('dropdown-arrow');
-		const selectedText = document.getElementById('selected-model-text');
-		const hiddenSelect = document.getElementById('setting-model');
-		const dropdownWrapper = document.getElementById('dropdown-wrapper');
-		
-		function toggleDropdown() {
-			if(dropdownMenu.classList.contains('dropdown-open')) closeDropdown();
-			else openDropdown();
-		}
-		
-		function openDropdown() {
-			dropdownMenu.classList.remove('dropdown-closed');
-			dropdownMenu.classList.add('dropdown-open');
-			dropdownArrow.classList.add('rotate-180');
-		}
-		
-		function closeDropdown() {
-			dropdownMenu.classList.remove('dropdown-open');
-			dropdownMenu.classList.add('dropdown-closed');
-			dropdownArrow.classList.remove('rotate-180');
-		}
-		
-		function selectOption(value, text) {
-			selectedText.textContent = text;
-			hiddenSelect.value = value;
-			closeDropdown();
-		}
-		document.addEventListener('click', function(e) {
-			if(!dropdownWrapper.contains(e.target)) closeDropdown();
-		});
-		
-		function updateTempLabel(val) {
-			document.getElementById('temp-label').innerText = val;
-		}
-		
-		function startNewChat(shouldReloadList = true) {
-			currentChatId = null;
-			chatHistory = [];
-			chatContainer.innerHTML = '';
-			userInput.value = '';
-			sendBtn.disabled = false;
-			const welcomeDiv = document.createElement('div');
-			welcomeDiv.className = 'flex flex-col items-center justify-center h-full pb-20 text-center p-8 select-none animate-[fadeIn_0.5s_ease-out]';
-			welcomeDiv.innerHTML = `
-                    <h2 class="text-xl md:text-2xl font-sans font-bold mb-1 bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent tracking-wide leading-tight">Halo, Selamat Datang</h2>
-              <p class="text-sm md:text-base text-slate-400 font-medium font-sans">Ada yang bisa saya bantu hari ini?</p>
-          `;
-			chatContainer.appendChild(welcomeDiv);
-			forceCloseSidebar();
-			if(shouldReloadList) loadChatList();
-		}
-		async function handleImageGeneration(text) {
-			const isEdit = text.toLowerCase().startsWith('/edit');
-			const cleanPrompt = text.replace(/^\/(gambar|edit)\s+/i, '').trim();
-			if(!cleanPrompt) {
-				appendMessage('model', `Mohon masukkan deskripsi.`);
-				return;
-			}
-			let imageInput = null;
-			if(isEdit) {
-				const attachedImage = uploadedFiles.find(f => f.mimeType.startsWith('image/'));
-				if(!attachedImage) {
-					appendMessage('model', "Lampirkan gambar untuk diedit.");
-					return;
-				}
-				imageInput = {
-					mimeType: attachedImage.mimeType,
-					data: attachedImage.data
-				};
-			}
-			const originalInputValue = userInput.value;
-			userInput.value = '';
-			userInput.blur();
-			adjustHeight(userInput);
-			sendBtn.disabled = false;
-			if(!currentChatId || chatHistory.length === 0) chatContainer.innerHTML = '';
-			appendMessage('user', cleanPrompt, false, false);
-			chatHistory.push({
-				role: "user",
-				parts: [{
-					text: text
-				}]
-			});
-			document.getElementById('file-preview-container').innerHTML = '';
-			uploadedFiles = [];
-			const actionText = isEdit ? "Mengedit gambar" : "Membuat gambar";
-			const loadingHtml = `
-    <div class="flex items-center gap-2.5 text-slate-500">
-        <i class="fa-solid fa-paintbrush fa-bounce text-xs"></i>
-        <span class="text-sm font-medium typing-dots">${actionText}</span>
-    </div>
-    `;
-			const loadingBubble = appendMessage('model', loadingHtml, false, true);
-			try {
-				const {
-					data: {
-						session
-					}
-				} = await supabase.auth.getSession();
-				if(!session) throw new Error("Sesi habis.");
-				const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-image`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'Authorization': `Bearer ${session.access_token}`
-					},
-					body: JSON.stringify({
-						prompt: cleanPrompt,
-						imageInput: imageInput
-					}),
-				});
-				const data = await response.json();
-				if(loadingBubble) loadingBubble.remove();
-				if(!response.ok) throw new Error(data.error || "Gagal memproses.");
-				if(data.type === 'image') {
-					const mime = data.mimeType || 'image/png';
-					const timestamp = Date.now();
-					// --- TAMPILAN GAMBAR DENGAN TOMBOL DOWNLOAD PUTIH (FIXED) ---
-					const imgHtml = `
-            <div tabindex="0" class="relative group rounded-xl overflow-hidden border border-gray-200 shadow-sm mt-1 inline-block w-full outline-none cursor-pointer">
-                <img src="data:${mime};base64,${data.image}" class="w-full h-auto bg-gray-50" alt="${cleanPrompt}">
-                
-                <a href="data:${mime};base64,${data.image}" 
-                   onclick="handleImageDownload(event, this.href, 'AI-${timestamp}.png')"
-                   class="absolute top-1 right-1 p-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] active:scale-90 z-10 opacity-0 invisible group-focus:opacity-100 group-focus:visible transition-all duration-300"
-                   title="Simpan Gambar">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5">
-                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-                        <g id="SVGRepo_iconCarrier"> 
-                            <g id="Interface / Download"> 
-                                <path id="Vector" d="M6 21H18M12 3V17M12 17L17 12M12 17L7 12" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path> 
-                            </g> 
-                        </g>
-                    </svg>
-                </a>
-            </div>
-            `;
-					// -----------------------------------------------------------
-					appendMessage('model', imgHtml, false, true);
-					if(!currentChatId) {
-						const title = (isEdit ? "Edit: " : "Img: ") + cleanPrompt.substring(0, 20) + "...";
-						const {
-							data: newConv,
-							error: errConv
-						} = await supabase
-							.from('conversations')
-							.insert({
-								user_id: currentUser.id,
-								title: title
-							})
-							.select()
-							.single();
-						if(errConv) throw errConv;
-						currentChatId = newConv.id;
-						loadChatList();
-					}
-					await supabase.from('messages').insert({
-						conversation_id: currentChatId,
-						role: 'user',
-						parts: [{
-							text: text
-						}]
-					});
-					await supabase.from('messages').insert({
-						conversation_id: currentChatId,
-						role: 'model',
-						parts: [{
-							text: `[GAMBAR: ${cleanPrompt}]`,
-							fileHtml: imgHtml
-						}]
-					});
-					chatHistory.push({
-						role: "model",
-						parts: [{
-							text: `Berhasil menampilkan gambar: "${cleanPrompt}"`
-						}]
-					});
-				} else if(data.type === 'text') {
-					if(!currentChatId) {
-						const title = "Info: " + cleanPrompt.substring(0, 20);
-						const {
-							data: newConv
-						} = await supabase.from('conversations').insert({
-							user_id: currentUser.id,
-							title: title
-						}).select().single();
-						currentChatId = newConv.id;
-						loadChatList();
-					}
-					appendMessage('model', data.text);
-					await supabase.from('messages').insert({
-						conversation_id: currentChatId,
-						role: 'user',
-						parts: [{
-							text: text
-						}]
-					});
-					await supabase.from('messages').insert({
-						conversation_id: currentChatId,
-						role: 'model',
-						parts: [{
-							text: data.text
-						}]
-					});
-					chatHistory.push({
-						role: "model",
-						parts: [{
-							text: data.text
-						}]
-					});
-				}
-			} catch (error) {
-				// === BAGIAN PESAN ERROR YANG SUDAH DIPERBAIKI ===
-				if(loadingBubble) loadingBubble.remove();
-				console.error("Error Generate Image:", error); // Tetap log ke console untuk admin
-				const errorHtml = `<div class="bg-red-50 p-3 rounded-lg text-red-600 text-sm border border-red-100">Server lagi sibuk, silahkan coba lagi nanti.</div>`;
-				appendMessage('model', errorHtml, false, true);
-				userInput.value = originalInputValue;
-			} finally {
-				sendBtn.disabled = false;
-			}
-		}
-		async function handleYoutubeSearch(text) {
-			const cleanQuery = text.replace(/^\/youtube\s+/i, '').trim();
-			if(!cleanQuery) {
-				appendMessage('model', `Mohon masukkan kata kunci.`);
-				return;
-			}
-			const originalInputValue = userInput.value;
-			userInput.value = '';
-			userInput.blur();
-			adjustHeight(userInput);
-			sendBtn.disabled = false;
-			if(!currentChatId || chatHistory.length === 0) chatContainer.innerHTML = '';
-			appendMessage('user', cleanQuery, false, false);
-			chatHistory.push({
-				role: "user",
-				parts: [{
-					text: text
-				}]
-			});
-			// Indikator Loading
-			const loadingHtml = `
-            <div class="flex items-center gap-2.5 text-slate-500">
-                <i class="fa-brands fa-youtube fa-fade text-red-600 text-sm"></i>
-                <span class="text-sm font-medium typing-dots">Mencari video YouTube</span>
-            </div>
-        `;
-			const loadingBubble = appendMessage('model', loadingHtml, false, true);
-			try {
-				const {
-					data: {
-						session
-					}
-				} = await supabase.auth.getSession();
-				if(!session) throw new Error("Sesi habis.");
-				const response = await fetch(`${SUPABASE_URL}/functions/v1/search-youtube`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'Authorization': `Bearer ${session.access_token}`
-					},
-					body: JSON.stringify({
-						query: cleanQuery
-					}),
-				});
-				const data = await response.json();
-				if(loadingBubble) loadingBubble.remove();
-				if(!response.ok) throw new Error(data.error || "Gagal mencari video.");
-				if(data.type === 'youtube' && data.videos.length > 0) {
-					// --- GRID 4 VIDEO (2x2) ---
-					let videoHtml = `<div class="yt-embed-grid">`;
-					data.videos.forEach(video => {
-						videoHtml += `
-                        <div class="yt-container">
-                            <iframe 
-                                src="https://www.youtube.com/embed/${video.id}" 
-                                title="YouTube video player" 
-                                frameborder="0" 
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                                allowfullscreen
-                                loading="lazy">
-                            </iframe>
-                        </div>
-                    `;
-					});
-					videoHtml += `</div>`;
-					appendMessage('model', videoHtml, false, true);
-					if(!currentChatId) {
-						const title = "YT: " + cleanQuery.substring(0, 20);
-						const {
-							data: newConv
-						} = await supabase.from('conversations').insert({
-							user_id: currentUser.id,
-							title: title
-						}).select().single();
-						currentChatId = newConv.id;
-						loadChatList();
-					}
-					await supabase.from('messages').insert({
-						conversation_id: currentChatId,
-						role: 'user',
-						parts: [{
-							text: text
-						}]
-					});
-					await supabase.from('messages').insert({
-						conversation_id: currentChatId,
-						role: 'model',
-						parts: [{
-							text: `[YOUTUBE: ${cleanQuery}]`,
-							fileHtml: videoHtml
-						}]
-					});
-					// INJEKSI MEMORI (4 Video)
-					chatHistory.push({
-						role: "model",
-						parts: [{
-							text: `Berhasil menampilkan 4 video YouTube tentang "${cleanQuery}". Silakan tonton langsung di sini.`
-						}]
-					});
-				} else {
-					appendMessage('model', "Tidak ditemukan video.", false, true);
-				}
-			} catch (error) {
-				if(loadingBubble) loadingBubble.remove();
-				const errorHtml = `<div class="bg-red-50 p-3 rounded-lg text-red-600 text-sm border border-red-100">Error: ${error.message}</div>`;
-				appendMessage('model', errorHtml, false, true);
-				userInput.value = originalInputValue;
-			}
-		}
-		async function sendMessage() {
-    const text = userInput.value.trim();
+    <title>AI Assistant - Settings Icon</title>
+    
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- IMPORT FONT: Inter & Orbitron (Weights 400-900) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-    if (text.toLowerCase().startsWith('/gambar ') || text.toLowerCase().startsWith('/edit ')) {
-        await handleImageGeneration(text);
-        return;
-    }
-
-    if (text.toLowerCase().startsWith('/youtube ')) {
-        await handleYoutubeSearch(text);
-        return;
-    }
-
-    if ((!text && uploadedFiles.length === 0) || !currentUser) return;
-
-    // Simpan teks asli untuk dikembalikan jika error
-    const originalText = text;
-
-    userInput.value = '';
-    userInput.blur();
-    adjustHeight(userInput);
-    sendBtn.disabled = true;
-
-    document.getElementById('file-preview-container').innerHTML = '';
-
-    if (chatHistory.length === 0) chatContainer.innerHTML = '';
-
-    let fileDisplayHtml = '';
-    if (uploadedFiles.length > 0) {
-        fileDisplayHtml = '<div class="w-full grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">';
-        uploadedFiles.forEach(f => {
-            const iconHtml = getFileIcon(f);
-            
-            fileDisplayHtml += `
-            <div class="relative flex items-center p-2 bg-gray-200 rounded-xl select-none overflow-hidden h-16">
-                <div class="w-10 h-10 mr-3 shrink-0 rounded-lg overflow-hidden flex items-center justify-center">
-                    ${iconHtml}
-                </div>
-                <div class="overflow-hidden min-w-0 flex-1 flex flex-col justify-center">
-                    <div class="text-sm font-medium text-slate-700 truncate leading-tight">${f.name}</div>
-                    <div class="text-[11px] font-medium text-slate-500 uppercase leading-none mt-0.5">${formatFileSize(f.size)}</div>
-                </div>
-            </div>`;
-        });
-        fileDisplayHtml += '</div>';
-    }
-
-    const textHtml = text ? `<p class="text-slate-700 whitespace-pre-wrap leading-relaxed">${text.replace(/\n/g, '<br>')}</p>` : '';
-    const fullUserDisplay = fileDisplayHtml + textHtml;
-
-    appendMessage('user', fullUserDisplay, false, true);
-
-    const userParts = [];
-    const dbParts = [];
-    const currentPayloadFiles = [...uploadedFiles];
-    uploadedFiles = []; // Kosongkan antrian file
-
-    let documentContext = "";
-
-    currentPayloadFiles.forEach(file => {
-        if (file.isTextContent) {
-            documentContext += `\n\n[DOKUMEN: ${file.name}]\nISI:\n${file.data}\n----------------\n`;
-        } else {
-            // PDF & Gambar masuk lewat sini (Base64)
-            userParts.push({
-                inlineData: {
-                    mimeType: file.mimeType,
-                    data: file.data
-                }
-            });
-        }
-    });
-
-    const finalPrompt = text + documentContext;
-    if (finalPrompt.trim() !== "") userParts.push({ text: finalPrompt });
-
-    // 1. MASUKKAN KE MEMORI CHAT (Push)
-    // Di sinilah file 70MB masuk ke memori
-    chatHistory.push({
-        role: "user",
-        parts: userParts
-    });
-
-    if (text) dbParts.push({ text: text });
-    if (fileDisplayHtml) dbParts.push({ fileHtml: fileDisplayHtml });
-    if (dbParts.length === 0) dbParts.push({ text: "..." });
-
-    const loadingMsg = appendMessage('model', '', true);
-
-    try {
-        if (!currentChatId) {
-            const title = (text ? text.substring(0, 30) : "Lampiran File") + "...";
-            const { data: newConv } = await supabase.from('conversations').insert({
-                user_id: currentUser.id,
-                title: title
-            }).select().single();
-            currentChatId = newConv.id;
-            loadChatList();
-        }
-
-        await supabase.from('messages').insert({
-            conversation_id: currentChatId,
-            role: 'user',
-            parts: dbParts
-        });
-
-        const model = document.getElementById('setting-model').value || 'gemini-2.5-flash';
-        const customPrompt = document.getElementById('setting-prompt')?.value || '';
-        const temperature = document.getElementById('setting-temp')?.value || 0.7;
-
-        const functionUrl = `${SUPABASE_URL}/functions/v1/call-gemini`;
-        const { data: { session } } = await supabase.auth.getSession();
-
-        // 2. KIRIM KE SERVER (Jika 70MB, ini akan gagal/timeout)
-        const response = await fetch(functionUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`
-            },
-            body: JSON.stringify({
-                model: model,
-                payload: {
-                    contents: chatHistory, // Mengirim file besar
-                    tools: [{ googleSearch: {} }],
-                    generationConfig: {
-                        temperature: parseFloat(temperature),
-                        maxOutputTokens: 2048
-                    },
-                    systemInstruction: {
-                        role: "system",
-                        parts: [{ text: customPrompt || "You are a helpful AI." }]
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 
+                        sans: ['Inter', 'sans-serif'],
+                        orbitron: ['Orbitron', 'sans-serif'] 
                     }
                 }
-            }),
-        });
+            }
+        }
+    </script>
 
-        if (!response.ok) throw new Error("Gagal terhubung ke AI (File mungkin terlalu besar).");
+    <style>
+        /* === 1. GLOBAL RESET & IOS BASE === */
+        *, *::before, *::after {
+            touch-action: manipulation;
+        }
 
-        const data = await response.json();
-        const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, saya tidak bisa menjawab.";
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden; 
+            background-color: #ffffff;
+            overscroll-behavior: none; 
+            -webkit-overflow-scrolling: touch;
+            -webkit-user-select: none; 
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        #chat-container, input, textarea {
+            -webkit-user-select: text;
+            user-select: text;
+        }
 
-        loadingMsg.remove();
-        appendMessage('model', aiText);
+        *:focus { outline: none; box-shadow: none; }
 
-        chatHistory.push({ role: "model", parts: [{ text: aiText }] });
+        /* === 2. UTILITIES === */
+        #chat-container {
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
+        }
 
-        await supabase.from('messages').insert({
-            conversation_id: currentChatId,
-            role: 'model',
-            parts: [{ text: aiText }]
-        });
+        #user-input::-webkit-scrollbar { display: none; }
+        #user-input { -ms-overflow-style: none; scrollbar-width: none; }
 
-    } catch (error) {
-        if (loadingMsg) loadingMsg.remove();
+        .safe-pt { padding-top: env(safe-area-inset-top); }
+        .safe-pb { padding-bottom: env(safe-area-inset-bottom); }
 
-        // === PERBAIKAN PENTING: AMNESIA OTOMATIS ===
-        // Buang pesan terakhir (file 70MB tadi) dari ingatan
-        // Agar chat selanjutnya bersih dan tidak stuck
-        chatHistory.pop();
+        .markdown-body { font-size: 1rem; line-height: 1.6; color: #334155; }
+        .markdown-body p { margin-bottom: 0.75rem; }
+        .markdown-body pre { background: #e2e8f0; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.5rem 0; }
+        .markdown-body code { font-family: monospace; background: #f1f5f9; padding: 0.1rem 0.3rem; border-radius: 0.2rem; }
 
-        console.error("Chat Error:", error);
+        .dot-flashing {
+            position: relative; width: 6px; height: 6px;
+            border-radius: 50%; background-color: #94a3b8;
+            animation: dot-flashing 1s infinite linear alternate; animation-delay: 0.5s;
+        }
+        .dot-flashing::before, .dot-flashing::after {
+            content: ''; display: inline-block; position: absolute; top: 0;
+            width: 6px; height: 6px; border-radius: 50%; background-color: #94a3b8;
+            animation: dot-flashing 1s infinite alternate;
+        }
+        .dot-flashing::before { left: -10px; animation-delay: 0s; }
+        .dot-flashing::after { left: 10px; animation-delay: 1s; }
+        @keyframes dot-flashing { 0% { background-color: #94a3b8; } 50%, 100% { background-color: #cbd5e1; } }
 
-        // Tampilkan pesan error
-        const errorHtml = `<div class="bg-red-50 p-3 rounded-lg text-red-600 text-sm border border-red-100 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> <span>Server sibuk atau file terlalu besar. Silakan coba lagi nanti.</span></div>`;
-        appendMessage('model', errorHtml, false, true);
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="flex flex-col relative">
 
-        // Kembalikan teks yang sudah diketik user agar tidak hilang
-        userInput.value = originalText;
+    <!-- === SIDEBAR & OVERLAY === -->
+    <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/20 z-40 hidden transition-opacity opacity-0 backdrop-blur-sm"></div>
 
-    } finally {
-        sendBtn.disabled = false;
-    }
-}
-		
-		function appendMessage(role, content, isLoading = false, isRawHtml = false) {
-			const div = document.createElement('div');
-			div.className = 'w-full max-w-3xl mx-auto';
-			const isUser = role === 'user';
-			const name = isUser ? 'ANDA' : 'ASISTEN';
-			const nameColorClass = isUser ?
-				'text-slate-500' :
-				'bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent';
-			const bubbleClass = isUser ? 'user-bubble' : 'ai-bubble cursor-pointer';
-			let htmlContent;
-			// --- LOGIKA PERBAIKAN DI SINI ---
-			if(isLoading) {
-				htmlContent = `<div class="flex items-center h-6 pl-3 gap-1"><div class="dot-flashing"></div></div>`;
-			} else if(isRawHtml) {
-				// PRIORITAS: Jika isRawHtml = true, jangan proses markdown! Langsung render HTML.
-				htmlContent = content;
-			} else if(role === 'model') {
-				// Jika bukan raw HTML, baru proses Markdown
-				let rawHtml = converter.makeHtml(content);
-				const tempDiv = document.createElement('div');
-				tempDiv.innerHTML = rawHtml;
-				// Pembungkus Tabel
-				const tables = tempDiv.querySelectorAll('table');
-				tables.forEach(tbl => {
-					const wrapper = document.createElement('div');
-					wrapper.className = 'overflow-x-auto w-full block mb-2';
-					tbl.parentNode.insertBefore(wrapper, tbl);
-					wrapper.appendChild(tbl);
-					tbl.style.marginTop = '0';
-					tbl.style.marginBottom = '0';
-				});
-				htmlContent = tempDiv.innerHTML;
-			} else {
-				htmlContent = content.replace(/\n/g, '<br>');
-			}
-			// -------------------------------
-			// Tombol Copy (Sama seperti sebelumnya)
-			const copyButtonHtml = role === 'model' && !isLoading && !isRawHtml ? `
-        <div class="copy-container hidden absolute bottom-1.5 left-4 select-none">
-            <button class="copy-btn text-slate-400 p-0 flex items-center transition-colors hover:text-slate-600" title="Salin">
-                <svg viewBox="0 0 1024 1024" width="14" height="14" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-                    <path d="M768 832a128 128 0 0 1-128 128H192A128 128 0 0 1 64 832V384a128 128 0 0 1 128-128v64a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64h64z"></path>
-                    <path d="M384 128a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64V192a64 64 0 0 0-64-64H384zm0-64h448a128 128 0 0 1 128 128v448a128 128 0 0 1-128 128H384a128 128 0 0 1-128-128V192A128 128 0 0 1 384 64z"></path>
+    <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+        
+        <!-- Sidebar Top Section -->
+        <div class="flex-none min-h-[64px] safe-pt flex items-center px-4">
+            <!-- TOMBOL PERCAKAPAN BARU -->
+            <button onclick="startNewChat()" class="w-full flex items-center justify-center px-4 py-3 bg-gray-100 text-slate-700 rounded-2xl hover:bg-gray-200 active:scale-95 transition-all duration-200 group">
+                <svg class="w-5 h-5 mr-3 text-slate-500 group-hover:text-slate-800 transition-colors" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"></path>
+                    <path d="M8 12h8"></path>
+                    <path d="M12 8v8"></path>
                 </svg>
+                <span class="font-bold text-sm text-slate-700">Percakapan Baru</span>
             </button>
-        </div>` : '';
-			div.innerHTML = `
-        <div class="${bubbleClass} relative flex flex-col bg-gray-100 px-4 pt-3 pb-6 rounded-2xl shadow-sm mb-4">
-            <div class="flex justify-between items-center mb-1 border-b-[0.5px] border-gray-300 pb-1">
-                <span class="text-xs font-bold uppercase tracking-wide ${nameColorClass}">${name}</span>
-                <span class="text-[10px] text-slate-400 font-sans">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        </div>
+
+        <div class="flex-1 overflow-y-auto"></div>
+    </div>
+
+    <!-- === SECTION: LOGIN PAGE === -->
+    <div id="login-page" class="absolute inset-0 z-[30] flex items-center justify-center bg-gray-100 p-4 transition-all duration-300 transform">
+        <div class="bg-white w-full max-w-sm p-8 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-center gap-6">
+            
+            <div class="flex flex-col items-center justify-center text-center">
+                <img src="logo.png" alt="AI Logo" class="w-24 h-24 object-contain -mt-2 mb-0 drop-shadow-sm">
+                <h1 class="font-orbitron text-2xl font-extrabold text-slate-800 tracking-wider">
+                    AI ASISTEN
+                </h1>
+            </div>
+
+            <div class="w-full space-y-3">
+                <input type="email" placeholder="Email" class="login-input w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-slate-300 transition-all">
+                <input type="password" placeholder="Password" class="login-input w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-slate-300 transition-all">
             </div>
             
-            <div class="text-sm md:text-base text-slate-700 font-medium leading-relaxed markdown-body mt-1 chat-content">${htmlContent}</div>
-            
-            ${copyButtonHtml}
-        </div>`;
-			const contentBody = div.querySelector('.markdown-body');
-			if(contentBody && contentBody.lastElementChild) {
-				contentBody.lastElementChild.style.marginBottom = '0px';
-				if(contentBody.lastElementChild.classList.contains('overflow-x-auto')) {
-					contentBody.lastElementChild.classList.remove('mb-6');
-				}
-			}
-			chatContainer.appendChild(div);
-			chatContainer.scrollTo({
-				top: chatContainer.scrollHeight,
-				behavior: 'auto'
-			});
-			return div;
-		}
-		
-		function adjustHeight(el) {
-			el.style.height = 'auto';
-			el.style.height = Math.min(Math.max(el.scrollHeight, 56), 128) + 'px';
-		}
-		
-		function handleEnter(e) {
-			if(e.key === 'Enter' && !e.shiftKey) {
-				e.preventDefault();
-				sendMessage();
-			}
-		}
-		async function loadChatList() {
-			const listContainer = document.getElementById('sidebar-content');
-			let listDiv = document.getElementById('chat-history-list');
-			if(!listDiv) {
-				listDiv = document.createElement('div');
-				listDiv.id = 'chat-history-list';
-				listDiv.className = 'flex flex-col mt-0 px-4 space-y-1 pb-4';
-				listContainer.appendChild(listDiv);
-			}
-			listDiv.innerHTML = '';
-			try {
-				const {
-					data: chats,
-					error
-				} = await supabase.from('conversations').select('id, title').eq('user_id', currentUser.id).order('created_at', {
-					ascending: false
-				});
-				if(error) throw error;
-				if(!chats || chats.length === 0) {
-					listDiv.innerHTML = '<p class="text-xs text-slate-400 text-center mt-4">Belum ada riwayat.</p>';
-					return;
-				}
-				chats.forEach(chat => {
-					const isActive = chat.id === currentChatId;
-					const containerStyle = isActive ? 'bg-blue-50' : 'bg-gray-50';
-					const textClass = isActive ? 'text-blue-700 font-bold' : 'text-slate-600 font-medium';
-					const div = document.createElement('div');
-					div.className = `relative flex items-center justify-between py-2 px-3 rounded-xl cursor-pointer transition-all duration-200 group ${containerStyle}`;
-					div.onclick = () => loadMessages(chat.id);
-					div.innerHTML = `
-      	            <span class="${textClass} text-sm md:text-base truncate flex-1 mr-2 select-none transition-colors">${chat.title}</span>
-      	            <button onclick="confirmDeleteChat(event, '${chat.id}')" class="text-slate-400 hover:text-red-500 transition-all p-1 rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible">
-      	                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      	                    <path d="M4 7.00005L10.2 11.65C11.2667 12.45 12.7333 12.45 13.8 11.65L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-      	                    <path d="M13 19H5C3.89543 19 3 18.1046 3 17V7C3 5.89543 3.89543 5 5 5H19C20.1046 5 21 5.89543 21 7V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-      	                    <path d="M17 16L19 18M21 20L19 18M19 18L21 16M19 18L17 20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-      	                </svg>
-      	            </button>
-      	        `;
-					listDiv.appendChild(div);
-				});
-			} catch (error) {
-				console.error(error);
-			}
-		}
-		async function loadMessages(chatId) {
-			currentChatId = chatId;
-			loadChatList();
-			forceCloseSidebar();
-			chatContainer.innerHTML = '';
-			const loading = appendMessage('model', '', true);
-			chatHistory = [];
-			try {
-				const {
-					data: messages,
-					error
-				} = await supabase.from('messages')
-					.select('*')
-					.eq('conversation_id', chatId)
-					.order('created_at', {
-						ascending: true
-					});
-				if(error) throw error;
-				loading.remove();
-				messages.forEach(msg => {
-					let displayContent = "";
-					let isRaw = false;
-					const parts = msg.parts;
-					let foundHtml = null;
-					let foundText = "";
-					const extractData = (item) => {
-						if(!item) return;
-						if(item.fileHtml) foundHtml = item.fileHtml;
-						if(item.text) foundText = item.text;
-					};
-					if(Array.isArray(parts)) {
-						parts.forEach(p => extractData(p));
-					} else {
-						extractData(parts);
-					}
-					if(msg.role === 'user') {
-						const formattedText = foundText ? `<p class="text-slate-700 whitespace-pre-wrap leading-relaxed">${foundText.replace(/\n/g, '<br>')}</p>` : "";
-						displayContent = (foundHtml || "") + formattedText;
-						isRaw = true;
-						chatHistory.push({
-							role: "user",
-							parts: [{
-								text: foundText
-							}]
-						});
-					} else {
-						if(foundHtml) {
-							const tempDiv = document.createElement('div');
-							tempDiv.innerHTML = foundHtml;
-							const imgTag = tempDiv.querySelector('img');
-							if(imgTag && imgTag.src) {
-								const timestamp = new Date(msg.created_at).getTime();
-								displayContent = `
-        <div tabindex="0" class="relative group rounded-xl overflow-hidden border border-gray-200 shadow-sm mt-1 inline-block w-full outline-none cursor-pointer">
-            <img src="${imgTag.src}" class="w-full h-auto bg-gray-50">
-            
-            <a href="${imgTag.src}" 
-               onclick="handleImageDownload(event, this.href, 'AI-${timestamp}.png')"
-               class="absolute top-1 right-1 p-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] active:scale-90 z-10 opacity-0 invisible group-focus:opacity-100 group-focus:visible transition-all duration-300"
-               title="Simpan Gambar">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5">
-                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-                    <g id="SVGRepo_iconCarrier"> 
-                        <g id="Interface / Download"> 
-                            <path id="Vector" d="M6 21H18M12 3V17M12 17L17 12M12 17L7 12" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path> 
-                        </g> 
-                    </g>
-                </svg>
-            </a>
+            <button onclick="enterApp()" class="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm tracking-wide rounded-xl shadow-sm transition-transform active:scale-95 uppercase">
+                Masuk
+            </button>
         </div>
-      `;
-							} else {
-								displayContent = foundHtml;
-							}
-							isRaw = true;
-						} else {
-							displayContent = foundText;
-							isRaw = false;
-						}
-						chatHistory.push({
-							role: "model",
-							parts: [{
-								text: foundText
-							}]
-						});
-					}
-					appendMessage(msg.role === 'user' ? 'user' : 'model', displayContent, false, isRaw);
-				});
-				setTimeout(() => {
-					chatContainer.scrollTo({
-						top: chatContainer.scrollHeight,
-						behavior: 'auto'
-					});
-				}, 100);
-			} catch (error) {
-				loading.remove();
-				console.error(error);
-				appendMessage('model', "Gagal memuat pesan: " + error.message);
-			}
-		}
-		async function callAdminFunction(action, payload = {}) {
-			const {
-				data: {
-					session
-				}
-			} = await supabase.auth.getSession();
-			if(!session) {
-				alert("Akses ditolak.");
-				return null;
-			}
-			const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-user-manager`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'Authorization': `Bearer ${session.access_token}`
-				},
-				body: JSON.stringify({
-					action,
-					payload
-				}),
-			});
-			if(!response.ok) {
-				const err = await response.json();
-				throw new Error(err.error || "Gagal memproses permintaan admin.");
-			}
-			return response.json();
-		}
-		// === FUNGSI DOWNLOAD KHUSUS iOS PWA (ANTI ERROR LOG) ===
-		async function handleImageDownload(e, dataUrl, fileName) {
-			e.preventDefault();
-			e.stopPropagation();
-			try {
-				const response = await fetch(dataUrl);
-				const blob = await response.blob();
-				const file = new File([blob], fileName, {
-					type: blob.type
-				});
-				if(navigator.canShare && navigator.canShare({
-						files: [file]
-					})) {
-					await navigator.share({
-						files: [file],
-						title: 'Simpan Gambar AI',
-					});
-				} else {
-					// Fallback Desktop
-					const blobUrl = window.URL.createObjectURL(blob);
-					const link = document.createElement('a');
-					link.href = blobUrl;
-					link.download = fileName;
-					document.body.appendChild(link);
-					link.click();
-					document.body.removeChild(link);
-					window.URL.revokeObjectURL(blobUrl);
-				}
-			} catch (err) {
-				// === PERBAIKAN DI SINI ===
-				// Jika user menekan tombol 'Batal' atau 'X', jangan dianggap error
-				if(err.name === 'AbortError') {
-					return; // Keluar diam-diam (Silent exit)
-				}
-				console.error('Download error:', err);
-			}
-		}
-		async function handleAddUser() {
-			const email = document.getElementById('create-email').value;
-			const password = document.getElementById('create-password').value;
-			const btn = document.getElementById('btn-add-user');
-			if(!email || password.length < 6) {
-				// --- PERBAIKAN DI SINI ---
-				// Parameter terakhir diubah jadi 'false' agar tombol OK berwarna BIRU
-				showCustomAlert("DATA TIDAK VALID", "Email wajib diisi dan password minimal 6 karakter.", false);
-				return;
-			}
-			btn.textContent = "Menambahkan...";
-			btn.disabled = true;
-			try {
-				await callAdminFunction('create_user', {
-					email,
-					password
-				});
-				// Sukses = False (Biru) - Sudah Benar
-				showCustomAlert("BERHASIL", `User ${email} berhasil ditambahkan!`, false);
-				document.getElementById('create-email').value = '';
-				document.getElementById('create-password').value = '';
-				loadUsers();
-			} catch (error) {
-				// Jika Error Server/Sistem, tetap Merah (True) agar user tahu ini masalah serius
-				// Kecuali jika Anda mau ini biru juga, ubah jadi false.
-				showCustomAlert("GAGAL", error.message, true);
-			} finally {
-				btn.innerHTML = `<i class="fa-solid fa-user-plus text-slate-300 group-hover:text-white transition-colors"></i><span>TAMBAH USER</span>`;
-				btn.disabled = false;
-			}
-		}
-		async function loadUsers() {
-			const container = document.getElementById('user-list-container');
-			container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4"><i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Memuat data...</p>';
-			try {
-				const users = await callAdminFunction('list_users');
-				const {
-					data: {
-						user: currentUser
-					}
-				} = await supabase.auth.getUser();
-				container.innerHTML = '';
-				if(!users || users.length === 0) {
-					container.innerHTML = '<p class="text-xs text-slate-400 text-center">Tidak ada pengguna lain.</p>';
-					return;
-				}
-				users.forEach(user => {
-					const isSelf = user.id === currentUser?.id;
-					const isFrozen = user.banned_until && (new Date(user.banned_until) > new Date());
-					const div = document.createElement('div');
-					div.className = `flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-xl ${isFrozen ? 'opacity-60' : ''}`;
-					div.innerHTML = `
-    <div class="overflow-hidden mr-2">
-        <p class="text-xs md:text-sm font-bold text-slate-700 truncate">${user.email}</p>
-        <p class="text-[10px] md:text-xs text-slate-400 uppercase font-bold tracking-wider mt-0.5">${isFrozen ? '<span class="text-red-500">DIBEKUKAN</span>' : 'AKTIF'} ${isSelf ? '(ANDA)' : ''}</p>
     </div>
-    <div class="flex items-center gap-2 shrink-0">
-        <button onclick="toggleFreeze('${user.id}', ${isFrozen})" ${isSelf ? 'disabled' : ''} 
-    class="w-8 h-8 flex items-center justify-center rounded-lg transition-colors bg-blue-100 text-blue-600 hover:bg-blue-200 disabled:opacity-30" 
-    title="${isFrozen ? 'Buka Akun' : 'Bekukan Akun'}">
-    
-    <svg class="w-5 h-5" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-       <g stroke-width="0"></g><g stroke-linecap="round" stroke-linejoin="round"></g><g><defs><style>.a{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;}</style></defs><path class="a" d="M29.535,33.5623l-5.5344-1.8331-5.5345,1.8331L17.29,27.8649l-4.3588-3.8643L17.29,20.1363l1.1757-5.6973,5.5345,1.833,5.5344-1.833,1.1757,5.6973L35.07,24.0006l-4.3588,3.8643Z"></path><path class="a" d="M24.0006,31.7292l0-29.2292"></path><path class="a" d="M17.6613,7.151l6.3392,3.0277"></path><path class="a" d="M30.34,7.151l-6.3392,3.0277"></path><path class="a" d="M24.0006,31.7292V45.5013"></path><path class="a" d="M30.34,40.85l-6.3392-3.0277"></path><path class="a" d="M17.6613,40.85l6.3392-3.0277"></path><path class="a" d="M17.29,27.8649,42.668,13.25"></path><path class="a" d="M35.46,10.1l.5409,6.99"></path><path class="a" d="M41.8,21.0519,36.0011,17.09"></path><path class="a" d="M17.29,27.8649,5.3331,34.751"></path><path class="a" d="M12.5409,37.9015,12,30.9116"></path><path class="a" d="M6.2016,26.9494,12,30.9116"></path><path class="a" d="M30.7107,27.8649,42.668,34.751"></path><path class="a" d="M41.8,26.9494l-5.7984,3.9622"></path><path class="a" d="M35.46,37.9015l.5409-6.99"></path><path class="a" d="M30.7107,27.8649,5.3331,13.25"></path><path class="a" d="M6.2016,21.0519,12,17.09"></path><path class="a" d="M12.5409,10.1,12,17.09"></path></g>
-    </svg>
 
-</button>
-        <button onclick="deleteUser('${user.id}', '${user.email}')" ${isSelf ? 'disabled' : ''} class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors disabled:opacity-30">
-            <i class="fa-solid fa-trash text-sm"></i>
-        </button>
+    <!-- === SECTION: CHAT APP === -->
+    <div id="chat-page" class="flex-1 flex flex-col h-full hidden opacity-0 relative bg-white w-full z-10">
+        
+        <!-- Header -->
+        <header class="flex-none min-h-[64px] safe-pt flex items-center justify-between px-3 border-b border-gray-100 bg-white z-20 select-none">
+            
+            <div class="flex items-center gap-2 h-16">
+                <img src="logo.png" alt="AI Icon" class="w-14 h-14 object-contain drop-shadow-sm">
+                <div>
+                    <h2 class="font-orbitron font-extrabold text-lg text-slate-800 tracking-wide">AI ASISTEN</h2>
+                    <p class="text-[11px] text-slate-500 font-medium font-sans">
+                        Artificial Intelligence
+                    </p>
+                </div>
+            </div>
+
+            <!-- Header Buttons (Settings & Menu) -->
+            <div class="flex items-center">
+                <!-- Settings Icon (No Function) -->
+                <button class="p-3 text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg class="w-6 h-6" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                        <g id="SVGRepo_iconCarrier">
+                            <g>
+                                <path fill="none" d="M0 0h24v24H0z"></path>
+                                <path d="M12 14v2a6 6 0 0 0-6 6H4a8 8 0 0 1 8-8zm0-1c-3.315 0-6-2.685-6-6s2.685-6 6-6 6 2.685 6 6-2.685 6-6 6zm0-2c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm9 6h1v5h-8v-5h1v-1a3 3 0 0 1 6 0v1zm-2 0v-1a1 1 0 0 0-2 0v1h2z"></path>
+                            </g>
+                        </g>
+                    </svg> 
+                </button>
+
+                <!-- Toggle Sidebar Icon -->
+                <button onclick="toggleSidebar()" class="p-3 text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <g stroke-width="0"></g>
+                        <g stroke-linecap="round" stroke-linejoin="round"></g>
+                        <g> 
+                            <path d="M5 7H19" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path> 
+                            <path d="M5 12L19 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path> 
+                            <path d="M5 17L19 17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path> 
+                        </g>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Messages Area -->
+        <main id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+            <div class="w-full max-w-3xl mx-auto">
+                <div class="bg-white border border-gray-200 p-4 rounded-2xl shadow-sm">
+                    <!-- Header Pesan -->
+                    <div class="flex justify-between items-center mb-1 border-b-[0.5px] border-gray-200 pb-1">
+                        <span class="text-xs font-bold uppercase tracking-wide bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">ASISTEN</span>
+                        <span class="text-xs text-slate-400 font-sans current-time">--:--</span>
+                    </div>
+                    <div class="text-slate-700 leading-relaxed markdown-body">
+                        Halo! Ikon pengaturan telah ditambahkan di sebelah ikon menu. Saat ini ikon tersebut belum memiliki fungsi.
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Input Area -->
+        <div class="flex-none bg-white border-t border-gray-100 px-4 pt-4 pb-6 safe-pb z-30 w-full select-none">
+            <div class="w-full max-w-3xl mx-auto relative flex items-end bg-gray-100 rounded-[2rem] border border-transparent transition-all">
+                
+                <button class="absolute left-2 bottom-2 w-10 h-10 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-700 hover:bg-gray-200 transition-colors">
+                    <i class="fa-solid fa-plus text-xl"></i>
+                </button>
+                
+                <textarea 
+                    id="user-input"
+                    rows="1"
+                    placeholder="Ketik pesan..." 
+                    class="w-full py-4 pl-14 pr-14 bg-transparent text-slate-800 text-base placeholder:text-slate-400 resize-none max-h-32 rounded-[2rem] focus:outline-none focus:ring-0"
+                    style="min-height: 56px;"
+                    oninput="adjustHeight(this)"
+                    onkeydown="handleEnter(event)"
+                ></textarea>
+                
+                <button id="send-btn" class="absolute right-2 bottom-2 w-10 h-10 flex items-center justify-center rounded-full bg-slate-900 text-white hover:bg-slate-800 shadow-sm transition-transform active:scale-90 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg class="w-5 h-5 translate-x-0.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none">
+                        <path fill="#ffffff" fill-rule="evenodd" d="M2.345 2.245a1 1 0 0 1 1.102-.14l18 9a1 1 0 0 1 0 1.79l-18 9a1 1 0 0 1-1.396-1.211L4.613 13H10a1 1 0 1 0 0-2H4.613L2.05 3.316a1 1 0 0 1 .294-1.071z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
     </div>
-`;
-					container.appendChild(div);
-				});
-			} catch (error) {
-				container.innerHTML = `<p class="text-xs text-red-400 text-center">Error: ${error.message}</p>`;
-			}
-		}
-		// Tambahkan parameter terakhir: cancelColorClass
-		function showCustomConfirm(title, message, actionCallback, btnText = "HAPUS", btnColorClass = "text-red-600", cancelColorClass = "text-blue-600") {
-			document.getElementById('confirm-title').textContent = title;
-			document.getElementById('confirm-message').textContent = message;
-			const agreeBtn = document.getElementById('modal-agree-button');
-			const cancelBtn = document.getElementById('modal-cancel-button');
-			// 1. Setup Tombol KANAN (Aksi Utama)
-			agreeBtn.textContent = btnText;
-			agreeBtn.className = `w-1/2 py-2.5 text-center text-sm md:text-base font-semibold hover:bg-gray-200 transition-colors ${btnColorClass}`;
-			// 2. Setup Tombol KIRI (Batal) - DINAMIS (Merah/Biru)
-			cancelBtn.textContent = "BATAL";
-			cancelBtn.className = `w-1/2 py-2.5 text-center text-sm md:text-base font-semibold hover:bg-gray-200 border-r border-gray-200 transition-colors ${cancelColorClass}`;
-			currentConfirmAction = actionCallback;
-			confirmModal.classList.remove('hidden');
-		}
-		// === LOGIKA MODAL (CONFIRM & ALERT) ===
-		function hideConfirmModal() {
-			confirmModal.classList.add('hidden');
-			currentConfirmAction = null;
-			// --- PROTEKSI AGAR CONFIRM TIDAK RUSAK ---
-			// Kita wajib mengembalikan tombol ke bentuk asalnya (2 Tombol berdampingan)
-			const cancelBtn = document.getElementById('modal-cancel-button');
-			const agreeBtn = document.getElementById('modal-agree-button');
-			// 1. Munculkan kembali tombol Batal (jika sebelumnya disembunyikan oleh Alert)
-			cancelBtn.classList.remove('hidden');
-			// 2. Kembalikan tombol 'Ya/OK' menjadi setengah lebar (w-1/2)
-			agreeBtn.classList.remove('w-full');
-			agreeBtn.classList.add('w-1/2');
-		}
-		// Fungsi Baru: Menggunakan Modal Confirm sebagai Alert Info
-		function showCustomAlert(title, message, isError = false) {
-			// Set Teks Judul & Pesan
-			document.getElementById('confirm-title').textContent = title;
-			document.getElementById('confirm-message').textContent = message;
-			const cancelBtn = document.getElementById('modal-cancel-button');
-			const agreeBtn = document.getElementById('modal-agree-button');
-			// --- MODIFIKASI TAMPILAN SEMENTARA ---
-			// 1. Sembunyikan tombol 'BATAL'
-			cancelBtn.classList.add('hidden');
-			// 2. Ubah tombol 'YA' menjadi 'OK' dan Lebar Penuh (w-full)
-			agreeBtn.textContent = "OK";
-			agreeBtn.classList.remove('w-1/2');
-			agreeBtn.classList.add('w-full');
-			// 3. Atur Warna (Merah jika Error, Biru jika Sukses)
-			// Kita reset dulu semua class warna agar tidak bertumpuk
-			agreeBtn.className = `w-full py-2.5 text-center text-sm md:text-base font-semibold hover:bg-gray-200 transition-colors ${isError ? 'text-red-600' : 'text-blue-600'}`;
-			// 4. Pastikan tidak ada aksi callback (Hanya tutup)
-			currentConfirmAction = null;
-			// 5. Tampilkan Modal
-			confirmModal.classList.remove('hidden');
-		}
-		document.getElementById('modal-cancel-button').addEventListener('click', hideConfirmModal);
-		document.getElementById('modal-agree-button').addEventListener('click', async () => {
-			if(currentConfirmAction) await currentConfirmAction();
-			hideConfirmModal();
-		});
-		
-		function confirmDeleteChat(e, chatId) {
-			e.stopPropagation();
-			forceCloseSidebar();
-			// Hapus: Merah, Batal: Biru
-			showCustomConfirm("Hapus Percakapan?", "Tindakan ini tidak dapat dibatalkan. Yakin hapus?", async () => {
-				try {
-					await supabase.from('conversations').delete().eq('id', chatId);
-					if(currentChatId === chatId) startNewChat();
-					else loadChatList();
-				} catch (err) {
-					showCustomAlert("GAGAL", err.message, true);
-				}
-			}, "HAPUS", "text-red-600", "text-blue-600"); // <--- Batal diset Biru
-		}
-		async function deleteUser(userId, userEmail) {
-			// Hapus: Merah, Batal: Biru
-			showCustomConfirm("Hapus User?", `Hapus permanen akun ${userEmail}?`, async () => {
-				try {
-					await callAdminFunction('delete_user', {
-						id: userId
-					});
-					loadUsers();
-				} catch (err) {
-					showCustomAlert("GAGAL", err.message, true);
-				}
-			}, "HAPUS", "text-red-600", "text-blue-600"); // <--- Batal diset Biru
-		}
-		async function toggleFreeze(userId, isCurrentlyFrozen) {
-			const actionName = isCurrentlyFrozen ? 'unfreeze_user' : 'freeze_user';
-			const title = isCurrentlyFrozen ? "Buka Akun?" : "Bekukan Akun?";
-			const msg = isCurrentlyFrozen ? "User ini akan bisa login kembali." : "User ini tidak akan bisa login aplikasi sampai akun dibuka kembali.";
-			// --- ATURAN WARNA: HANYA MERAH & BIRU ---
-			// SKENARIO 1: MEMBUKA AKUN (UNFREEZE)
-			// Tombol: BUKA (Biru) | Batal: MERAH
-			if(isCurrentlyFrozen) {
-				showCustomConfirm(title, msg, async () => {
-					try {
-						await callAdminFunction(actionName, {
-							id: userId
-						});
-						loadUsers();
-					} catch (err) {
-						showCustomAlert("GAGAL", err.message, true);
-					}
-				}, "BUKA", "text-blue-600", "text-red-600"); // <--- Aksi Biru, Batal Merah
-			}
-			// SKENARIO 2: MEMBEKUKAN AKUN (FREEZE)
-			// Tombol: BEKUKAN (Merah) | Batal: BIRU
-			else {
-				showCustomConfirm(title, msg, async () => {
-					try {
-						await callAdminFunction(actionName, {
-							id: userId
-						});
-						loadUsers();
-					} catch (err) {
-						showCustomAlert("GAGAL", err.message, true);
-					}
-				}, "BEKUKAN", "text-red-600", "text-blue-600"); // <--- Aksi Merah, Batal Biru
-			}
-		}
-		const resetScroll = () => {
-			window.scrollTo(0, 0);
-			setTimeout(() => document.body.scrollTop = 0, 50);
-		};
-		document.querySelectorAll('input, textarea').forEach(el => {
-			el.addEventListener('blur', resetScroll);
-		});
-		userInput.addEventListener('input', function() {
-			adjustHeight(this);
-		});
-		
-		function handleSend(e) {
-			e.preventDefault();
-			if(!sendBtn.disabled) {
-				sendMessage();
-			}
-		}
-		sendBtn.addEventListener('click', handleSend);
-		sendBtn.addEventListener('touchend', handleSend);
-		let lastTouchEnd = 0;
-		document.addEventListener('touchend', (e) => {
-			const now = (new Date()).getTime();
-			if(now - lastTouchEnd <= 300) e.preventDefault();
-			lastTouchEnd = now;
-		}, false);
-		sendBtn.disabled = false;
-		checkSession();
-	</script>
+
+    <script>
+        const apiKey = ""; 
+        const loginPage = document.getElementById('login-page');
+        const chatPage = document.getElementById('chat-page');
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const loginInputs = document.querySelectorAll('.login-input');
+        
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+        function toggleSidebar() {
+            const isClosed = sidebar.classList.contains('-translate-x-full');
+            if (isClosed) {
+                sidebar.classList.remove('-translate-x-full');
+                sidebarOverlay.classList.remove('hidden');
+                setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                sidebarOverlay.classList.add('opacity-0');
+                setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+            }
+        }
+
+        function startNewChat() {
+            toggleSidebar();
+            setTimeout(() => { window.location.reload(); }, 300);
+        }
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) event.preventDefault();
+            lastTouchEnd = now;
+        }, false);
+
+        document.body.addEventListener('touchmove', (e) => {
+            const isScrollableChat = e.target.closest('#chat-container');
+            const isScrollableSidebar = e.target.closest('#sidebar'); 
+            const isInput = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
+            if (!isScrollableChat && !isInput && !isScrollableSidebar) e.preventDefault();
+        }, { passive: false });
+
+        const resetScroll = () => {
+            window.scrollTo(0, 0);
+            setTimeout(() => { document.body.scrollTop = 0; }, 50);
+        };
+        loginInputs.forEach(input => input.addEventListener('blur', resetScroll));
+        userInput.addEventListener('blur', resetScroll);
+
+        sendBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault(); 
+            e.stopPropagation();
+            sendMessage();
+        }, { passive: false });
+
+        sendBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            sendMessage();
+        });
+
+        function enterApp() {
+            loginPage.style.pointerEvents = 'none';
+            loginPage.style.opacity = '0';
+            setTimeout(() => {
+                loginPage.classList.add('hidden');
+                loginPage.style.zIndex = '-1'; 
+                loginPage.style.display = 'none'; 
+                chatPage.classList.remove('hidden');
+                chatPage.classList.add('flex'); 
+                void chatPage.offsetWidth; 
+                chatPage.style.opacity = '1';
+                userInput.focus();
+            }, 300);
+        }
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            userInput.blur();
+            userInput.value = '';
+            userInput.style.height = '56px';
+            sendBtn.disabled = true;
+
+            appendMessage('user', text);
+            const loadingMsg = appendMessage('model', '', true);
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: text }] }] })
+                });
+
+                const data = await response.json();
+                const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, tidak ada respon.";
+
+                loadingMsg.remove();
+                appendMessage('model', aiText);
+
+            } catch (error) {
+                loadingMsg.remove();
+                appendMessage('model', "Error koneksi jaringan.");
+            } finally {
+                sendBtn.disabled = false;
+            }
+        }
+
+        function appendMessage(role, content, isLoading = false) {
+            const div = document.createElement('div');
+            div.className = 'w-full max-w-3xl mx-auto animate-[fadeIn_0.3s_ease-out]';
+            
+            const isUser = role === 'user';
+            const bgClass = 'bg-white';
+            const borderClass = 'border-gray-200';
+            
+            const name = isUser ? 'ANDA' : 'ASISTEN';
+            const nameColorClass = isUser 
+                ? 'text-slate-500' 
+                : 'bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent';
+            
+            let htmlContent = isLoading 
+                ? `<div class="flex items-center h-6 pl-2 gap-1"><div class="dot-flashing"></div></div>`
+                : (role === 'model' ? marked.parse(content) : content.replace(/\n/g, '<br>'));
+
+            div.innerHTML = `
+                <div class="flex flex-col ${bgClass} border ${borderClass} p-4 rounded-2xl shadow-sm mb-4">
+                    <div class="flex justify-between items-center mb-1 border-b-[0.5px] border-gray-200 pb-1">
+                        <span class="text-xs font-bold uppercase tracking-wide ${nameColorClass}">${name}</span>
+                        <span class="text-xs text-slate-400 font-sans">${getFormattedTime()}</span>
+                    </div>
+                    <div class="text-base text-slate-700 leading-relaxed markdown-body">
+                        ${htmlContent}
+                    </div>
+                </div>
+            `;
+            chatContainer.appendChild(div);
+            scrollToBottom();
+            return div;
+        }
+
+        function adjustHeight(el) {
+            el.style.height = 'auto';
+            el.style.height = Math.min(Math.max(el.scrollHeight, 56), 128) + 'px';
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function scrollToBottom() {
+            chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+        }
+
+        function getFormattedTime() {
+            return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        document.querySelectorAll('.current-time').forEach(el => el.textContent = getFormattedTime());
+    </script>
 </body>
 </html>
