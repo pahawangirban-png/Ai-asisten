@@ -2351,14 +2351,14 @@
 		
 		// ==========================================
     // ==========================================
-    // SOLUSI FINAL IOS 15: PAKU BETON + SOLID LAYOUT (NO ANIMATION)
+    // SOLUSI FINAL IOS 15: PAKU BETON + FIX POSISI HAMBURGER
     // ==========================================
     (function() {
         const ua = navigator.userAgent;
         const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
 
         if (isIOS15) {
-            console.log("🗿 iOS 15: Mode Solid (Tanpa Animasi Buatan)...");
+            console.log("🛠️ iOS 15: Mode Paku Beton + Fix Layout Kanan...");
 
             const viewport = window.visualViewport;
             const chatPage = document.getElementById('chat-page');
@@ -2376,7 +2376,7 @@
                 }
             };
 
-            // 1. INJEKSI CSS "PAKU BETON" (TANPA TRANSISI HEADER)
+            // 1. INJEKSI CSS KHUSUS IOS 15
             const style = document.createElement('style');
             style.innerHTML = `
                 html, body {
@@ -2401,23 +2401,26 @@
                     height: 100%;
                     touch-action: pan-y;
                     
-                    /* JARAK PRESISI: 15px */
+                    /* JARAK PRESISI FOOTER: 15px */
                     padding-bottom: 15px !important; 
                 }
-                /* HAPUS ANIMASI: Biarkan header solid menyatu dengan layout */
+                /* HEADER FIX */
                 header {
                     will-change: margin-top;
+                    
+                    /* FIX POSISI HAMBURGER MEPET KANAN: */
+                    /* Kita paksa padding kanan lebih besar agar icon geser ke kiri */
+                    padding-right: 25px !important; 
                 }
             `;
             document.head.appendChild(style);
 
-            // 2. LOGIKA INTERAKSI (INSTANT SNAP)
+            // 2. LOGIKA INTERAKSI (HEADER INSTANT SNAP)
             if (inputField && header) {
                 const headerHeight = header.offsetHeight || 80;
 
                 inputField.addEventListener('focus', () => {
-                    // Header Langsung Naik (Tanpa Animasi)
-                    // Ini memberikan efek 'terdorong' instan saat input aktif
+                    // Header Naik Instan
                     header.style.marginTop = `-${headerHeight}px`; 
                     
                     if (viewport) chatPage.style.height = `${viewport.height}px`;
@@ -2425,9 +2428,7 @@
                 });
 
                 inputField.addEventListener('blur', () => {
-                    // Header Langsung Turun (Tanpa Animasi)
-                    // Dia akan muncul tepat saat layout container chat memanjang
-                    // Memberikan kesan "Satu Kesatuan"
+                    // Header Turun Instan
                     header.style.marginTop = '0px';
 
                     if (viewport) chatPage.style.height = `${viewport.height}px`;
