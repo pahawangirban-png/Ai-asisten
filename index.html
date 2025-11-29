@@ -2024,6 +2024,9 @@
 			try {
                 for (const file of files) {
                     if (uploadedFiles.find(f => f.name === file.name)) continue;
+					const file = originalFile.slice(0, originalFile.size, originalFile.type);
+                    
+                    file.name = originalFile.name;
 
                     const fileType = file.name.split('.').pop().toLowerCase();
                     const isImage = file.type.startsWith('image/');
