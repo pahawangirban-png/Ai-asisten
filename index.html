@@ -2350,143 +2350,151 @@
         }
 		
 		// ==========================================
-	    // SOLUSI FINAL IOS 15: PAKU BETON + SMOOTH HEADER ANIMATION
-	    // ==========================================
-	    (function() {
-	        const ua = navigator.userAgent;
-	        const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
-	
-	        if (isIOS15) {
-	            console.log("✨ iOS 15: Mode Paku Beton + Smooth Animation...");
-	
-	            const viewport = window.visualViewport;
-	            const chatPage = document.getElementById('chat-page');
-	            const chatContainer = document.getElementById('chat-container');
-	            const header = document.querySelector('header'); 
-	            const inputField = document.getElementById('user-input');
-	
-	            // FUNGSI BANTUAN: SCROLL KE BAWAH HALUS
-	            const scrollToBottom = () => {
-	                if (chatContainer) {
-	                    chatContainer.scrollTo({
-	                        top: chatContainer.scrollHeight,
-	                        behavior: 'smooth'
-	                    });
-	                }
-	            };
-	
-	            // 1. INJEKSI CSS "PAKU BETON" + ANIMASI HEADER
-	            const style = document.createElement('style');
-	            style.innerHTML = `
-	                html, body {
-	                    position: fixed !important;
-	                    overflow: hidden !important;
-	                    width: 100% !important;
-	                    height: 100% !important;
-	                    touch-action: none; 
-	                }
-	                #chat-page {
-	                    position: absolute !important;
-	                    left: 0;
-	                    right: 0;
-	                    top: 0;
-	                    bottom: 0;
-	                    overflow: hidden !important;
-	                    z-index: 10;
-	                }
-	                #chat-container {
-	                    overflow-y: scroll !important;
-	                    -webkit-overflow-scrolling: touch;
-	                    height: 100%;
-	                    touch-action: pan-y;
-	                    padding-bottom: 0px !important;
-	                }
-	                /* INI KUNCI ANIMASI HALUSNYA */
-	                header {
-	                    transition: margin-top 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease;
-	                    will-change: margin-top, opacity;
-	                }
-	            `;
-	            document.head.appendChild(style);
-	
-	            // 2. LOGIKA INTERAKSI (SLIDING ANIMATION)
-	            if (inputField && header) {
-	                // Ambil tinggi header secara dinamis (biasanya 80px untuk h-20)
-	                const headerHeight = header.offsetHeight || 80;
-	
-	                // SAAT KLIK INPUT (KEYBOARD NAIK)
-	                inputField.addEventListener('focus', () => {
-	                    // A. Slide Header ke Atas (Sembunyi Halus)
-	                    header.style.marginTop = `-${headerHeight}px`; 
-	                    header.style.opacity = '0'; // Biar makin halus
-	
-	                    // B. Resize Halaman
-	                    if (viewport) chatPage.style.height = `${viewport.height}px`;
-	                    window.scrollTo(0, 0);
-	
-	                    // C. Auto Scroll
-	                    setTimeout(scrollToBottom, 300); 
-	                });
-	
-	                // SAAT SELESAI (KEYBOARD TURUN)
-	                inputField.addEventListener('blur', () => {
-	                    // A. Slide Header Turun (Muncul Halus)
-	                    header.style.marginTop = '0px';
-	                    header.style.opacity = '1';
-	
-	                    // B. Kembalikan Ukuran
-	                    if (viewport) chatPage.style.height = `${viewport.height}px`;
-	                    window.scrollTo(0, 0);
-	                });
-	            }
-	
-	            // 3. LOGIKA RESIZE VIEWPORT
-	            const handleResize = () => {
-	                if (!viewport || !chatPage) return;
-	                chatPage.style.height = `${viewport.height}px`;
-	                window.scrollTo(0, 0);
-	            };
-	
-	            if (viewport) {
-	                viewport.addEventListener('resize', handleResize);
-	                setTimeout(handleResize, 100);
-	            }
-	
-	            // 4. SATPAM SCROLL (MENCEGAH KARET)
-	            if (chatContainer) {
-	                chatContainer.addEventListener('touchmove', function(e) {
-	                    const el = this;
-	                    const scrollTop = el.scrollTop;
-	                    const scrollHeight = el.scrollHeight;
-	                    const height = el.clientHeight;
-	                    const deltaY = e.touches[0].pageY - (el.lastY || e.touches[0].pageY);
-	                    el.lastY = e.touches[0].pageY;
-	
-	                    if (scrollHeight <= height) {
-	                        e.preventDefault();
-	                        return;
-	                    }
-	                    if (scrollTop <= 0 && deltaY > 0) {
-	                        e.preventDefault();
-	                    }
-	                    if (scrollTop + height >= scrollHeight && deltaY < 0) {
-	                        e.preventDefault();
-	                    }
-	                }, { passive: false });
-	
-	                chatContainer.addEventListener('touchstart', function(e) {
-	                    this.lastY = e.touches[0].pageY;
-	                }, { passive: true });
-	            }
-	
-	            // 5. BLOKIR LUAR
-	            document.addEventListener('touchmove', function(e) {
-	                if (!e.target.closest('#chat-container')) {
-	                    e.preventDefault();
-	                }
-	            }, { passive: false });
-	        }
-	    })();
+    // SOLUSI FINAL IOS 15: PAKU BETON + SMOOTH HEADER + LIVE AUTO-SCROLL
+    // ==========================================
+    (function() {
+        const ua = navigator.userAgent;
+        const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
+
+        if (isIOS15) {
+            console.log("✨ iOS 15: Mode Paku Beton + Live Scroll...");
+
+            const viewport = window.visualViewport;
+            const chatPage = document.getElementById('chat-page');
+            const chatContainer = document.getElementById('chat-container');
+            const header = document.querySelector('header'); 
+            const inputField = document.getElementById('user-input');
+
+            // FUNGSI BANTUAN: SCROLL KE BAWAH (AGRESIF)
+            const scrollToBottom = () => {
+                if (chatContainer) {
+                    // Paksa mentok bawah
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+            };
+
+            // 1. INJEKSI CSS "PAKU BETON" + ANIMASI HEADER
+            const style = document.createElement('style');
+            style.innerHTML = `
+                html, body {
+                    position: fixed !important;
+                    overflow: hidden !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    touch-action: none; 
+                }
+                #chat-page {
+                    position: absolute !important;
+                    left: 0;
+                    right: 0;
+                    top: 0;
+                    bottom: 0;
+                    overflow: hidden !important;
+                    z-index: 10;
+                }
+                #chat-container {
+                    overflow-y: scroll !important;
+                    -webkit-overflow-scrolling: touch;
+                    height: 100%;
+                    touch-action: pan-y;
+                    padding-bottom: 20px !important; /* Tambah padding biar gak mepet */
+                }
+                header {
+                    transition: margin-top 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease;
+                    will-change: margin-top, opacity;
+                }
+            `;
+            document.head.appendChild(style);
+
+            // 2. LOGIKA INTERAKSI (SLIDING ANIMATION)
+            if (inputField && header) {
+                const headerHeight = header.offsetHeight || 80;
+
+                inputField.addEventListener('focus', () => {
+                    // Header Naik
+                    header.style.marginTop = `-${headerHeight}px`; 
+                    header.style.opacity = '0'; 
+
+                    if (viewport) chatPage.style.height = `${viewport.height}px`;
+                    window.scrollTo(0, 0);
+                    
+                    setTimeout(scrollToBottom, 300); 
+                });
+
+                inputField.addEventListener('blur', () => {
+                    // Header Turun
+                    header.style.marginTop = '0px';
+                    header.style.opacity = '1';
+
+                    if (viewport) chatPage.style.height = `${viewport.height}px`;
+                    window.scrollTo(0, 0);
+                });
+            }
+
+            // 3. LOGIKA RESIZE VIEWPORT
+            const handleResize = () => {
+                if (!viewport || !chatPage) return;
+                chatPage.style.height = `${viewport.height}px`;
+                window.scrollTo(0, 0);
+            };
+
+            if (viewport) {
+                viewport.addEventListener('resize', handleResize);
+                setTimeout(handleResize, 100);
+            }
+
+            // 4. SATPAM SCROLL (MENCEGAH KARET)
+            if (chatContainer) {
+                chatContainer.addEventListener('touchmove', function(e) {
+                    const el = this;
+                    const scrollTop = el.scrollTop;
+                    const scrollHeight = el.scrollHeight;
+                    const height = el.clientHeight;
+                    const deltaY = e.touches[0].pageY - (el.lastY || e.touches[0].pageY);
+                    el.lastY = e.touches[0].pageY;
+
+                    if (scrollHeight <= height) {
+                        e.preventDefault();
+                        return;
+                    }
+                    if (scrollTop <= 0 && deltaY > 0) {
+                        e.preventDefault();
+                    }
+                    if (scrollTop + height >= scrollHeight && deltaY < 0) {
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+
+                chatContainer.addEventListener('touchstart', function(e) {
+                    this.lastY = e.touches[0].pageY;
+                }, { passive: true });
+            }
+
+            // 5. BLOKIR LUAR
+            document.addEventListener('touchmove', function(e) {
+                if (!e.target.closest('#chat-container')) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            // ==========================================
+            // 6. MATA-MATA (MUTATION OBSERVER) - INI SOLUSINYA
+            // ==========================================
+            // Fitur ini memantau jika ada chat baru masuk ke dalam container
+            if (chatContainer) {
+                const observer = new MutationObserver(() => {
+                    // Jika ada perubahan (pesan baru/typing indikator), SCROLL KE BAWAH!
+                    scrollToBottom();
+                    
+                    // Ulangi sedikit delay untuk memastikan gambar/konten ter-render
+                    setTimeout(scrollToBottom, 100);
+                });
+
+                // Mulai memantau perubahan anak elemen (chat bubbles)
+                observer.observe(chatContainer, { childList: true, subtree: true });
+            }
+        }
+    })();
         // ============================
         // EVENT LISTENERS
         // ============================
