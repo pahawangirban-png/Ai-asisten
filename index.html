@@ -2351,14 +2351,14 @@
 		
 		// ==========================================
     // ==========================================
-    // SOLUSI FINAL IOS 15: PAKU BETON + NATURAL SCROLL + CONSISTENT SPACING
+    // SOLUSI FINAL IOS 15: PAKU BETON + JARAK NORMAL (20px)
     // ==========================================
     (function() {
         const ua = navigator.userAgent;
         const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
 
         if (isIOS15) {
-            console.log("🌊 iOS 15: Mode Natural + Konsisten...");
+            console.log("👌 iOS 15: Mode Jarak Normal (20px)...");
 
             const viewport = window.visualViewport;
             const chatPage = document.getElementById('chat-page');
@@ -2376,7 +2376,7 @@
                 }
             };
 
-            // 1. INJEKSI CSS "PAKU BETON" + SPACING KONSISTEN
+            // 1. INJEKSI CSS "PAKU BETON" + JARAK NORMAL
             const style = document.createElement('style');
             style.innerHTML = `
                 html, body {
@@ -2400,9 +2400,9 @@
                     -webkit-overflow-scrolling: touch;
                     height: 100%;
                     touch-action: pan-y;
-                    /* INI SOLUSI JARAK MEPET: */
-                    /* Memberikan bantalan empuk di bawah chat agar tidak nabrak footer */
-                    padding-bottom: 80px !important; 
+                    
+                    /* REVISI JARAK: 20px (Standar Rapi, Tidak Mepet, Tidak Jauh) */
+                    padding-bottom: 20px !important; 
                 }
                 header {
                     transition: margin-top 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease;
@@ -2411,23 +2411,23 @@
             `;
             document.head.appendChild(style);
 
-            // 2. LOGIKA INTERAKSI (TANPA SCROLL PAKSA SAAT KLIK)
+            // 2. LOGIKA INTERAKSI (HEADER SLIDE + RESIZE)
             if (inputField && header) {
                 const headerHeight = header.offsetHeight || 80;
 
                 inputField.addEventListener('focus', () => {
-                    // Hanya Slide Header & Resize Layar
+                    // Header Naik Halus
                     header.style.marginTop = `-${headerHeight}px`; 
                     header.style.opacity = '0'; 
 
                     if (viewport) chatPage.style.height = `${viewport.height}px`;
                     window.scrollTo(0, 0);
                     
-                    // SAYA HAPUS setTimeout(scrollToBottom) DARI SINI
-                    // Jadi saat keyboard naik, posisi chat TIDAK BERUBAH.
+                    // TIDAK ADA SCROLL PAKSA DI SINI (Biarkan user baca posisi terakhir)
                 });
 
                 inputField.addEventListener('blur', () => {
+                    // Header Turun Halus
                     header.style.marginTop = '0px';
                     header.style.opacity = '1';
 
@@ -2475,23 +2475,19 @@
                 }, { passive: true });
             }
 
-            // 5. BLOKIR LUAR
+            // 5. BLOKIR SENTUHAN LUAR
             document.addEventListener('touchmove', function(e) {
                 if (!e.target.closest('#chat-container')) {
                     e.preventDefault();
                 }
             }, { passive: false });
 
-            // 6. AUTO SCROLL (HANYA SAAT PESAN BARU MUNCUL)
+            // 6. AUTO SCROLL (HANYA SAAT CHAT BARU)
             if (chatContainer) {
                 const observer = new MutationObserver((mutations) => {
-                    // Cek apakah ada elemen baru yang ditambahkan
                     const hasNewNodes = mutations.some(m => m.addedNodes.length > 0);
-                    
                     if (hasNewNodes) {
-                        // Jika ada chat baru (Text atau Dots), scroll ke bawah
                         scrollToBottom();
-                        // Ulangi sedikit delay untuk memastikan rendering visual selesai
                         setTimeout(scrollToBottom, 100);
                     }
                 });
