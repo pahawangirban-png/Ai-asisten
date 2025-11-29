@@ -664,34 +664,41 @@
 			}
 		};
 		/**
-		 * Get appropriate file icon based on file type
-		 */
-		const getFileIcon = (file) => {
-			const mime = file.mimeType;
-			const type = file.type;
-			// 1. Image Preview
-			if(mime.startsWith('image/')) {
-				return `<img src="data:${mime};base64,${file.data}" class="w-full h-full object-cover rounded-md" alt="preview" />`;
-			}
-			// 2. PDF Icon (Merah)
-			if(mime.includes('pdf') || type === 'pdf') {
-				return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#EF4444" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2 -2V4a2 2 0 012-2h8l6 6z"/><path fill="#DC2626" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="7" font-family="sans-serif" font-weight="bold">PDF</text></svg>`;
-			}
-			// 3. Word Icon (Biru)
-			if(mime.includes('word') || type === 'doc' || type === 'docx') {
-				return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#3B82F6" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#2563EB" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-family="sans-serif" font-weight="bold">W</text></svg>`;
-			}
-			// 4. Excel Icon (Hijau)
-			if(mime.includes('excel') || mime.includes('spreadsheet') || type === 'xls' || type === 'xlsx') {
-				return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#22C55E" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#16A34A" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-family="sans-serif" font-weight="bold">X</text></svg>`;
-			}
-			// 5. PowerPoint Icon (Oranye)
-			if(mime.includes('powerpoint') || mime.includes('presentation') || type === 'ppt' || type === 'pptx') {
-				return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#F97316" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#EA580C" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-family="sans-serif" font-weight="bold">P</text></svg>`;
-			}
-			// 6. Text/Lainnya (Abu-abu)
-			return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#94a3b8" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#64748b" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="7" font-family="sans-serif" font-weight="bold">FILE</text></svg>`;
-		};
+ * Get appropriate file icon based on file type (IOS 15 OPTIMIZED)
+ */
+const getFileIcon = (file) => {
+    const mime = file.mimeType || '';
+    const type = file.type || '';
+    
+    // 1. Image Preview (Prioritaskan Blob URL agar ringan di iOS)
+    // Kita cek apakah ada properti previewUrl (yang akan kita buat nanti)
+    if (file.previewUrl && (mime.startsWith('image/') || ['jpg','jpeg','png','heic','webp'].includes(type))) {
+        return `<img src="${file.previewUrl}" class="w-full h-full object-cover rounded-md" alt="preview" />`;
+    }
+    // Fallback ke Base64 lama jika Blob tidak ada
+    if (mime.startsWith('image/') && file.data) {
+         return `<img src="data:${mime};base64,${file.data}" class="w-full h-full object-cover rounded-md" alt="preview" />`;
+    }
+
+    // 2. PDF Icon (Merah)
+    if (mime.includes('pdf') || type === 'pdf') {
+        return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#EF4444" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2 -2V4a2 2 0 012-2h8l6 6z"/><path fill="#DC2626" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="7" font-family="sans-serif" font-weight="bold">PDF</text></svg>`;
+    }
+    // 3. Word Icon (Biru)
+    if (mime.includes('word') || type === 'doc' || type === 'docx') {
+        return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#3B82F6" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#2563EB" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-family="sans-serif" font-weight="bold">W</text></svg>`;
+    }
+    // 4. Excel Icon (Hijau)
+    if (mime.includes('excel') || mime.includes('spreadsheet') || type === 'xls' || type === 'xlsx') {
+        return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#22C55E" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#16A34A" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-family="sans-serif" font-weight="bold">X</text></svg>`;
+    }
+    // 5. PowerPoint Icon (Oranye)
+    if (mime.includes('powerpoint') || mime.includes('presentation') || type === 'ppt' || type === 'pptx') {
+        return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#F97316" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#EA580C" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10" font-family="sans-serif" font-weight="bold">P</text></svg>`;
+    }
+    // 6. Text/Lainnya (Abu-abu)
+    return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#94a3b8" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#64748b" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="7" font-family="sans-serif" font-weight="bold">FILE</text></svg>`;
+};
 		/**
 		 * Render file previews in the UI
 		 */
@@ -1974,121 +1981,143 @@
 			}, "HAPUS", "text-red-600", "text-blue-600");
 		}
 		// ============================
-// FILE HANDLING (IPHONE IOS 15 FIX)
+// FILE HANDLING (IOS 15 MEMORY FIX)
 // ============================
 document.getElementById('file-input').addEventListener('change', async (e) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    // 1. AMANKAN FILE DULU
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    // Loader indikator sederhana (opsional, agar user tahu sedang memproses)
-    const sendBtnIcon = document.getElementById('send-btn').innerHTML;
-    
-    try {
-        for (const file of files) {
-            // Cek duplikasi
-            if (uploadedFiles.find(f => f.name === file.name && f.size === file.size)) continue;
+    // 2. RESET TOMBOL SEGERA (Agar tidak pernah macet/mati)
+    // Kita reset value input SEBELUM melakukan proses berat apapun.
+    e.target.value = '';
 
-            // Normalisasi nama dan ekstensi untuk iOS
-            const fileName = file.name || "image.jpg"; // Fallback jika iOS tidak memberi nama
-            const fileType = fileName.split('.').pop().toLowerCase();
-            
-            // DETEKSI GAMBAR KHUSUS IOS:
-            // iOS kadang mime-type nya kosong atau application/octet-stream untuk gambar
-            const isImage = file.type.startsWith('image/') || ['jpg', 'jpeg', 'png', 'heic', 'webp'].includes(fileType);
+    // Loader indikator di console
+    console.log(`Memproses ${files.length} file...`);
 
-            const reader = new FileReader();
-            
-            const processFile = new Promise((resolve, reject) => {
-                reader.onload = async (event) => {
+    // 3. GUNAKAN TIMEOUT AGAR UI TIDAK FREEZE
+    // Trik ini membiarkan thread utama browser bernafas sebentar
+    setTimeout(async () => {
+        try {
+            for (const file of files) {
+                // Cek duplikasi sederhana
+                if (uploadedFiles.find(f => f.name === file.name && f.size === file.size)) continue;
+
+                const fileName = file.name || "image.jpg";
+                const fileType = fileName.split('.').pop().toLowerCase();
+                const isImage = file.type.startsWith('image/') || ['jpg', 'jpeg', 'png', 'heic', 'webp'].includes(fileType);
+
+                // --- TRIK PRATINJAU INSTAN (Blob URL) ---
+                // Kita buat URL sementara ke file disk, TANPA membaca isinya ke RAM
+                let previewUrl = null;
+                if (isImage) {
                     try {
-                        let content, mimeType, isTextContent = false;
-                        const resultData = event.target.result;
-
-                        if (['doc', 'docx'].includes(fileType)) {
-                            const result = await mammoth.extractRawText({ arrayBuffer: resultData });
-                            content = result.value;
-                            mimeType = 'text/plain';
-                            isTextContent = true;
-                        } else if (['xls', 'xlsx'].includes(fileType)) {
-                            const workbook = XLSX.read(resultData, { type: 'buffer' });
-                            content = workbook.SheetNames.map(name => XLSX.utils.sheet_to_txt(workbook.Sheets[name])).join('\n\n');
-                            mimeType = 'text/plain';
-                            isTextContent = true;
-                        } else if (fileType === 'pptx') {
-                            const zip = await JSZip.loadAsync(resultData);
-                            const slidePromises = [];
-                            zip.folder("ppt/slides").forEach((path, f) => {
-                                if (path.startsWith("slide") && path.endsWith(".xml")) {
-                                    slidePromises.push(f.async("string").then(extractTextFromSlideXML));
-                                }
-                            });
-                            content = (await Promise.all(slidePromises)).join('\n\n');
-                            mimeType = 'text/plain';
-                            isTextContent = true;
-                        } else if (fileType === 'txt') {
-                            content = resultData;
-                            mimeType = 'text/plain';
-                            isTextContent = true;
-                        } else if (fileType === 'pdf') {
-                            content = resultData.split(',')[1];
-                            mimeType = 'application/pdf';
-                            isTextContent = false;
-                        } else if (isImage) {
-                            // Penanganan Gambar (Universal)
-                            content = resultData.split(',')[1];
-                            // Pastikan mimeType tidak kosong
-                            mimeType = file.type || ('image/' + (fileType === 'jpg' ? 'jpeg' : fileType));
-                            isTextContent = false;
-                        } else {
-                            // Jika format tidak dikenal, coba baca sebagai text biasa atau skip
-                            console.warn("Format tidak didukung penuh, mencoba skip:", fileName);
-                            reject(new Error("Format tidak didukung"));
-                            return;
-                        }
-
-                        resolve({
-                            name: fileName,
-                            size: file.size,
-                            type: fileType,
-                            data: content,
-                            mimeType: mimeType,
-                            isTextContent: isTextContent
-                        });
+                        previewUrl = URL.createObjectURL(file);
                     } catch (err) {
-                        reject(err);
+                        console.warn("Gagal buat preview blob:", err);
                     }
-                };
-
-                reader.onerror = () => reject(new Error("Gagal membaca file"));
-
-                // LOGIKA BACA FILE
-                if (['doc', 'docx', 'xls', 'xlsx', 'pptx'].includes(fileType)) {
-                    reader.readAsArrayBuffer(file);
-                } else if (fileType === 'txt') {
-                    reader.readAsText(file);
-                } else {
-                    // PDF & Image (DataURL aman untuk preview & upload)
-                    reader.readAsDataURL(file); 
                 }
-            });
 
-            try {
-                const processed = await processFile;
-                uploadedFiles.push(processed);
-            } catch (err) {
-                console.error("Error processing file:", file.name, err);
-                alert(`Gagal memproses file ${file.name}. Mungkin file rusak atau memori penuh.`);
+                // Masukkan ke array dulu agar user MELIHAT previewnya SEGERA
+                // Kita isi data 'data: null' dulu, nanti diisi belakangan
+                const tempFileIndex = uploadedFiles.push({
+                    name: fileName,
+                    size: file.size,
+                    type: fileType,
+                    data: null, // Belum dibaca (untuk hemat memori saat render awal)
+                    mimeType: file.type || 'application/octet-stream',
+                    isTextContent: false,
+                    previewUrl: previewUrl, // URL Ringan untuk UI
+                    originalFile: file // Simpan referensi asli
+                }) - 1;
+
+                renderFilePreviews(); // TAMPILKAN LANGSUNG!
+
+                // --- PROSES BERAT (MEMBACA DATA) DILAKUKAN DI BELAKANG LAYAR ---
+                // Kita baca datanya satu per satu
+                try {
+                    const processedData = await readFileData(file, fileType, isImage);
+                    // Update data di array yang sudah ada
+                    uploadedFiles[tempFileIndex].data = processedData.data;
+                    uploadedFiles[tempFileIndex].mimeType = processedData.mimeType;
+                    uploadedFiles[tempFileIndex].isTextContent = processedData.isTextContent;
+                    
+                    console.log("Selesai memproses:", fileName);
+                } catch (readErr) {
+                    console.error("Gagal baca data file:", fileName, readErr);
+                    // Beri tanda visual kalau file gagal dibaca (opsional)
+                    // Tapi biarkan preview tetap muncul
+                }
             }
+        } catch (globalErr) {
+            console.error("Critical upload error:", globalErr);
+            alert("Terjadi kesalahan memori pada browser. Coba upload satu per satu.");
         }
-    } catch (globalErr) {
-        console.error("Global upload error:", globalErr);
-    } finally {
-        // Render ulang preview apapun yang terjadi
-        renderFilePreviews();
-        // Reset input value agar tombol bisa diklik lagi (Backup Logic)
-        e.target.value = '';
-    }
+    }, 50); // Delay 50ms agar tombol visual sempat 'click' effect
 });
+
+/**
+ * Helper terpisah untuk membaca data file (Base64/Text)
+ */
+const readFileData = (file, fileType, isImage) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        
+        reader.onload = async (event) => {
+            try {
+                const resultData = event.target.result;
+                let content, mimeType, isTextContent = false;
+
+                if (['doc', 'docx'].includes(fileType)) {
+                    const result = await mammoth.extractRawText({ arrayBuffer: resultData });
+                    content = result.value;
+                    mimeType = 'text/plain';
+                    isTextContent = true;
+                } else if (['xls', 'xlsx'].includes(fileType)) {
+                    const workbook = XLSX.read(resultData, { type: 'buffer' });
+                    content = workbook.SheetNames.map(name => XLSX.utils.sheet_to_txt(workbook.Sheets[name])).join('\n\n');
+                    mimeType = 'text/plain';
+                    isTextContent = true;
+                } else if (fileType === 'pptx') {
+                    const zip = await JSZip.loadAsync(resultData);
+                    const slidePromises = [];
+                    zip.folder("ppt/slides").forEach((path, f) => {
+                        if (path.startsWith("slide") && path.endsWith(".xml")) {
+                            slidePromises.push(f.async("string").then(extractTextFromSlideXML));
+                        }
+                    });
+                    content = (await Promise.all(slidePromises)).join('\n\n');
+                    mimeType = 'text/plain';
+                    isTextContent = true;
+                } else if (fileType === 'txt') {
+                    content = resultData;
+                    mimeType = 'text/plain';
+                    isTextContent = true;
+                } else {
+                    // PDF & Image -> Base64
+                    content = resultData.split(',')[1];
+                    mimeType = file.type || ('image/' + (fileType === 'jpg' ? 'jpeg' : fileType));
+                    isTextContent = false;
+                }
+
+                resolve({ data: content, mimeType, isTextContent });
+            } catch (err) {
+                reject(err);
+            }
+        };
+
+        reader.onerror = () => reject(new Error("Gagal FileReader"));
+
+        // STRATEGI MEMBACA
+        if (['doc', 'docx', 'xls', 'xlsx', 'pptx'].includes(fileType)) {
+            reader.readAsArrayBuffer(file);
+        } else if (fileType === 'txt') {
+            reader.readAsText(file);
+        } else {
+            reader.readAsDataURL(file); 
+        }
+    });
+};
 		/**
 		 * Handle image download
 		 */
