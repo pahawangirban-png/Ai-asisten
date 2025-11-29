@@ -2463,7 +2463,7 @@
 							setTimeout(smoothScrollToBottom, 100);
 						}
 					});
-					observer.observe(chatContainer, { childList: true, subtree: true });
+					observer.observe(chatContainer, { childList: true, subtree: false });
 				}
 				
 				let lastTouchEnd = 0;
