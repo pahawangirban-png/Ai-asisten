@@ -423,7 +423,7 @@
 		<main id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"></main>
 		<div class="flex-none bg-white border-t border-gray-100 px-4 pt-2 pb-6 safe-pb z-30 w-full select-none">
 			<div id="file-preview-container" class="w-full max-w-3xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-2 mb-2 empty:hidden"></div>
-			<input type="file" id="file-input" onclick="this.value=null" accept=".pdf,.docx,.xls,.xlsx,.pptx,.txt,image/*" multiple class="absolute opacity-0 w-0 h-0 overflow-hidden pointer-events-none" />
+			<input type="file" id="file-input" accept=".pdf,.docx,.xls,.xlsx,.pptx,.txt,image/*" multiple class="absolute opacity-0 w-0 h-0 overflow-hidden pointer-events-none" />
 			<div class="w-full max-w-3xl mx-auto relative flex items-end bg-gray-100 rounded-[2rem] border border-transparent transition-all">
 				<button onclick="document.getElementById('file-input').click()" class="absolute left-2 bottom-2 w-10 h-10 flex items-center justify-center rounded-full text-slate-400 z-10">
 					<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1996,122 +1996,94 @@
 			}, "HAPUS", "text-red-600", "text-blue-600");
 		}
 		// ============================
-// FILE HANDLING - IOS 15 GALLERY METADATA FIX
-// ============================
-document.getElementById('file-input').addEventListener('change', async (e) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    // Reset value (Backup di JS)
-    e.target.value = '';
-
-    try {
-        for (const file of files) {
-            // Cek duplikasi
-            if (uploadedFiles.find(f => f.name === file.name && f.size === file.size)) continue;
-
-            let finalName = file.name;
-            let finalType = file.type;
-            let finalExt = "";
-
-            // --- PERBAIKAN AKAR MASALAH (IOS 15 BUG) ---
-            // Bug: iOS 15 Galeri sering kirim type="" dan name="image" (tanpa ekstensi)
-            // Solusi: Jika metadata kosong/rusak, kita tembak langsung jadi JPG.
-            if (!finalType || finalType === "" || finalName.indexOf('.') === -1) {
-                finalType = "image/jpeg";
-                // Jika nama tidak ada ekstensinya, tambah .jpg
-                if (finalName.indexOf('.') === -1) {
-                    finalName = finalName + ".jpg"; 
-                }
-            }
-            
-            // Ambil ekstensi setelah nama diperbaiki
-            finalExt = finalName.split('.').pop().toLowerCase();
-
-            // Cek apakah ini gambar (Logic dilonggarkan untuk menerima hasil perbaikan di atas)
-            const isImage = finalType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'heic', 'webp'].includes(finalExt);
-
-            const reader = new FileReader();
-            
-            const processFile = new Promise((resolve, reject) => {
-                reader.onload = async (event) => {
-                    try {
-                        const resultData = event.target.result;
-                        let content, mimeType, isTextContent = false;
-
-                        // HANDLING DOKUMEN (Word/Excel/PPT/Txt)
-                        if (['doc', 'docx'].includes(finalExt)) {
-                            const result = await mammoth.extractRawText({ arrayBuffer: resultData });
-                            content = result.value;
-                            mimeType = 'text/plain';
-                            isTextContent = true;
-                        } else if (['xls', 'xlsx'].includes(finalExt)) {
-                            const workbook = XLSX.read(resultData, { type: 'buffer' });
-                            content = workbook.SheetNames.map(name => XLSX.utils.sheet_to_txt(workbook.Sheets[name])).join('\n\n');
-                            mimeType = 'text/plain';
-                            isTextContent = true;
-                        } else if (finalExt === 'pptx') {
-                            const zip = await JSZip.loadAsync(resultData);
-                            const slidePromises = [];
-                            zip.folder("ppt/slides").forEach((path, f) => {
-                                if (path.startsWith("slide") && path.endsWith(".xml")) {
-                                    slidePromises.push(f.async("string").then(extractTextFromSlideXML));
-                                }
-                            });
-                            content = (await Promise.all(slidePromises)).join('\n\n');
-                            mimeType = 'text/plain';
-                            isTextContent = true;
-                        } else if (finalExt === 'txt') {
-                            content = resultData;
-                            mimeType = 'text/plain';
-                            isTextContent = true;
-                        } else {
-                            // HANDLING GAMBAR & PDF (Fallback ke Base64)
-                            if (typeof resultData === 'string' && resultData.includes(',')) {
-                                content = resultData.split(',')[1];
-                            } else {
-                                content = ""; 
-                            }
-                            mimeType = finalType; // Gunakan tipe yang sudah diperbaiki
-                            isTextContent = false;
-                        }
-
-                        resolve({
-                            name: finalName, // Gunakan nama yang sudah ada .jpg
-                            size: file.size,
-                            type: finalExt,
-                            data: content,
-                            mimeType: mimeType,
-                            isTextContent: isTextContent
-                        });
-                    } catch (err) {
-                        reject(err);
-                    }
-                };
-                
-                reader.onerror = () => reject(new Error("Gagal FileReader"));
-
-                // LOGIKA BACA
-                if (['doc', 'docx', 'xls', 'xlsx', 'pptx'].includes(finalExt)) {
-                    reader.readAsArrayBuffer(file);
-                } else if (finalExt === 'txt') {
-                    reader.readAsText(file);
-                } else {
-                    // Gambar & PDF baca sebagai DataURL (Aman untuk iOS)
-                    reader.readAsDataURL(file);
-                }
-            });
-
-            const processed = await processFile;
-            uploadedFiles.push(processed);
-        }
-    } catch (err) {
-        console.error("Upload error:", err);
-        // Jangan alert error, biarkan silent fail agar UX tidak terganggu jika cuma 1 file bermasalah
-    } finally {
-        renderFilePreviews();
-    }
-});
+		// FILE HANDLING
+		// ============================
+		/**
+		 * Handle file input change
+		 */
+		document.getElementById('file-input').addEventListener('change', async (e) => {
+			const files = e.target.files;
+			if(!files.length) return;
+			for(const file of files) {
+				// Cek duplikasi
+				if(uploadedFiles.find(f => f.name === file.name)) continue;
+				const fileType = file.name.split('.').pop().toLowerCase();
+				const reader = new FileReader();
+				const processFile = new Promise((resolve, reject) => {
+					reader.onload = async (event) => {
+						try {
+							let content, mimeType, isTextContent = false;
+							// Logika Ekstraksi (Mammoth, XLSX, JSZip)
+							if(['doc', 'docx'].includes(fileType)) {
+								const result = await mammoth.extractRawText({
+									arrayBuffer: event.target.result
+								});
+								content = result.value;
+								mimeType = 'text/plain';
+								isTextContent = true;
+							} else if(['xls', 'xlsx'].includes(fileType)) {
+								const workbook = XLSX.read(event.target.result, {
+									type: 'buffer'
+								});
+								content = workbook.SheetNames.map(name => XLSX.utils.sheet_to_txt(workbook.Sheets[name])).join('\n\n');
+								mimeType = 'text/plain';
+								isTextContent = true;
+							} else if(fileType === 'pptx') {
+								const zip = await JSZip.loadAsync(event.target.result);
+								const slidePromises = [];
+								zip.folder("ppt/slides").forEach((path, f) => {
+									if(path.startsWith("slide") && path.endsWith(".xml")) {
+										slidePromises.push(f.async("string").then(extractTextFromSlideXML));
+									}
+								});
+								content = (await Promise.all(slidePromises)).join('\n\n');
+								mimeType = 'text/plain';
+								isTextContent = true;
+							} else if(fileType === 'txt') {
+								content = event.target.result;
+								mimeType = 'text/plain';
+								isTextContent = true;
+							} else if(fileType === 'pdf') {
+								// PDF dikirim sebagai Base64 (Inline Data) untuk Gemini
+								content = event.target.result.split(',')[1];
+								mimeType = 'application/pdf';
+								isTextContent = false;
+							} else if(file.type.startsWith('image/')) {
+								content = event.target.result.split(',')[1];
+								mimeType = file.type;
+								isTextContent = false;
+							} else {
+								reject(new Error("Format tidak didukung"));
+								return;
+							}
+							resolve({
+								name: file.name,
+								size: file.size,
+								type: fileType,
+								data: content, // Teks mentah (dokumen) atau Base64 (gambar/pdf)
+								mimeType: mimeType,
+								isTextContent: isTextContent
+							});
+						} catch (err) {
+							reject(err);
+						}
+					};
+					// Cara membaca file
+					if(['doc', 'docx', 'xls', 'xlsx', 'pptx'].includes(fileType)) reader.readAsArrayBuffer(file);
+					else if(fileType === 'txt') reader.readAsText(file);
+					else reader.readAsDataURL(file); // PDF & Image
+				});
+				try {
+					const processed = await processFile;
+					uploadedFiles.push(processed);
+				} catch (err) {
+					console.error("Gagal baca file:", err);
+					alert("Gagal membaca file: " + file.name);
+				}
+			}
+			renderFilePreviews();
+			e.target.value = ''; // Reset input
+		});
 		/**
 		 * Handle image download
 		 */
@@ -2342,6 +2314,103 @@ document.getElementById('file-input').addEventListener('change', async (e) => {
 				});
 			}
 		})();
+		// ==========================================
+// PATCH DARURAT KHUSUS IOS 15 (ANTI CRASH)
+// ==========================================
+(function() {
+    // 1. Deteksi Spesifik iOS 15 (WebKit Lama)
+    const ua = navigator.userAgent;
+    const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
+
+    if (isIOS15) {
+        console.log("⚠️ iOS 15 Terdeteksi: Mengaktifkan Mode Safe-Upload (Tanpa Thumbnail)");
+
+        // 2. TIMPA TAMPILAN ICON (Override Fungsi getFileIcon)
+        // Kita ganti fungsinya agar mereturn ICON STATIS saja untuk gambar.
+        // Tidak ada rendering image, tidak ada memory leak.
+        window.getFileIcon = function(file) {
+            const name = file.name || "";
+            const type = file.mimeType || "";
+            
+            // Cek apakah ini gambar (termasuk file "hantu" tanpa tipe)
+            const isImg = type.startsWith('image/') || 
+                          name.match(/\.(jpg|jpeg|png|heic|webp)$/i) || 
+                          (type === "" && name.indexOf('.') === -1);
+
+            if (isImg) {
+                // OUTPUT: ICON GALERI UNGU (Tanpa Gambar Asli)
+                return `
+                <div class="w-full h-full flex items-center justify-center bg-purple-50 rounded-lg border border-purple-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                </div>`;
+            }
+            
+            // Icon File Biasa (Untuk Word/PDF dll)
+            return `
+            <div class="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg border border-gray-200">
+                <span class="text-[10px] font-bold text-gray-500">FILE</span>
+            </div>`;
+        };
+
+        // 3. GANTI LISTENER UPLOAD (Total Replacement)
+        // Kita buang elemen input lama yang mungkin nge-bug, ganti dengan yang baru (Fresh)
+        const oldInput = document.getElementById('file-input');
+        const newInput = oldInput.cloneNode(true); // Buat duplikat bersih
+        
+        // Pastikan atribut onclick pembersih terpasang
+        newInput.onclick = function() { this.value = null; };
+        
+        // Listener Baru (Sederhana & Stabil)
+        newInput.addEventListener('change', async function(e) {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+
+            // Indikator loading kecil di console
+            console.log("iOS 15 Upload: Memulai...");
+
+            for (const file of files) {
+                // Cek duplikasi
+                if (uploadedFiles.find(f => f.size === file.size)) continue;
+
+                // Nama & Tipe Fallback
+                let safeName = file.name || ("image-" + Date.now() + ".jpg");
+                if (!safeName.includes('.')) safeName += ".jpg";
+                
+                // Baca File (Data tetap dibaca untuk AI, tapi tidak ditampilkan ke UI)
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const result = evt.target.result;
+                    // Ambil Base64 Murni
+                    const b64 = result.includes(',') ? result.split(',')[1] : result;
+                    
+                    // Masukkan ke Memory Aplikasi
+                    uploadedFiles.push({
+                        name: safeName,
+                        size: file.size,
+                        type: "image/jpeg", // Asumsi aman
+                        mimeType: "image/jpeg",
+                        data: b64, // Data ini dikirim ke AI nanti
+                        isTextContent: false,
+                        previewUrl: null // NULL = Pemicu Icon Statis
+                    });
+                    
+                    // Update UI (Akan memanggil getFileIcon yang sudah di-patch di atas)
+                    renderFilePreviews();
+                };
+                
+                // Baca sebagai DataURL (Metode paling stabil di iOS 15)
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Tukar elemen lama dengan yang baru di HTML
+        oldInput.parentNode.replaceChild(newInput, oldInput);
+    }
+})();
 		// ============================
 		// EVENT LISTENERS
 		// ============================
