@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
+	<meta name="theme-color" content="#ffffff">
     <meta name="apple-mobile-web-app-title" content="AI ASISTEN">
     <link rel="apple-touch-icon" href="./icon-512.png">
     <link rel="icon" type="image/png" href="./icon-512.png">
@@ -2347,6 +2348,61 @@
                 console.error('Download error:', err);
             }
         }
+		
+		// ============================
+        // PATCH KHUSUS IOS 15 (Safe Mode)
+        // ============================
+        /**
+         * Fungsi ini HANYA akan berjalan di iOS 15.
+         * Tujuannya memperbaiki layout 'bocor' saat keyboard muncul
+         * dan masalah status bar tanpa mengganggu versi iOS lain/Android.
+         */
+        function applyIOS15SpecificFix() {
+            // Deteksi User Agent
+            const ua = navigator.userAgent || navigator.vendor || window.opera;
+            
+            // Regex: Cari kata "iPhone" DAN "OS 15_"
+            const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
+
+            if (isIOS15) {
+                console.log("⚠️ iOS 15 Terdeteksi: Menerapkan Patch Kompatibilitas...");
+
+                // 1. Fix Status Bar (Paksa background body jadi putih solid)
+                // Ini membantu iOS merender teks status bar menjadi hitam (kontras)
+                document.body.style.backgroundColor = "#ffffff";
+                
+                // 2. Fix Layout Bocor / Keyboard Issue
+                // Menggunakan Visual Viewport API untuk resize container secara paksa
+                if (window.visualViewport) {
+                    const handleResize = () => {
+                        const height = window.visualViewport.height;
+                        const page = document.getElementById('chat-page');
+                        
+                        // Paksa tinggi body dan chat-page sesuai area terlihat (visual viewport)
+                        // agar tidak ada area 'bocor' di balik keyboard
+                        document.body.style.height = height + 'px';
+                        document.body.style.minHeight = height + 'px';
+                        
+                        if (page) {
+                            page.style.height = height + 'px';
+                        }
+                        
+                        // Kunci scroll window ke 0,0 agar header tetap di tempat (tidak terdorong)
+                        window.scrollTo(0, 0);
+                    };
+
+                    // Pasang event listener
+                    window.visualViewport.addEventListener('resize', handleResize);
+                    window.visualViewport.addEventListener('scroll', handleResize);
+                    
+                    // Jalankan sekali di awal untuk inisialisasi
+                    handleResize();
+                }
+            }
+        }
+
+        // Jalankan Patch ini di akhir
+        applyIOS15SpecificFix();
         
         // ============================
         // EVENT LISTENERS
