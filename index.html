@@ -2484,14 +2484,14 @@
 			}
 		})();
 		// ============
-		// PATCH IOS 15 (FINAL: PRECISION SPACING V7)
+		// PATCH IOS 15 (FINAL: FONT SIZE 16PX + TABLE FIX)
 		// ============
 		(function() {
 			const ua = navigator.userAgent;
 			const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
 			
 			if(isIOS15) {
-				console.log("🛡️ iOS 15: Parser V7 (Precision Spacing)");
+				console.log("🛡️ iOS 15: Parser V6 (Font 16px Fixed)");
 				if(typeof converter !== 'undefined') {
 					converter.makeHtml = function(text) {
 						if(!text) return "";
@@ -2502,8 +2502,8 @@
 								.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
 								.replace(/\*(.*?)\*/g, '<i>$1</i>')
 								.replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-1 rounded text-red-600 font-mono text-sm border border-gray-200">$1</code>')
-								.replace(/^### (.*$)/gm, '<h3 class="text-lg font-bold text-gray-900 mt-4 mb-2">$1</h3>') // MT dikurangi sedikit biar rapi
-								.replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold text-gray-900 mt-5 mb-2 border-b border-gray-300 pb-1">$1</h2>');
+								.replace(/^### (.*$)/gm, '<h3 class="text-lg font-bold text-gray-900 mt-5 mb-2">$1</h3>') // Header dibesarkan
+								.replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold text-gray-900 mt-6 mb-3 border-b border-gray-300 pb-1">$1</h2>');
 
 							const lines = html.split('\n');
 							let output = [];
@@ -2517,7 +2517,6 @@
 								// A. CODE BLOCK
 								if(line.trim().startsWith('```')) {
 									inCodeBlock = !inCodeBlock;
-									// Margin code block juga dirapikan (my-2)
 									output.push(inCodeBlock ? '<pre class="bg-gray-100 p-3 rounded-lg text-xs my-2 overflow-x-auto border border-gray-200"><code>' : '</code></pre>');
 									continue;
 								}
@@ -2526,20 +2525,19 @@
 									continue;
 								}
 
-								// B. HR (GARIS BAWAH) - PRESISI
+								// B. HR (Garis)
 								if(line.trim().match(/^[-*_]{3,}$/)) {
-									// UBAH: my-4 -> my-2 (Lebih rapat dan presisi)
-									output.push('<hr class="my-2 border-t border-gray-300">');
+									output.push('<hr class="my-4 border-t border-gray-300">');
 									continue;
 								}
 
-								// C. TABEL - PRESISI
+								// C. TABEL (FIX: UBAH text-sm JADI text-base)
 								if(line.trim().startsWith('|')) {
 									if(!inTable) {
 										inTable = true;
 										tableHeaderProcessed = false;
-                                        // UBAH: my-3 -> my-2 (Jarak tabel ke teks lebih rapat)
-										output.push('<div class="overflow-x-auto my-2"><table class="w-full text-base text-left border-collapse border-l border-t border-gray-300">'); 
+                                        // PERUBAHAN DISINI: text-sm -> text-base (16px)
+										output.push('<div class="overflow-x-auto my-3"><table class="w-full text-base text-left border-collapse border-l border-t border-gray-300">'); 
 									}
 									const cells = line.split('|').filter(cell => cell.trim() !== '');
 									const isSeparator = cells.every(c => c.trim().match(/^[-: ]+$/));
@@ -2566,7 +2564,7 @@
 									}
 								}
 
-								// D. LIST
+								// D. LIST (FIX: Tambah text-base)
 								const listMatch = line.match(/^(\s*)([-*]|\d+\.)\s+(.*)$/);
 								if(listMatch) {
 									const indent = listMatch[1].length;
@@ -2583,17 +2581,19 @@
 										markerHtml = `<span class="mr-2 text-black text-lg leading-none mt-[-2px]">&bull;</span>`;
 									}
                                     
+                                    // PERUBAHAN: text-base
 									output.push(`
                                 <div class="flex items-start ${paddingClass} mb-1 leading-snug text-gray-900 text-base">
                                     ${markerHtml}
                                     <span class="flex-1">${content}</span>
                                 </div>`);
 								}
-								// E. TEXT BIASA
+								// E. TEXT BIASA (FIX: Tambah text-base)
 								else {
 									if(line.trim() === '') {
 										output.push('<div class="h-2"></div>');
 									} else {
+                                        // PERUBAHAN: text-base ditambahkan di class
 										output.push(`<div class="mb-1 leading-relaxed text-gray-900 text-base">${line}</div>`);
 									}
 								}
@@ -2603,7 +2603,7 @@
 							}
 							return output.join('');
 						} catch (e) {
-							console.error("V7 Parser Error:", e);
+							console.error("V6 Parser Error:", e);
 							return text;
 						}
 					};
