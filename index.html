@@ -2506,6 +2506,51 @@
 	            }
 	        }
 	    })();
+		// ==========================================
+	    // PATCH FINAL IOS 15: SHOWDOWN.JS SANITIZER (ANTI-CRASH)
+	    // ==========================================
+	    (function() {
+	        // 1. Deteksi iOS 15
+	        const ua = navigator.userAgent;
+	        const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
+	
+	        // Pastikan converter ada (agar tidak error)
+	        if (isIOS15 && typeof converter !== 'undefined') {
+	            console.log("🚑 iOS 15 Detected: Menyuntikkan Anti-Crash Markdown...");
+	
+	            // 2. SIMPAN FUNGSI ASLI (BACKUP)
+	            // Kita simpan logika asli Showdown agar tidak hilang
+	            const originalMakeHtml = converter.makeHtml;
+	
+	            // 3. TIMPA (OVERRIDE) FUNGSI DENGAN VERSI KITA
+	            converter.makeHtml = function(text) {
+	                // Cek apakah ada teks input
+	                if (text && typeof text === 'string') {
+	                    
+	                    // --- LOGIKA PERBAIKAN (Hanya merapikan teks sebelum diproses) ---
+	                    
+	                    // A. Normalisasi Enter (Windows/Unix)
+	                    let cleanText = text.replace(/\r\n/g, '\n');
+	
+	                    // B. FIX LIST (Bullet/Numbering)
+	                    // Cari baris baru (\n) yang diikuti tanda list (*, -, +, 1.), paksa tambah Enter lagi (\n\n)
+	                    cleanText = cleanText.replace(/\n([*+-]|\d+\.) /g, '\n\n$1 ');
+	
+	                    // C. FIX TABEL
+	                    // Cari baris baru (\n) yang diikuti garis tabel (|), paksa tambah Enter lagi (\n\n)
+	                    cleanText = cleanText.replace(/\n(\|)/g, '\n\n$1');
+	
+	                    // --- SELESAI PERBAIKAN ---
+	
+	                    // 4. JALANKAN FUNGSI ASLI DENGAN TEKS YANG SUDAH BERSIH
+	                    return originalMakeHtml.call(this, cleanText);
+	                }
+	
+	                // Jika input bukan string, kembalikan apa adanya (ke fungsi asli)
+	                return originalMakeHtml.call(this, text);
+	            };
+	        }
+	    })();
         // ============================
         // EVENT LISTENERS
         // ============================
