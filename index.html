@@ -2308,93 +2308,99 @@
 		checkSession();
 	</script>
 	<script>
-(function() {
-    // 1. Deteksi iOS 15
-    const isIOS15 = /iPhone/.test(navigator.userAgent) && /OS 15_/.test(navigator.userAgent);
+		// ============
+		// PATCH IOS 15 (NATURAL PUSH - NO JUMP FIX)
+		// ============
+		(function() {
+			const ua = navigator.userAgent;
+			const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
+			
+			if(isIOS15) {
+				console.log("🔧 iOS 15: Mode Natural Push (Anti-Jump)...");
 
-    if (isIOS15) {
-        console.log("🔧 iOS 15 Natural Keyboard Fix: Activated");
+				const viewport = window.visualViewport;
+				const chatPage = document.getElementById('chat-page');
+				const chatContainer = document.getElementById('chat-container');
+				const header = document.querySelector('header');
+				const inputField = document.getElementById('user-input');
 
-        const chatPage = document.getElementById('chat-page');
-        const header = document.querySelector('header');
-        const inputField = document.getElementById('user-input');
-        const chatContainer = document.getElementById('chat-container');
-        const viewport = window.visualViewport;
+				// 1. CSS FIX: Kunci Body agar tidak ikut scroll (Penyebab utama loncat)
+				document.body.style.position = 'fixed';
+				document.body.style.width = '100%';
+				document.body.style.height = '100%';
+				document.body.style.overflow = 'hidden';
+				
+				// Tambahkan transisi halus ke header agar naiknya natural
+				if(header) {
+					header.style.transition = 'margin-top 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+					header.style.willChange = 'margin-top';
+				}
 
-        // 2. PERSIAPAN ANIMASI NATURAL (CSS TRANSITION)
-        // Kita pasang transisi halus pada Header agar saat naik/turun terlihat enak
-        if (header) {
-            header.style.transition = 'margin-top 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
-            header.style.willChange = 'margin-top';
-        }
-        
-        // Kunci body agar tidak ikut scroll (penyebab loncat)
-        document.body.style.position = 'fixed';
-        document.body.style.width = '100%';
-        document.body.style.height = '100%';
-        document.body.style.overflow = 'hidden';
+				// 2. LOGIKA VIEWPORT (INTI PERBAIKAN)
+				const handleResize = () => {
+					if (!viewport || !chatPage) return;
+					
+					// A. Pastikan Top SELALU 0 (Jangan digeser-geser manual)
+					chatPage.style.top = '0px';
+					
+					// B. Sesuaikan tinggi aplikasi dengan area terlihat (Visible Area)
+					// Ini otomatis membuat input naik pas di atas keyboard
+					chatPage.style.height = `${viewport.height}px`;
+					
+					// C. Reset Scroll Window (Pencegah layar loncat keluar)
+					window.scrollTo(0, 0);
 
-        // 3. LOGIKA UTAMA (VIEWPORT RESIZE)
-        // Fungsi ini dipanggil setiap kali keyboard bergerak (naik/turun)
-        const handleResize = () => {
-            if (!viewport) return;
-            
-            // A. Paksakan tinggi aplikasi SAMA PERSIS dengan area terlihat (Visible Area)
-            // Ini membuat Input otomatis 'nempel' di atas keyboard tanpa hitungan rumit
-            chatPage.style.height = `${viewport.height}px`;
-            
-            // B. Reset Scroll Window (Penyebab utama 'loncat' keluar layar)
-            window.scrollTo(0, 0);
+					// D. Deteksi Keyboard: Jika tinggi viewport < tinggi layar asli, berarti keyboard aktif
+					const isKeyboardOpen = viewport.height < window.innerHeight;
 
-            // C. Auto Scroll Chat ke Bawah (Agar pesan terakhir terlihat)
-            if (document.activeElement === inputField) {
-                 setTimeout(() => {
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                 }, 50);
-            }
-        };
+					if (isKeyboardOpen) {
+						// Keyboard Muncul: Sembunyikan Header dengan Margin (Animasi Halus)
+						if (header) {
+							const hHeight = header.offsetHeight;
+							header.style.marginTop = `-${hHeight}px`;
+						}
+						
+						// Scroll chat ke bawah agar pesan terakhir terlihat
+						if(chatContainer) {
+							setTimeout(() => {
+								chatContainer.scrollTop = chatContainer.scrollHeight;
+							}, 100);
+						}
+					} else {
+						// Keyboard Tutup: Kembalikan Header
+						if (header) {
+							header.style.marginTop = '0px';
+						}
+					}
+				};
 
-        // Pasang Event Listener
-        if (viewport) {
-            viewport.addEventListener('resize', handleResize);
-            viewport.addEventListener('scroll', () => window.scrollTo(0, 0)); // Double lock
-        }
+				// 3. PASANG EVENT LISTENER
+				if (viewport) {
+					viewport.addEventListener('resize', handleResize);
+					viewport.addEventListener('scroll', () => window.scrollTo(0, 0)); // Double lock scroll
+				}
 
-        // 4. LOGIKA ANIMASI HEADER (NAIK / TURUN)
-        // Saat Input Fokus -> Header Naik (Sembunyi ke atas) dengan mulus
-        inputField.addEventListener('focus', () => {
-            // Reset posisi 'top' yang mungkin dirusak script lama
-            chatPage.style.top = '0px'; 
-            
-            // Efek Header Naik (Negative Margin)
-            // Header akan 'terdorong' ke atas sejauh tingginya sendiri
-            if (header) {
-                const hHeight = header.offsetHeight;
-                header.style.marginTop = `-${hHeight}px`;
-            }
-            
-            // Panggil resize manual untuk memastikan layout pas
-            handleResize();
-        });
+				// Trigger saat fokus input (Untuk memicu animasi header lebih responsif)
+				if(inputField) {
+					inputField.addEventListener('focus', () => {
+						// Paksa cek resize segera
+						handleResize();
+					});
 
-        // Saat Input Blur (Keyboard Tutup) -> Header Turun Kembali
-        inputField.addEventListener('blur', () => {
-            // Header Turun (Reset Margin)
-            if (header) {
-                header.style.marginTop = '0px';
-            }
+					inputField.addEventListener('blur', () => {
+						// Reset saat blur
+						if(header) header.style.marginTop = '0px';
+						setTimeout(() => {
+							window.scrollTo(0, 0);
+							if(chatPage) chatPage.style.height = '100%';
+						}, 300);
+					});
+				}
 
-            // Kembalikan tinggi penuh
-            setTimeout(() => {
-                chatPage.style.height = '100%';
-                window.scrollTo(0, 0);
-            }, 300); // Delay sedikit agar animasi keyboard selesai dulu
-        });
-        
-        // Eksekusi awal untuk inisialisasi
-        handleResize();
-    }
-})();
+				// Eksekusi awal
+				handleResize();
+			}
+		})();
 		(function() {
 			// 1. Deteksi iOS 15
 			const isIOS15 = /iPhone/.test(navigator.userAgent) && /OS 15_/.test(navigator.userAgent);
