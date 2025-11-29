@@ -1974,93 +1974,137 @@
 			}, "HAPUS", "text-red-600", "text-blue-600");
 		}
 		// ============================
-		// FILE HANDLING
+		// FILE HANDLING (FINAL STABLE IOS 15 - ARRAY BUFFER MODE)
 		// ============================
+		
+		// Fungsi Helper: Ubah ArrayBuffer ke Base64 (Manual)
+        // Ini lebih aman di iOS 15 daripada mengandalkan FileReader.readAsDataURL
+		const arrayBufferToBase64 = (buffer) => {
+            let binary = '';
+            const bytes = new Uint8Array(buffer);
+            const len = bytes.byteLength;
+            // Gunakan chunking untuk performa jika file besar
+            for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return window.btoa(binary);
+		};
+
+        // Fungsi Helper: Baca File sebagai ArrayBuffer (Paling Stabil)
+        const readFileAsBuffer = (file) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(e);
+                reader.readAsArrayBuffer(file); // KUNCI: BACA SEBAGAI BINARY, BUKAN URL
+            });
+        };
+
+        // Fungsi Helper: Baca Text
+        const readFileAsText = (file) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(e);
+                reader.readAsText(file);
+            });
+        };
+
 		/**
 		 * Handle file input change
 		 */
 		document.getElementById('file-input').addEventListener('change', async (e) => {
 			const files = e.target.files;
-			if(!files.length) return;
-			for(const file of files) {
-				// Cek duplikasi
-				if(uploadedFiles.find(f => f.name === file.name)) continue;
-				const fileType = file.name.split('.').pop().toLowerCase();
-				const reader = new FileReader();
-				const processFile = new Promise((resolve, reject) => {
-					reader.onload = async (event) => {
-						try {
-							let content, mimeType, isTextContent = false;
-							// Logika Ekstraksi (Mammoth, XLSX, JSZip)
-							if(['doc', 'docx'].includes(fileType)) {
-								const result = await mammoth.extractRawText({
-									arrayBuffer: event.target.result
-								});
-								content = result.value;
-								mimeType = 'text/plain';
-								isTextContent = true;
-							} else if(['xls', 'xlsx'].includes(fileType)) {
-								const workbook = XLSX.read(event.target.result, {
-									type: 'buffer'
-								});
-								content = workbook.SheetNames.map(name => XLSX.utils.sheet_to_txt(workbook.Sheets[name])).join('\n\n');
-								mimeType = 'text/plain';
-								isTextContent = true;
-							} else if(fileType === 'pptx') {
-								const zip = await JSZip.loadAsync(event.target.result);
-								const slidePromises = [];
-								zip.folder("ppt/slides").forEach((path, f) => {
-									if(path.startsWith("slide") && path.endsWith(".xml")) {
-										slidePromises.push(f.async("string").then(extractTextFromSlideXML));
-									}
-								});
-								content = (await Promise.all(slidePromises)).join('\n\n');
-								mimeType = 'text/plain';
-								isTextContent = true;
-							} else if(fileType === 'txt') {
-								content = event.target.result;
-								mimeType = 'text/plain';
-								isTextContent = true;
-							} else if(fileType === 'pdf') {
-								// PDF dikirim sebagai Base64 (Inline Data) untuk Gemini
-								content = event.target.result.split(',')[1];
-								mimeType = 'application/pdf';
-								isTextContent = false;
-							} else if(file.type.startsWith('image/')) {
-								content = event.target.result.split(',')[1];
-								mimeType = file.type;
-								isTextContent = false;
-							} else {
-								reject(new Error("Format tidak didukung"));
-								return;
-							}
-							resolve({
-								name: file.name,
-								size: file.size,
-								type: fileType,
-								data: content, // Teks mentah (dokumen) atau Base64 (gambar/pdf)
-								mimeType: mimeType,
-								isTextContent: isTextContent
-							});
-						} catch (err) {
-							reject(err);
-						}
-					};
-					// Cara membaca file
-					if(['doc', 'docx', 'xls', 'xlsx', 'pptx'].includes(fileType)) reader.readAsArrayBuffer(file);
-					else if(fileType === 'txt') reader.readAsText(file);
-					else reader.readAsDataURL(file); // PDF & Image
-				});
-				try {
-					const processed = await processFile;
-					uploadedFiles.push(processed);
-				} catch (err) {
-					console.error("Gagal baca file:", err);
-					alert("Gagal membaca file: " + file.name);
-				}
-			}
-			renderFilePreviews();
-			e.target.value = ''; // Reset input
+			if (!files || !files.length) return;
+
+            const btn = e.target.parentElement.querySelector('button');
+            const originalIcon = btn.innerHTML;
+            btn.innerHTML = `<div class="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>`;
+
+			try {
+                for (const file of files) {
+                    if (uploadedFiles.find(f => f.name === file.name)) continue;
+
+                    const fileType = file.name.split('.').pop().toLowerCase();
+                    const isImage = file.type.startsWith('image/');
+
+                    // Delay kecil untuk iOS 15 (membiarkan sistem nafas)
+                    if (isImage) await new Promise(r => setTimeout(r, 100));
+
+                    try {
+                        let content, mimeType, isTextContent = false;
+
+                        // 1. DOKUMEN (Word/Excel/PPT) - Butuh ArrayBuffer
+                        if (['doc', 'docx', 'xls', 'xlsx', 'pptx'].includes(fileType)) {
+                            const buffer = await readFileAsBuffer(file);
+
+                            if (['doc', 'docx'].includes(fileType)) {
+                                const res = await mammoth.extractRawText({ arrayBuffer: buffer });
+                                content = res.value;
+                                mimeType = 'text/plain';
+                                isTextContent = true;
+                            } else if (['xls', 'xlsx'].includes(fileType)) {
+                                const wb = XLSX.read(buffer, { type: 'buffer' });
+                                content = wb.SheetNames.map(n => XLSX.utils.sheet_to_txt(wb.Sheets[n])).join('\n\n');
+                                mimeType = 'text/plain';
+                                isTextContent = true;
+                            } else if (fileType === 'pptx') {
+                                const zip = await JSZip.loadAsync(buffer);
+                                const slides = [];
+                                zip.folder("ppt/slides").forEach((path, f) => {
+                                    if (path.startsWith("slide") && path.endsWith(".xml")) {
+                                        slides.push(f.async("string").then(extractTextFromSlideXML));
+                                    }
+                                });
+                                content = (await Promise.all(slides)).join('\n\n');
+                                mimeType = 'text/plain';
+                                isTextContent = true;
+                            }
+                        } 
+                        // 2. TEXT (Txt)
+                        else if (fileType === 'txt') {
+                            content = await readFileAsText(file);
+                            mimeType = 'text/plain';
+                            isTextContent = true;
+                        } 
+                        // 3. GAMBAR & PDF (Base64) - INI YANG KITA PERBAIKI
+                        else if (fileType === 'pdf' || isImage) {
+                            // BACA SEBAGAI BUFFER DULU (ANTI CRASH IOS 15)
+                            const buffer = await readFileAsBuffer(file);
+                            // BARU CONVERT KE BASE64 MANUAL
+                            content = arrayBufferToBase64(buffer);
+                            
+                            mimeType = isImage ? file.type : 'application/pdf';
+                            isTextContent = false;
+                        } 
+                        else {
+                            console.warn("Format skip: " + file.name);
+                            continue;
+                        }
+
+                        uploadedFiles.push({
+                            name: file.name,
+                            size: file.size,
+                            type: fileType,
+                            data: content,
+                            mimeType: mimeType,
+                            isTextContent: isTextContent
+                        });
+
+                    } catch (err) {
+                        console.error("Gagal proses file:", file.name, err);
+                    }
+                }
+
+                renderFilePreviews();
+
+            } catch (globalErr) {
+                console.error("Upload Error:", globalErr);
+            } finally {
+                // WAJIB RESET INPUT
+                e.target.value = ''; 
+                btn.innerHTML = originalIcon;
+            }
 		});
 		/**
 		 * Handle image download
