@@ -78,11 +78,17 @@
 		}
 		/* === MARKDOWN STYLES - UNIVERSAL COMPATIBILITY === */
 		.markdown-body {
-			font-size: 0.95rem;
+			/* UBAH KE 1rem (16px) agar terbaca jelas di iPhone */
+			font-size: 1rem; 
 			line-height: 1.6;
 			color: #334155;
 			word-wrap: break-word;
 		}
+        
+        /* TAMBAHAN KHUSUS INPUT IOS (Agar tidak zoom & ukuran pas) */
+        input, textarea, select, .login-input {
+            font-size: 16px !important; /* Wajib 16px di iOS */
+        }
 		.markdown-body p {
 			margin-bottom: 0.75rem;
 			margin-top: 0;
@@ -386,8 +392,8 @@
 				<h1 class="font-orbitron text-xl font-extrabold text-slate-800 tracking-wide">AI ASISTEN</h1>
 			</div>
 			<form id="login-form" class="w-full space-y-3" onsubmit="handleLogin(event)">
-				<input type="email" id="email-input" placeholder="Email" required class="login-input w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-slate-300 transition-all">
-				<input type="password" id="password-input" placeholder="Password" required class="login-input w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-slate-300 transition-all">
+				<input type="email" id="email-input" placeholder="Email" required class="login-input w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl text-base text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-slate-300 transition-all">
+<input type="password" id="password-input" placeholder="Password" required class="login-input w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl text-base text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-slate-300 transition-all">
 				<p id="login-error" class="text-red-500 text-xs text-center hidden"></p>
 				<button type="submit" id="login-btn" class="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm tracking-wide rounded-xl shadow-sm transition-transform active:scale-95 uppercase mt-2">Masuk</button>
 			</form>
