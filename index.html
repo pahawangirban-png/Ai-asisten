@@ -2351,14 +2351,14 @@
 		
 		// ==========================================
     // ==========================================
-    // SOLUSI FINAL IOS 15: PAKU BETON + JARAK NORMAL (20px)
+    // SOLUSI FINAL IOS 15: PAKU BETON + JARAK 15PX + NATURAL ANIMATION
     // ==========================================
     (function() {
         const ua = navigator.userAgent;
         const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
 
         if (isIOS15) {
-            console.log("👌 iOS 15: Mode Jarak Normal (20px)...");
+            console.log("🎨 iOS 15: Mode Presisi (15px) + Natural Motion...");
 
             const viewport = window.visualViewport;
             const chatPage = document.getElementById('chat-page');
@@ -2376,7 +2376,7 @@
                 }
             };
 
-            // 1. INJEKSI CSS "PAKU BETON" + JARAK NORMAL
+            // 1. INJEKSI CSS "PAKU BETON" + ANIMASI NATURAL
             const style = document.createElement('style');
             style.innerHTML = `
                 html, body {
@@ -2401,33 +2401,33 @@
                     height: 100%;
                     touch-action: pan-y;
                     
-                    /* REVISI JARAK: 20px (Standar Rapi, Tidak Mepet, Tidak Jauh) */
-                    padding-bottom: 20px !important; 
+                    /* JARAK PRESISI: 15px */
+                    padding-bottom: 15px !important; 
                 }
                 header {
-                    transition: margin-top 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease;
+                    /* REVISI ANIMASI: ease-out lebih natural untuk gerakan turun */
+                    /* Durasi 0.35s disamakan dengan rata-rata speed keyboard iOS */
+                    transition: margin-top 0.35s ease-out, opacity 0.35s ease-out;
                     will-change: margin-top, opacity;
                 }
             `;
             document.head.appendChild(style);
 
-            // 2. LOGIKA INTERAKSI (HEADER SLIDE + RESIZE)
+            // 2. LOGIKA INTERAKSI (SLIDING ANIMATION)
             if (inputField && header) {
                 const headerHeight = header.offsetHeight || 80;
 
                 inputField.addEventListener('focus', () => {
-                    // Header Naik Halus
+                    // Header Naik (Sembunyi)
                     header.style.marginTop = `-${headerHeight}px`; 
                     header.style.opacity = '0'; 
 
                     if (viewport) chatPage.style.height = `${viewport.height}px`;
                     window.scrollTo(0, 0);
-                    
-                    // TIDAK ADA SCROLL PAKSA DI SINI (Biarkan user baca posisi terakhir)
                 });
 
                 inputField.addEventListener('blur', () => {
-                    // Header Turun Halus
+                    // Header Turun (Muncul) - Natural
                     header.style.marginTop = '0px';
                     header.style.opacity = '1';
 
