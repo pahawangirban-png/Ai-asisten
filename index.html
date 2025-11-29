@@ -2350,57 +2350,104 @@
         }
 		
 		// ==========================================
-    // SOLUSI FINAL IOS 15: JEBAKAN 1 PIKSEL & KUNCI TOTAL
+    // SOLUSI FINAL IOS 15: PERMANENT FIXED SHELL
     // ==========================================
     (function() {
-        // 1. Deteksi iOS 15
         const ua = navigator.userAgent;
         const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
 
         if (isIOS15) {
-            console.log("🛡️ iOS 15 Detected: Mengaktifkan Jebakan Scroll...");
+            console.log("🔒 iOS 15: Mengaktifkan Mode Paku Mati (Fixed Shell)...");
 
+            const viewport = window.visualViewport;
+            const chatPage = document.getElementById('chat-page');
             const chatContainer = document.getElementById('chat-container');
 
-            // A. LOGIKA UTAMA: CEGAH KARET DI HEADER/FOOTER/KOSONG
-            document.addEventListener('touchmove', function(e) {
-                const target = e.target;
-                const scrollable = target.closest('#chat-container');
-
-                // Kondisi 1: Jari di luar area chat (Header/Footer) -> BLOKIR
-                if (!scrollable) {
-                    e.preventDefault();
-                    return;
+            // 1. INJEKSI CSS KERAS (MEMAKU BODY SELAMANYA)
+            // Kita tidak mengubah ini via JS saat event, tapi pasang mati dari awal.
+            const style = document.createElement('style');
+            style.innerHTML = `
+                html, body {
+                    position: fixed !important;
+                    overflow: hidden !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    touch-action: none; /* Matikan semua gesture default di body */
                 }
-
-                // Kondisi 2: Jari di area chat, TAPI chatnya kosong (gak ada scrollbar) -> BLOKIR
-                // (scrollHeight <= clientHeight artinya konten muat di layar, gak perlu scroll)
-                if (chatContainer.scrollHeight <= chatContainer.clientHeight) {
-                    e.preventDefault();
-                    return;
+                #chat-page {
+                    position: absolute !important; /* Mengambang di dalam body yang mati */
+                    left: 0;
+                    right: 0;
+                    top: 0;
+                    bottom: 0; /* Awalnya full */
+                    overflow: hidden !important;
                 }
+                #chat-container {
+                    overflow-y: scroll !important; /* Hanya ini yang boleh gerak */
+                    -webkit-overflow-scrolling: touch;
+                    height: 100%;
+                    touch-action: pan-y; /* Izinkan scroll vertikal saja */
+                }
+            `;
+            document.head.appendChild(style);
 
-                // Jika chat ada isinya dan panjang, biarkan jalan (nanti diurus poin B)
-                e.stopPropagation();
-            }, { passive: false });
+            // 2. JS: MENGURUS UKURAN CHAT PAGE (AGAR INPUT TIDAK KETUTUP)
+            // Karena body fixed, input akan ketutup keyboard jika kita tidak resize wrapper-nya
+            const handleResize = () => {
+                if (!viewport || !chatPage) return;
+                // Ubah tinggi chat-page mengikuti tinggi visual viewport (area yang tidak tertutup keyboard)
+                chatPage.style.height = `${viewport.height}px`;
+                // Scroll window ke 0 untuk jaga-jaga
+                window.scrollTo(0, 0);
+            };
 
-            // B. LOGIKA TAMBAHAN: JEBAKAN 1 PIKSEL (Agar mentok gak narik Header)
-            if (chatContainer) {
-                chatContainer.addEventListener('touchstart', function() {
-                    const top = chatContainer.scrollTop;
-                    const totalScroll = chatContainer.scrollHeight;
-                    const currentScroll = top + chatContainer.offsetHeight;
-
-                    // Jika mentok ATAS, geser turun 1px
-                    if (top === 0) {
-                        chatContainer.scrollTop = 1;
-                    }
-                    // Jika mentok BAWAH, geser naik 1px
-                    else if (currentScroll === totalScroll) {
-                        chatContainer.scrollTop = top - 1;
-                    }
-                });
+            if (viewport) {
+                viewport.addEventListener('resize', handleResize);
+                // Jalankan sekali saat load
+                handleResize();
             }
+
+            // 3. JS: SATPAM SCROLL (MENCEGAH KEBOCORAN MOMENTUM)
+            // Ini menangani kasus "tarik mentok jauh" agar tidak tembus ke body
+            if (chatContainer) {
+                chatContainer.addEventListener('touchmove', function(e) {
+                    const el = this;
+                    const scrollTop = el.scrollTop;
+                    const scrollHeight = el.scrollHeight;
+                    const height = el.clientHeight;
+                    const deltaY = e.touches[0].pageY - (el.lastY || e.touches[0].pageY);
+                    el.lastY = e.touches[0].pageY;
+
+                    // Mencegah scroll saat konten kosong/pendek
+                    if (scrollHeight <= height) {
+                        e.preventDefault();
+                        return;
+                    }
+
+                    // Logika Mentok Atas: Jika user tarik ke bawah (deltaY > 0) saat posisi 0
+                    if (scrollTop <= 0 && deltaY > 0) {
+                        e.preventDefault(); // Matikan efek karet atas
+                    }
+                    
+                    // Logika Mentok Bawah: Jika user tarik ke atas (deltaY < 0) saat mentok bawah
+                    if (scrollTop + height >= scrollHeight && deltaY < 0) {
+                        e.preventDefault(); // Matikan efek karet bawah
+                    }
+                }, { passive: false });
+
+                // Reset lastY saat sentuh baru dimulai
+                chatContainer.addEventListener('touchstart', function(e) {
+                    this.lastY = e.touches[0].pageY;
+                }, { passive: true });
+            }
+
+            // 4. JS: BLOKIR SENTUHAN DI HEADER & FOOTER
+            document.addEventListener('touchmove', function(e) {
+                // Jika yang disentuh BUKAN chat container, bunuh event-nya.
+                if (!e.target.closest('#chat-container')) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
         }
     })();
         // ============================
