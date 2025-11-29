@@ -78,16 +78,19 @@
 		}
 		/* === MARKDOWN STYLES - UNIVERSAL COMPATIBILITY === */
 		.markdown-body {
-			/* UBAH KE 1rem (16px) agar terbaca jelas di iPhone */
-			font-size: 1rem; 
+			font-size: 1rem; /* 16px */
 			line-height: 1.6;
 			color: #334155;
 			word-wrap: break-word;
 		}
-        
-        /* TAMBAHAN KHUSUS INPUT IOS (Agar tidak zoom & ukuran pas) */
-        input, textarea, select, .login-input {
-            font-size: 16px !important; /* Wajib 16px di iOS */
+        /* PAKU BETON UKURAN FONT (MOBILE) */
+        @media screen and (max-width: 768px) {
+            .markdown-body, .markdown-body div, .markdown-body p, .markdown-body td, .markdown-body th {
+                font-size: 16px !important; /* Paksa 16px di HP */
+            }
+            input, textarea, .login-input {
+                font-size: 16px !important; /* Mencegah Zoom di iPhone */
+            }
         }
 		.markdown-body p {
 			margin-bottom: 0.75rem;
@@ -392,8 +395,8 @@
 				<h1 class="font-orbitron text-xl font-extrabold text-slate-800 tracking-wide">AI ASISTEN</h1>
 			</div>
 			<form id="login-form" class="w-full space-y-3" onsubmit="handleLogin(event)">
-				<input type="email" id="email-input" placeholder="Email" required class="login-input w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl text-base text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-slate-300 transition-all">
-<input type="password" id="password-input" placeholder="Password" required class="login-input w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl text-base text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-slate-300 transition-all">
+				<input type="email" id="email-input" placeholder="Email" required class="login-input w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-slate-300 transition-all">
+				<input type="password" id="password-input" placeholder="Password" required class="login-input w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-slate-300 transition-all">
 				<p id="login-error" class="text-red-500 text-xs text-center hidden"></p>
 				<button type="submit" id="login-btn" class="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm tracking-wide rounded-xl shadow-sm transition-transform active:scale-95 uppercase mt-2">Masuk</button>
 			</form>
@@ -2480,31 +2483,37 @@
 				}, { passive: false });
 			}
 		})();
+		// ============
+		// PATCH IOS 15 (FINAL: FONT SIZE 16PX + TABLE FIX)
+		// ============
 		(function() {
-			// 1. Deteksi iOS 15
-			const isIOS15 = /iPhone/.test(navigator.userAgent) && /OS 15_/.test(navigator.userAgent);
+			const ua = navigator.userAgent;
+			const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
+			
 			if(isIOS15) {
-				console.log("🛡️ iOS 15 Detected: Mengaktifkan Parser V5 (Table Border + HR Fix)");
+				console.log("🛡️ iOS 15: Parser V6 (Font 16px Fixed)");
 				if(typeof converter !== 'undefined') {
 					converter.makeHtml = function(text) {
 						if(!text) return "";
 						try {
-							// --- PRE-PROCESSING ---
+							// PRE-PROCESSING
 							let html = text
 								.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
 								.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
 								.replace(/\*(.*?)\*/g, '<i>$1</i>')
 								.replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-1 rounded text-red-600 font-mono text-sm border border-gray-200">$1</code>')
-								.replace(/^### (.*$)/gm, '<h3 class="text-base font-bold text-gray-900 mt-5 mb-2">$1</h3>')
-								.replace(/^## (.*$)/gm, '<h2 class="text-lg font-bold text-gray-900 mt-6 mb-3 border-b border-gray-300 pb-1">$1</h2>');
-							// --- PARSING ---
+								.replace(/^### (.*$)/gm, '<h3 class="text-lg font-bold text-gray-900 mt-5 mb-2">$1</h3>') // Header dibesarkan
+								.replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold text-gray-900 mt-6 mb-3 border-b border-gray-300 pb-1">$1</h2>');
+
 							const lines = html.split('\n');
 							let output = [];
 							let inCodeBlock = false;
 							let inTable = false;
 							let tableHeaderProcessed = false;
+
 							for(let i = 0; i < lines.length; i++) {
 								let line = lines[i];
+
 								// A. CODE BLOCK
 								if(line.trim().startsWith('```')) {
 									inCodeBlock = !inCodeBlock;
@@ -2515,19 +2524,20 @@
 									output.push(line + '\n');
 									continue;
 								}
-								// B. GARIS BAWAH (HORIZONTAL RULE) - FIX BARU
-								// Mendeteksi --- atau *** atau ___
+
+								// B. HR (Garis)
 								if(line.trim().match(/^[-*_]{3,}$/)) {
-									// Ganti dengan garis HTML asli
 									output.push('<hr class="my-4 border-t border-gray-300">');
 									continue;
 								}
-								// C. TABEL (FIX BORDER KANAN)
+
+								// C. TABEL (FIX: UBAH text-sm JADI text-base)
 								if(line.trim().startsWith('|')) {
 									if(!inTable) {
 										inTable = true;
 										tableHeaderProcessed = false;
-										output.push('<div class="overflow-x-auto my-3"><table class="w-full text-sm text-left border-collapse border-l border-t border-gray-300">'); // Tambah border kiri/atas di wrapper table
+                                        // PERUBAHAN DISINI: text-sm -> text-base (16px)
+										output.push('<div class="overflow-x-auto my-3"><table class="w-full text-base text-left border-collapse border-l border-t border-gray-300">'); 
 									}
 									const cells = line.split('|').filter(cell => cell.trim() !== '');
 									const isSeparator = cells.every(c => c.trim().match(/^[-: ]+$/));
@@ -2540,10 +2550,8 @@
 									cells.forEach(cell => {
 										const content = cell.trim();
 										if(isHeaderRow) {
-											// Header: Border Kanan ADA (Hapus last:border-r-0)
 											output.push(`<th class="bg-gray-200 px-4 py-2 border-b border-r border-gray-300 font-bold text-black whitespace-nowrap">${content}</th>`);
 										} else {
-											// Body: Border Kanan ADA (Hapus last:border-r-0)
 											output.push(`<td class="px-4 py-2 border-b border-r border-gray-200 text-gray-900 min-w-[100px]">${content}</td>`);
 										}
 									});
@@ -2555,7 +2563,8 @@
 										inTable = false;
 									}
 								}
-								// D. LIST RAPI
+
+								// D. LIST (FIX: Tambah text-base)
 								const listMatch = line.match(/^(\s*)([-*]|\d+\.)\s+(.*)$/);
 								if(listMatch) {
 									const indent = listMatch[1].length;
@@ -2564,24 +2573,28 @@
 									let paddingClass = 'pl-0';
 									if(indent >= 2) paddingClass = 'pl-4';
 									if(indent >= 4) paddingClass = 'pl-8';
-									let markerHtml = '';
+									
+                                    let markerHtml = '';
 									if(symbol.includes('.') || !isNaN(parseInt(symbol))) {
 										markerHtml = `<span class="mr-2 font-bold text-black min-w-[1.2rem] text-right">${symbol}</span>`;
 									} else {
 										markerHtml = `<span class="mr-2 text-black text-lg leading-none mt-[-2px]">&bull;</span>`;
 									}
+                                    
+                                    // PERUBAHAN: text-base
 									output.push(`
-                                <div class="flex items-start ${paddingClass} mb-1 leading-snug text-gray-900">
+                                <div class="flex items-start ${paddingClass} mb-1 leading-snug text-gray-900 text-base">
                                     ${markerHtml}
                                     <span class="flex-1">${content}</span>
                                 </div>`);
 								}
-								// E. TEXT BIASA
+								// E. TEXT BIASA (FIX: Tambah text-base)
 								else {
 									if(line.trim() === '') {
 										output.push('<div class="h-2"></div>');
 									} else {
-										output.push(`<div class="mb-1 leading-relaxed text-gray-900">${line}</div>`);
+                                        // PERUBAHAN: text-base ditambahkan di class
+										output.push(`<div class="mb-1 leading-relaxed text-gray-900 text-base">${line}</div>`);
 									}
 								}
 							}
@@ -2590,7 +2603,7 @@
 							}
 							return output.join('');
 						} catch (e) {
-							console.error("V5 Parser Error:", e);
+							console.error("V6 Parser Error:", e);
 							return text;
 						}
 					};
@@ -2598,6 +2611,5 @@
 			}
 		})();
 	</script>
-	
 </body>
 </html>
