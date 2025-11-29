@@ -1058,31 +1058,30 @@
 		 */
 		async function sendMessage() {
 			const text = userInput.value.trim();
-
+			const welcomeTitle = chatContainer.querySelector('h2');
+			if(welcomeTitle && welcomeTitle.innerText.includes('Selamat Datang')) {
+				chatContainer.innerHTML = '';
+			}
 			// Handle Command Khusus
-			if (text.toLowerCase().startsWith('/gambar ') || text.toLowerCase().startsWith('/edit ')) {
+			if(text.toLowerCase().startsWith('/gambar ') || text.toLowerCase().startsWith('/edit ')) {
 				await handleImageGeneration(text);
 				return;
 			}
-			if (text.toLowerCase().startsWith('/youtube ')) {
+			if(text.toLowerCase().startsWith('/youtube ')) {
 				await handleYoutubeSearch(text);
 				return;
 			}
-
-			if ((!text && uploadedFiles.length === 0) || !currentUser) return;
-
+			if((!text && uploadedFiles.length === 0) || !currentUser) return;
 			const originalText = text;
 			userInput.value = '';
 			userInput.blur();
 			adjustHeight(userInput);
 			sendBtn.disabled = true;
-
 			// Bersihkan preview file di UI
 			document.getElementById('file-preview-container').innerHTML = '';
-
 			// Tampilkan Chat di UI (User Bubble)
 			let fileDisplayHtml = '';
-			if (uploadedFiles.length > 0) {
+			if(uploadedFiles.length > 0) {
 				fileDisplayHtml = '<div class="w-full grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">';
 				uploadedFiles.forEach(f => {
 					const iconHtml = getFileIcon(f);
@@ -1099,108 +1098,132 @@
 			}
 			const fullUserDisplay = fileDisplayHtml + (text ? `<p class="text-slate-700 whitespace-pre-wrap leading-relaxed">${text.replace(/\n/g, '<br>')}</p>` : '');
 			appendMessage('user', fullUserDisplay, false, true);
-
 			// --- PERSIAPAN PAYLOAD (OTAK BARU) ---
-			
 			// 1. Siapkan Bagian Pesan SAAT INI (Termasuk File Lengkap)
 			const currentParts = [];
 			let fileLog = ""; // Untuk catatan sejarah
-
 			// Proses File untuk dikirim SEKARANG
 			uploadedFiles.forEach(file => {
 				fileLog += `[File: ${file.name}] `;
-				if (file.isTextContent) {
+				if(file.isTextContent) {
 					// Dokumen Teks (Word/Excel/PPT)
-					currentParts.push({ text: `\n\n=== ISI DOKUMEN (${file.name}) ===\n${file.data}\n=== AKHIR DOKUMEN ===\n` });
+					currentParts.push({
+						text: `\n\n=== ISI DOKUMEN (${file.name}) ===\n${file.data}\n=== AKHIR DOKUMEN ===\n`
+					});
 				} else {
 					// Dokumen Gambar/PDF (Base64)
 					currentParts.push({
-						inlineData: { mimeType: file.mimeType, data: file.data }
+						inlineData: {
+							mimeType: file.mimeType,
+							data: file.data
+						}
 					});
 				}
 			});
-
 			// Masukkan teks user
 			const finalPrompt = text || (uploadedFiles.length > 0 ? "Mohon analisa dokumen yang saya lampirkan ini." : "...");
-			currentParts.push({ text: finalPrompt });
-
+			currentParts.push({
+				text: finalPrompt
+			});
 			// 2. BANGUN KONTEKS UNTUK API (MEMORY SEMENTARA)
 			// Kita ambil history lama, TAPI kita gabungkan dengan pesan 'berat' saat ini
 			// HANYA untuk panggilan API kali ini.
-			const payloadContents = [...chatHistory, { role: "user", parts: currentParts }];
-
+			const payloadContents = [...chatHistory, {
+				role: "user",
+				parts: currentParts
+			}];
 			// Kosongkan antrian file global
 			const filesProcessed = [...uploadedFiles];
-			uploadedFiles = []; 
-
+			uploadedFiles = [];
 			// Tampilkan Loading
 			const loadingMsg = appendMessage('model', '', true);
-
 			try {
 				// Simpan ke Database (User Message)
-				if (!currentChatId) {
+				if(!currentChatId) {
 					const title = (text ? text.substring(0, 30) : "Analisa Dokumen") + "...";
-					const { data: newConv } = await supabase.from('conversations').insert({
-						user_id: currentUser.id, title: title
+					const {
+						data: newConv
+					} = await supabase.from('conversations').insert({
+						user_id: currentUser.id,
+						title: title
 					}).select().single();
 					currentChatId = newConv.id;
 					loadChatList();
 				}
-
 				await supabase.from('messages').insert({
 					conversation_id: currentChatId,
 					role: 'user',
-					parts: [{ text: text, fileHtml: fileDisplayHtml }] // Simpan HTML saja di DB, jangan file raw
+					parts: [{
+						text: text,
+						fileHtml: fileDisplayHtml
+					}] // Simpan HTML saja di DB, jangan file raw
 				});
-
 				// Konfigurasi API
 				const model = document.getElementById('setting-model').value || 'gemini-2.5-flash';
 				const customPrompt = document.getElementById('setting-prompt')?.value || '';
 				const temperature = document.getElementById('setting-temp')?.value || 0.7;
 				const functionUrl = `${SUPABASE_URL}/functions/v1/call-gemini`;
-				const { data: { session } } = await supabase.auth.getSession();
-
+				const {
+					data: {
+						session
+					}
+				} = await supabase.auth.getSession();
 				// 3. KIRIM KE GEMINI
 				const response = await fetch(functionUrl, {
 					method: 'POST',
-					headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': `Bearer ${session.access_token}`
+					},
 					body: JSON.stringify({
 						model: model,
 						payload: {
 							contents: payloadContents, // Kirim history + file lengkap
-							generationConfig: { temperature: parseFloat(temperature), maxOutputTokens: 2048 },
-							systemInstruction: { role: "system", parts: [{ text: customPrompt || "Anda adalah asisten cerdas." }] }
+							generationConfig: {
+								temperature: parseFloat(temperature),
+								maxOutputTokens: 2048
+							},
+							systemInstruction: {
+								role: "system",
+								parts: [{
+									text: customPrompt || "Anda adalah asisten cerdas."
+								}]
+							}
 						}
 					}),
 				});
-
-				if (!response.ok) throw new Error("Gagal terhubung ke AI.");
+				if(!response.ok) throw new Error("Gagal terhubung ke AI.");
 				const data = await response.json();
 				const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, tidak ada jawaban.";
-
 				loadingMsg.remove();
 				appendMessage('model', aiText);
-
 				// --- LOGIKA KUNCI: MEMORI HEMAT (SANITASI) ---
-				
 				// 1. Simpan Pesan User ke History TAPI VERSI RINGAN (Tanpa File Content)
 				// Kita ganti isi file dengan 'Catatan' agar AI ingat user pernah upload, tapi tidak membebani token.
-				const cleanUserParts = [{ text: `${text}\n\n(System Note: User telah mengupload ${filesProcessed.length} dokumen: ${fileLog}. Gunakan hasil analisismu sebelumnya untuk menjawab pertanyaan terkait dokumen ini.)` }];
-				
-				chatHistory.push({ role: "user", parts: cleanUserParts });
-
+				const cleanUserParts = [{
+					text: `${text}\n\n(System Note: User telah mengupload ${filesProcessed.length} dokumen: ${fileLog}. Gunakan hasil analisismu sebelumnya untuk menjawab pertanyaan terkait dokumen ini.)`
+				}];
+				chatHistory.push({
+					role: "user",
+					parts: cleanUserParts
+				});
 				// 2. Simpan Jawaban AI ke History (Penting: Hasil Analisa ada di sini)
-				chatHistory.push({ role: "model", parts: [{ text: aiText }] });
-
+				chatHistory.push({
+					role: "model",
+					parts: [{
+						text: aiText
+					}]
+				});
 				// Simpan ke DB
 				await supabase.from('messages').insert({
 					conversation_id: currentChatId,
 					role: 'model',
-					parts: [{ text: aiText }]
+					parts: [{
+						text: aiText
+					}]
 				});
-
 			} catch (error) {
-				if (loadingMsg) loadingMsg.remove();
+				if(loadingMsg) loadingMsg.remove();
 				console.error("Chat Error:", error);
 				const errorHtml = `<div class="bg-red-50 p-3 rounded-lg text-red-600 text-sm border border-red-100 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> <span>Gagal memproses. Coba kurangi jumlah file atau kirim ulang.</span></div>`;
 				appendMessage('model', errorHtml, false, true);
@@ -1254,7 +1277,6 @@
 		                </svg>
 		            </button>
 		        </div>` : '';
-				
 			div.innerHTML = `
 		        <div class="${bubbleClass} relative flex flex-col bg-gray-100 px-4 pt-3 pb-6 rounded-2xl shadow-sm mb-4">
 		            <div class="flex justify-between items-center mb-1 border-b-[0.5px] border-gray-300 pb-1">
@@ -1974,94 +1996,120 @@
 			}, "HAPUS", "text-red-600", "text-blue-600");
 		}
 		// ============================
-		// FILE HANDLING
-		// ============================
-		/**
-		 * Handle file input change
-		 */
-		document.getElementById('file-input').addEventListener('change', async (e) => {
-			const files = e.target.files;
-			if(!files.length) return;
-			for(const file of files) {
-				// Cek duplikasi
-				if(uploadedFiles.find(f => f.name === file.name)) continue;
-				const fileType = file.name.split('.').pop().toLowerCase();
-				const reader = new FileReader();
-				const processFile = new Promise((resolve, reject) => {
-					reader.onload = async (event) => {
-						try {
-							let content, mimeType, isTextContent = false;
-							// Logika Ekstraksi (Mammoth, XLSX, JSZip)
-							if(['doc', 'docx'].includes(fileType)) {
-								const result = await mammoth.extractRawText({
-									arrayBuffer: event.target.result
-								});
-								content = result.value;
-								mimeType = 'text/plain';
-								isTextContent = true;
-							} else if(['xls', 'xlsx'].includes(fileType)) {
-								const workbook = XLSX.read(event.target.result, {
-									type: 'buffer'
-								});
-								content = workbook.SheetNames.map(name => XLSX.utils.sheet_to_txt(workbook.Sheets[name])).join('\n\n');
-								mimeType = 'text/plain';
-								isTextContent = true;
-							} else if(fileType === 'pptx') {
-								const zip = await JSZip.loadAsync(event.target.result);
-								const slidePromises = [];
-								zip.folder("ppt/slides").forEach((path, f) => {
-									if(path.startsWith("slide") && path.endsWith(".xml")) {
-										slidePromises.push(f.async("string").then(extractTextFromSlideXML));
-									}
-								});
-								content = (await Promise.all(slidePromises)).join('\n\n');
-								mimeType = 'text/plain';
-								isTextContent = true;
-							} else if(fileType === 'txt') {
-								content = event.target.result;
-								mimeType = 'text/plain';
-								isTextContent = true;
-							} else if(fileType === 'pdf') {
-								// PDF dikirim sebagai Base64 (Inline Data) untuk Gemini
-								content = event.target.result.split(',')[1];
-								mimeType = 'application/pdf';
-								isTextContent = false;
-							} else if(file.type.startsWith('image/')) {
-								content = event.target.result.split(',')[1];
-								mimeType = file.type;
-								isTextContent = false;
-							} else {
-								reject(new Error("Format tidak didukung"));
-								return;
-							}
-							resolve({
-								name: file.name,
-								size: file.size,
-								type: fileType,
-								data: content, // Teks mentah (dokumen) atau Base64 (gambar/pdf)
-								mimeType: mimeType,
-								isTextContent: isTextContent
-							});
-						} catch (err) {
-							reject(err);
-						}
-					};
-					// Cara membaca file
-					if(['doc', 'docx', 'xls', 'xlsx', 'pptx'].includes(fileType)) reader.readAsArrayBuffer(file);
-					else if(fileType === 'txt') reader.readAsText(file);
-					else reader.readAsDataURL(file); // PDF & Image
-				});
-				try {
-					const processed = await processFile;
-					uploadedFiles.push(processed);
-				} catch (err) {
-					console.error("Gagal baca file:", err);
-					alert("Gagal membaca file: " + file.name);
-				}
-			}
-			renderFilePreviews();
-			e.target.value = ''; // Reset input
-		});
+// FILE HANDLING (FIX STABIL IOS 15)
+// ============================
+document.getElementById('file-input').addEventListener('change', async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    // Reset value manual agar tombol tidak macet untuk upload berikutnya
+    e.target.value = '';
+
+    try {
+        for (const file of files) {
+            // Cek duplikasi
+            if (uploadedFiles.find(f => f.name === file.name && f.size === file.size)) continue;
+
+            let fileName = file.name;
+            let fileType = file.type;
+
+            // --- FIX KHUSUS IOS 15 ---
+            // Jika tipe kosong (bug galeri iOS), paksa jadi JPEG
+            if (!fileType || fileType === "") {
+                fileType = "image/jpeg";
+                // Jika nama file tidak ada ekstensinya, tambahkan .jpg
+                if (fileName && !fileName.includes('.')) fileName += ".jpg";
+            }
+            
+            // Cek ekstensi file
+            const ext = fileName.split('.').pop().toLowerCase();
+            
+            // Deteksi gambar yang lebih toleran
+            const isImage = fileType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'heic', 'webp'].includes(ext);
+
+            const reader = new FileReader();
+            
+            const processFile = new Promise((resolve, reject) => {
+                reader.onload = async (event) => {
+                    try {
+                        const resultData = event.target.result;
+                        let content, mimeType, isTextContent = false;
+
+                        // Logika Dokumen (Word/Excel/PPT/Txt)
+                        if (['doc', 'docx'].includes(ext)) {
+                            const result = await mammoth.extractRawText({ arrayBuffer: resultData });
+                            content = result.value;
+                            mimeType = 'text/plain';
+                            isTextContent = true;
+                        } else if (['xls', 'xlsx'].includes(ext)) {
+                            const workbook = XLSX.read(resultData, { type: 'buffer' });
+                            content = workbook.SheetNames.map(name => XLSX.utils.sheet_to_txt(workbook.Sheets[name])).join('\n\n');
+                            mimeType = 'text/plain';
+                            isTextContent = true;
+                        } else if (ext === 'pptx') {
+                            const zip = await JSZip.loadAsync(resultData);
+                            const slidePromises = [];
+                            zip.folder("ppt/slides").forEach((path, f) => {
+                                if (path.startsWith("slide") && path.endsWith(".xml")) {
+                                    slidePromises.push(f.async("string").then(extractTextFromSlideXML));
+                                }
+                            });
+                            content = (await Promise.all(slidePromises)).join('\n\n');
+                            mimeType = 'text/plain';
+                            isTextContent = true;
+                        } else if (ext === 'txt') {
+                            content = resultData;
+                            mimeType = 'text/plain';
+                            isTextContent = true;
+                        } else {
+                            // --- GAMBAR & PDF (BASE64) ---
+                            // Ambil data base64 murni
+                            if (typeof resultData === 'string' && resultData.includes(',')) {
+                                content = resultData.split(',')[1];
+                            } else {
+                                content = ""; // Fail safe
+                            }
+                            
+                            mimeType = fileType; // Gunakan tipe yang sudah kita perbaiki di atas
+                            isTextContent = false;
+                        }
+
+                        resolve({
+                            name: fileName,
+                            size: file.size,
+                            type: ext,
+                            data: content,
+                            mimeType: mimeType,
+                            isTextContent: isTextContent
+                        });
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+                
+                reader.onerror = () => reject(new Error("Gagal membaca file"));
+
+                // STRATEGI BACA FILE
+                if (['doc', 'docx', 'xls', 'xlsx', 'pptx'].includes(ext)) {
+                    reader.readAsArrayBuffer(file);
+                } else if (ext === 'txt') {
+                    reader.readAsText(file);
+                } else {
+                    // Gambar & PDF baca sebagai DataURL (Paling aman untuk iOS)
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            const processed = await processFile;
+            uploadedFiles.push(processed);
+        }
+    } catch (err) {
+        console.error("Error upload:", err);
+        alert("Gagal memuat file. Coba lagi.");
+    } finally {
+        renderFilePreviews();
+    }
+});
 		/**
 		 * Handle image download
 		 */
@@ -2106,17 +2154,14 @@
 		(function() {
 			const ua = navigator.userAgent;
 			const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
-
 			if(isIOS15) {
 				console.log("🚀 iOS 15: Mode True Push Up (Keyboard Anchor)...");
-
 				const viewport = window.visualViewport;
 				const chatPage = document.getElementById('chat-page');
 				const chatContainer = document.getElementById('chat-container');
 				const sidebarContent = document.getElementById('sidebar-content');
 				const header = document.querySelector('header');
 				const inputField = document.getElementById('user-input');
-
 				// FUNGSI SCROLL INSTAN (UNTUK EFEK PUSH)
 				// Kita butuh yang instan (auto) saat keyboard naik agar terlihat menyatu
 				const jumpToBottom = () => {
@@ -2124,7 +2169,6 @@
 						chatContainer.scrollTop = chatContainer.scrollHeight;
 					}
 				};
-
 				// FUNGSI SCROLL HALUS (UNTUK CHAT BARU)
 				const smoothScrollToBottom = () => {
 					if(chatContainer) {
@@ -2134,7 +2178,6 @@
 						});
 					}
 				};
-
 				// 1. INJEKSI CSS PERMANEN (PAKU BETON)
 				const style = document.createElement('style');
 				style.innerHTML = `
@@ -2176,122 +2219,125 @@
 	                }
 	            `;
 				document.head.appendChild(style);
-
 				// 2. LOGIKA PUSH UP + ANCHORING
 				if(inputField && header && chatPage) {
 					const getHeaderHeight = () => header.offsetHeight || 0;
-
-                    // SAAT KEYBOARD NAIK (FOCUS)
+					// SAAT KEYBOARD NAIK (FOCUS)
 					inputField.addEventListener('focus', () => {
-                        const hHeight = getHeaderHeight();
-                        
-                        // A. DORONG UI KE ATAS (Header Keluar)
+						const hHeight = getHeaderHeight();
+						// A. DORONG UI KE ATAS (Header Keluar)
 						chatPage.style.top = `-${hHeight}px`;
-                        
-                        // B. PERBESAR CONTAINER (Agar Input tetap di bawah)
+						// B. PERBESAR CONTAINER (Agar Input tetap di bawah)
 						if(viewport) {
-                            // Rumus: Tinggi Viewport + Tinggi Header yg dibuang
-                            chatPage.style.height = `${viewport.height + hHeight}px`;
-                        }
-						
-                        // C. KUNCI SCROLL WINDOW
-                        window.scrollTo(0, 0);
-
-                        // D. DORONG CHAT KE BAWAH (INI KUNCINYA!)
-                        // Agar pesan terakhir ikut naik bersama keyboard
-                        // Kita panggil berulang sedikit untuk menangani animasi keyboard native
-                        jumpToBottom(); 
-                        setTimeout(jumpToBottom, 50);
-                        setTimeout(jumpToBottom, 300); // Final check saat keyboard mentok
+							// Rumus: Tinggi Viewport + Tinggi Header yg dibuang
+							chatPage.style.height = `${viewport.height + hHeight}px`;
+						}
+						// C. KUNCI SCROLL WINDOW
+						window.scrollTo(0, 0);
+						// D. DORONG CHAT KE BAWAH (INI KUNCINYA!)
+						// Agar pesan terakhir ikut naik bersama keyboard
+						// Kita panggil berulang sedikit untuk menangani animasi keyboard native
+						jumpToBottom();
+						setTimeout(jumpToBottom, 50);
+						setTimeout(jumpToBottom, 300); // Final check saat keyboard mentok
 					});
-
-                    // SAAT KEYBOARD TURUN (BLUR)
+					// SAAT KEYBOARD TURUN (BLUR)
 					inputField.addEventListener('blur', () => {
-                        // Kembalikan Posisi
+						// Kembalikan Posisi
 						chatPage.style.top = '0px';
 						if(viewport) {
-                            chatPage.style.height = `${viewport.height}px`;
-                        }
+							chatPage.style.height = `${viewport.height}px`;
+						}
 						window.scrollTo(0, 0);
 					});
 				}
-
 				// 3. LOGIKA RESIZE (SIFAT RESPONSIF REAL-TIME)
-                // Ini menangani perubahan tinggi saat keyboard sedang bergerak naik
+				// Ini menangani perubahan tinggi saat keyboard sedang bergerak naik
 				const handleResize = () => {
 					if(!viewport || !chatPage) return;
-                    
-                    const hHeight = (header && inputField === document.activeElement) ? (header.offsetHeight || 0) : 0;
-                    
-                    // Update tinggi container
-                    chatPage.style.height = `${viewport.height + hHeight}px`;
-                    
-                    if (inputField === document.activeElement) {
-                        chatPage.style.top = `-${hHeight}px`;
-                        // Pastikan chat selalu 'nempel' bawah saat resize terjadi
-                        jumpToBottom(); 
-                    } else {
-                        chatPage.style.top = '0px';
-                    }
-
+					const hHeight = (header && inputField === document.activeElement) ? (header.offsetHeight || 0) : 0;
+					// Update tinggi container
+					chatPage.style.height = `${viewport.height + hHeight}px`;
+					if(inputField === document.activeElement) {
+						chatPage.style.top = `-${hHeight}px`;
+						// Pastikan chat selalu 'nempel' bawah saat resize terjadi
+						jumpToBottom();
+					} else {
+						chatPage.style.top = '0px';
+					}
 					window.scrollTo(0, 0);
 				};
-
 				if(viewport) {
 					viewport.addEventListener('resize', handleResize);
 					setTimeout(handleResize, 100);
 				}
-
 				// 4. SATPAM SCROLL (Chat & Sidebar)
-                const preventRubberBand = (element) => {
-                    if (!element) return;
-                    element.addEventListener('touchmove', function(e) {
+				const preventRubberBand = (element) => {
+					if(!element) return;
+					element.addEventListener('touchmove', function(e) {
 						const el = this;
 						const scrollTop = el.scrollTop;
 						const scrollHeight = el.scrollHeight;
 						const height = el.clientHeight;
 						const deltaY = e.touches[0].pageY - (el.lastY || e.touches[0].pageY);
 						el.lastY = e.touches[0].pageY;
-
-						if(scrollHeight <= height) { e.preventDefault(); return; }
-						if(scrollTop <= 0 && deltaY > 0) { e.preventDefault(); }
-						if(scrollTop + height >= scrollHeight && deltaY < 0) { e.preventDefault(); }
-					}, { passive: false });
+						if(scrollHeight <= height) {
+							e.preventDefault();
+							return;
+						}
+						if(scrollTop <= 0 && deltaY > 0) {
+							e.preventDefault();
+						}
+						if(scrollTop + height >= scrollHeight && deltaY < 0) {
+							e.preventDefault();
+						}
+					}, {
+						passive: false
+					});
 					element.addEventListener('touchstart', function(e) {
 						this.lastY = e.touches[0].pageY;
-					}, { passive: true });
-                };
-
-                if (chatContainer) preventRubberBand(chatContainer);
-                if (sidebarContent) preventRubberBand(sidebarContent);
-
+					}, {
+						passive: true
+					});
+				};
+				if(chatContainer) preventRubberBand(chatContainer);
+				if(sidebarContent) preventRubberBand(sidebarContent);
 				// 5. BLOKIR SENTUHAN LUAR
 				document.addEventListener('touchmove', function(e) {
-                    const isChat = e.target.closest('#chat-container');
-                    const isSidebar = e.target.closest('#sidebar-content');
-					if(!isChat && !isSidebar) { e.preventDefault(); }
-				}, { passive: false });
-
+					const isChat = e.target.closest('#chat-container');
+					const isSidebar = e.target.closest('#sidebar-content');
+					if(!isChat && !isSidebar) {
+						e.preventDefault();
+					}
+				}, {
+					passive: false
+				});
 				// 6. AUTO SCROLL (MUTATION OBSERVER - CHAT BARU)
 				if(chatContainer) {
 					const observer = new MutationObserver((mutations) => {
 						const hasNewNodes = mutations.some(m => m.addedNodes.length > 0);
 						if(hasNewNodes) {
-                            // Gunakan smooth scroll hanya untuk pesan baru
+							// Gunakan smooth scroll hanya untuk pesan baru
 							smoothScrollToBottom();
 							setTimeout(smoothScrollToBottom, 100);
 						}
 					});
-					observer.observe(chatContainer, { childList: true, subtree: true });
+					observer.observe(chatContainer, {
+						childList: true,
+						subtree: true
+					});
 				}
-
-                // 7. ANTI-DOUBLE TAP ZOOM
-                let lastTouchEnd = 0;
-                document.addEventListener('touchend', function(event) {
-                    const now = (new Date()).getTime();
-                    if (now - lastTouchEnd <= 300) { event.preventDefault(); }
-                    lastTouchEnd = now;
-                }, { passive: false });
+				// 7. ANTI-DOUBLE TAP ZOOM
+				let lastTouchEnd = 0;
+				document.addEventListener('touchend', function(event) {
+					const now = (new Date()).getTime();
+					if(now - lastTouchEnd <= 300) {
+						event.preventDefault();
+					}
+					lastTouchEnd = now;
+				}, {
+					passive: false
+				});
 			}
 		})();
 		// ============================
