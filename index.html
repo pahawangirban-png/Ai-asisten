@@ -5,13 +5,10 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="default">
-	<meta name="theme-color" content="#ffffff">
 	<meta name="apple-mobile-web-app-title" content="AI ASISTEN">
 	<link rel="apple-touch-icon" href="./icon-512.png">
 	<link rel="icon" type="image/png" href="./icon-512.png">
 	<title>AI ASISTEN</title>
-	
-	<!-- External Libraries -->
 	<script src="https://cdn.tailwindcss.com"></script>
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -20,9 +17,15 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.7.0/mammoth.browser.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-	
 	<script>
-		// Tailwind Configuration
+		const converter = new showdown.Converter({
+			tables: true,
+			strikethrough: true,
+			tasklists: true,
+			ghCodeBlocks: true,
+			openLinksInNewWindow: true,
+			emoji: true
+		});
 		tailwind.config = {
 			theme: {
 				extend: {
@@ -34,7 +37,6 @@
 			}
 		}
 	</script>
-	
 	<style>
 		/* === CORE & IOS RESETS === */
 		*, *::before, *::after {
@@ -76,17 +78,24 @@
 		.safe-pb {
 			padding-bottom: env(safe-area-inset-bottom);
 		}
-		/* === MARKDOWN STYLES - UNIVERSAL COMPATIBILITY === */
+		/* === TYPOGRAPHY & SPACING === */
+		/* 1. Pengaturan Dasar Teks */
 		.markdown-body {
 			font-size: 0.95rem;
 			line-height: 1.6;
 			color: #334155;
 			word-wrap: break-word;
+			/* Support Browser Lama */
+			overflow-wrap: break-word;
+			/* Standar Modern */
+			word-break: break-word;
 		}
+		/* 2. Paragraf */
 		.markdown-body p {
 			margin-bottom: 0.75rem;
 			margin-top: 0;
 		}
+		/* 3. Heading (Judul H1, H2, dll) */
 		.markdown-body h1,
 		.markdown-body h2,
 		.markdown-body h3,
@@ -97,34 +106,47 @@
 			margin-bottom: 0.5rem;
 			line-height: 1.3;
 		}
+		/* Hapus margin top jika heading ada di paling atas */
 		.markdown-body>*:first-child {
 			margin-top: 0 !important;
 		}
+		/* 4. List (Bullet & Numbering) */
 		.markdown-body ul {
 			list-style-type: disc;
-			margin: 0.5rem 0;
-			padding-left: 1.5rem;
+			margin-top: 0.25rem;
+			margin-bottom: 0.75rem;
+			padding-left: 1.6rem;
 		}
 		.markdown-body ol {
 			list-style-type: decimal;
-			margin: 0.5rem 0;
-			padding-left: 1.5rem;
+			margin-top: 0.25rem;
+			margin-bottom: 0.75rem;
+			padding-left: 1.6rem;
 		}
 		.markdown-body li {
 			margin-bottom: 0.25rem;
+			padding-left: 0.25rem;
 		}
+		.markdown-body li>p {
+			margin-bottom: 0.25rem;
+		}
+		/* 5. Garis Pemisah (HR) */
 		.markdown-body hr {
 			border: 0;
 			border-top: 1px solid #e2e8f0;
-			margin: 1rem 0;
+			margin-top: 0.75rem;
+			margin-bottom: 0.75rem;
 		}
+		/* 6. Blockquote (Kutipan) */
 		.markdown-body blockquote {
 			border-left: 3px solid #cbd5e1;
 			padding-left: 1rem;
 			color: #64748b;
-			margin: 1rem 0;
+			margin-left: 0;
+			margin-bottom: 0.75rem;
 			font-style: italic;
 		}
+		/* 7. Link */
 		.markdown-body a {
 			color: #2563eb;
 			text-decoration: none;
@@ -133,64 +155,107 @@
 		.markdown-body a:hover {
 			text-decoration: underline;
 		}
+		/* Bold */
 		.markdown-body strong {
 			font-weight: 700;
 			color: #1e293b;
 		}
+		/* PENTING: Elemen Terakhir tidak boleh punya margin bawah */
 		.markdown-body>*:last-child {
 			margin-bottom: 0 !important;
 		}
-		/* === TABLE STYLES - UNIVERSAL COMPATIBLE === */
-		.markdown-body table {
-			width: 100%;
-			border-collapse: collapse;
-			margin: 1rem 0;
-			background-color: transparent;
-		}
-		.markdown-body th,
-		.markdown-body td {
-			padding: 10px 12px;
-			border: 1px solid #cbd5e1;
-			text-align: left;
-			vertical-align: top;
-		}
-		.markdown-body th {
-			background-color: #f1f5f9;
-			color: #0f172a;
-			font-weight: 700;
-		}
-		/* Table wrapper for horizontal scroll */
+		/* === STYLE TABEL FINAL (ROUNDED & SERAGAM) === */
+		/* Wrapper (Wadah Scroll) */
 		.overflow-x-auto {
 			width: 100%;
 			overflow-x: auto;
 			-webkit-overflow-scrolling: touch;
-			margin: 1rem 0;
+			margin-bottom: 1rem;
+			border: none;
+			padding: 0;
 		}
-		/* === CODE STYLES - SIMPLE & COMPATIBLE === */
+		/* Tabel Utama */
+		.markdown-body table {
+			width: 100%;
+			border-collapse: separate;
+			/* Agar radius jalan */
+			border-spacing: 0;
+			background-color: transparent;
+			font-size: 0.9rem;
+			border: 1px solid #cbd5e1;
+			border-radius: 0.75rem;
+			overflow: hidden;
+		}
+		/* Header & Sel */
+		.markdown-body th,
+		.markdown-body td {
+			padding: 12px 16px;
+			border-bottom: 1px solid #cbd5e1;
+			border-right: 1px solid #cbd5e1;
+			vertical-align: top;
+			text-align: left;
+			color: #334155;
+			line-height: 1.5;
+			white-space: normal;
+			word-wrap: break-word;
+			min-width: 100px;
+		}
+		/* Hapus garis kanan di kolom terakhir */
+		.markdown-body th:last-child,
+		.markdown-body td:last-child {
+			border-right: none;
+		}
+		/* Hapus garis bawah di baris terakhir */
+		.markdown-body tr:last-child td {
+			border-bottom: none;
+		}
+		/* Header Styling */
+		.markdown-body th {
+			background-color: #f1f5f9;
+			color: #0f172a;
+			font-weight: 700;
+			font-size: 0.85rem;
+			letter-spacing: 0.02em;
+			border-bottom: 1px solid #cbd5e1;
+		}
+		/* === STYLING CODE BLOCK (GABUNGAN FINAL) === */
+		/* Wadah utama blok kode (Pre) */
 		.markdown-body pre {
 			background-color: #f8fafc;
 			color: #334155;
 			padding: 1rem;
-			border-radius: 0.5rem;
-			margin: 1rem 0;
+			border-radius: 0.75rem;
+			margin: 0.75rem 0;
 			overflow-x: auto;
+			/* Scroll horizontal */
+			width: 100%;
+			max-width: 100%;
+			white-space: pre;
+			-webkit-overflow-scrolling: touch;
 			border: 1px solid #e2e8f0;
-			font-family: monospace;
+			font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
 			font-size: 0.85rem;
+			line-height: 1.6;
 		}
+		/* Styling teks di dalam blok */
 		.markdown-body pre code {
 			background-color: transparent;
 			color: inherit;
 			padding: 0;
+			border-radius: 0;
+			font-family: inherit;
 		}
-		.markdown-body code {
+		/* Styling Inline Code (Kode pendek di tengah kalimat) */
+		.markdown-body :not(pre)>code {
 			background-color: #f1f5f9;
 			color: #ef4444;
 			padding: 0.2rem 0.4rem;
-			border-radius: 0.25rem;
-			font-family: monospace;
+			border-radius: 0.375rem;
+			font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
 			font-size: 0.875em;
+			font-weight: 500;
 			border: 1px solid #e2e8f0;
+			word-break: break-word;
 		}
 		/* === UI COMPONENTS & ANIMATIONS === */
 		/* Loading Animation */
@@ -264,7 +329,9 @@
 			height: 2.4rem;
 			width: 1rem;
 			background-color: #9ca3af;
+			/* Abu-abu (Gray-400) */
 			border: 1px solid #9ca3af;
+			/* Border Abu Tua (Gray-500) */
 			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 			border-radius: 4px;
 			margin-top: -1px;
@@ -320,25 +387,34 @@
 		/* === YOUTUBE EMBED STYLE (RESPONSIF PENUH) === */
 		.yt-embed-grid {
 			display: grid;
+			/* DEFAULT (HP): 1 Kolom saja agar video besar */
 			grid-template-columns: 1fr;
 			gap: 0.75rem;
+			/* Jarak antar video di HP sedikit lebih rapat */
 			margin-top: 0.5rem;
 			width: 100%;
 		}
+		/* KHUSUS LAYAR LEBAR (iPad/Laptop > 768px) */
 		@media (min-width: 768px) {
 			.yt-embed-grid {
+				/* Ubah jadi 2 kolom rapi */
 				grid-template-columns: repeat(2, 1fr);
 				gap: 1rem;
+				/* Jarak lebih lega */
 			}
 		}
 		.yt-container {
 			position: relative;
 			width: 100%;
 			padding-bottom: 56.25%;
+			/* Rasio Layar 16:9 */
 			height: 0;
 			background-color: #000;
+			/* Hitam saat loading */
 			border-radius: 0.75rem;
+			/* Melengkung manis */
 			overflow: hidden;
+			/* Shadow halus agar terlihat timbul sedikit */
 			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 		}
 		.yt-container iframe {
@@ -352,15 +428,10 @@
 	</style>
 </head>
 <body class="flex flex-col relative">
-	<!-- Initial Loader -->
 	<div id="initial-loader" class="fixed inset-0 z-[100] bg-white flex items-center justify-center transition-opacity duration-500">
 		<div class="w-8 h-8 border-8 border-gray-200 border-t-gray-400 rounded-full animate-spin"></div>
 	</div>
-	
-	<!-- Global Overlay -->
 	<div id="global-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/20 z-50 hidden transition-opacity opacity-0 backdrop-blur-sm"></div>
-	
-	<!-- Sidebar -->
 	<div id="sidebar" class="fixed inset-y-0 left-0 z-[60] w-72 bg-white shadow-2xl transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
 		<div class="flex-none safe-pt bg-white z-10 w-full">
 			<div class="h-20 flex items-center px-4 w-full">
@@ -377,8 +448,6 @@
 		</div>
 		<div class="flex-1 overflow-y-auto bg-white" id="sidebar-content"></div>
 	</div>
-	
-	<!-- Login Page -->
 	<div id="login-page" class="absolute inset-0 z-[40] flex items-center justify-center bg-gray-100 p-4 transition-all duration-300 transform hidden">
 		<div class="bg-white w-full max-w-sm p-8 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-center gap-6">
 			<div class="flex flex-col items-center justify-center text-center">
@@ -393,8 +462,6 @@
 			</form>
 		</div>
 	</div>
-	
-	<!-- Chat Page -->
 	<div id="chat-page" class="flex-1 flex flex-col h-full hidden opacity-0 relative bg-white w-full z-10">
 		<header class="flex-none h-20 safe-pt flex items-center justify-between px-3 border-b border-gray-100 bg-white z-20 select-none box-content">
 			<div class="flex items-center gap-0 h-full -ml-2">
@@ -447,8 +514,6 @@
 			</div>
 		</div>
 	</div>
-	
-	<!-- Settings Page -->
 	<div id="settings-page" class="absolute inset-0 z-[50] bg-white flex flex-col transition-all duration-300 opacity-0 invisible">
 		<header class="flex-none h-20 safe-pt flex items-center justify-between px-3 border-b border-gray-100 bg-white z-20 select-none box-content relative">
 			<button onclick="closeSettings()" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-full transition-colors relative z-30">
@@ -472,7 +537,6 @@
 		</header>
 		<main id="settings-content" class="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-6">
 			<div class="max-w-3xl mx-auto space-y-6 pb-12 mt-2">
-				<!-- AI Configuration -->
 				<fieldset class="bg-white rounded-2xl border border-gray-300 p-6 shadow-sm mt-6">
 					<legend class="px-2 text-sm md:text-base font-black text-slate-500 uppercase tracking-wide">KONFIGURASI AI</legend>
 					<div class="mb-4 relative" id="dropdown-wrapper">
@@ -513,8 +577,6 @@
 						<div class="flex justify-between text-[10px] md:text-xs text-slate-400 mt-2 px-1 font-medium"><span>Fokus (0.0)</span><span>Kreatif (1.0)</span></div>
 					</div>
 				</fieldset>
-				
-				<!-- User Management -->
 				<fieldset class="bg-white rounded-2xl border border-gray-300 p-6 shadow-sm mt-6">
 					<legend class="px-2 text-sm md:text-base font-black text-slate-500 uppercase tracking-wide">MANAJEMEN USER</legend>
 					<div class="mb-4">
@@ -554,8 +616,6 @@
 			</div>
 		</main>
 	</div>
-	
-	<!-- Confirmation Modal -->
 	<div id="confirm-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
 		<div class="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity"></div>
 		<div class="relative bg-gray-50 w-full max-w-[18rem] rounded-2xl shadow-2xl overflow-hidden transform scale-100 transition-all">
@@ -569,16 +629,11 @@
 			</div>
 		</div>
 	</div>
-	
 	<script>
-		// ============================
-		// APPLICATION CONFIGURATION
-		// ============================
 		const SUPABASE_URL = 'https://xdrqauwxvwooojufzndv.supabase.co';
 		const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkcnFhdXd4dndvb29qdWZ6bmR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1MDQyNDgsImV4cCI6MjA3ODA4MDI0OH0.mH7MEeAggksdAlandZpwuyGPYo08SuuWkXoMXVvwSiI';
-		// Initialize Supabase client
 		const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-		// PWA Manifest
+		// --- AUTO PWA MANIFEST (NATIVE BROWSER INSTALL) ---
 		const pwaManifest = {
 			"name": "AI ASISTEN",
 			"short_name": "AI ASISTEN",
@@ -600,7 +655,6 @@
 				}
 			]
 		};
-		// Inject PWA Manifest
 		try {
 			const stringManifest = JSON.stringify(pwaManifest);
 			const blob = new Blob([stringManifest], {
@@ -615,43 +669,14 @@
 		} catch (e) {
 			console.error("Gagal inject PWA:", e);
 		}
-		// ============================
-		// GLOBAL VARIABLES
-		// ============================
 		let currentUser = null;
+		// --- VARIABEL FILE ---
 		let uploadedFiles = [];
-		let chatHistory = [];
-		let currentChatId = null;
-		let currentConfirmAction = null;
-		// DOM Elements
-		const loginPage = document.getElementById('login-page');
-		const chatPage = document.getElementById('chat-page');
-		const sidebar = document.getElementById('sidebar');
-		const overlay = document.getElementById('global-overlay');
-		const chatContainer = document.getElementById('chat-container');
-		const userInput = document.getElementById('user-input');
-		const sendBtn = document.getElementById('send-btn');
-		const settingsPage = document.getElementById('settings-page');
-		const confirmModal = document.getElementById('confirm-modal');
-		// Dropdown Elements
-		const dropdownMenu = document.getElementById('dropdown-menu');
-		const dropdownArrow = document.getElementById('dropdown-arrow');
-		const selectedText = document.getElementById('selected-model-text');
-		const hiddenSelect = document.getElementById('setting-model');
-		const dropdownWrapper = document.getElementById('dropdown-wrapper');
-		// ============================
-		// HELPER FUNCTIONS
-		// ============================
-		/**
-		 * Format file size to readable string
-		 */
+		// --- HELPER FUNCTIONS ---
 		const formatFileSize = (bytes) => {
 			if(bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
 			return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 		};
-		/**
-		 * Extract text from PowerPoint slide XML
-		 */
 		const extractTextFromSlideXML = (xmlString) => {
 			try {
 				const parser = new DOMParser();
@@ -663,9 +688,42 @@
 				return '';
 			}
 		};
-		/**
-		 * Get appropriate file icon based on file type
-		 */
+		const renderFilePreviews = () => {
+    const container = document.getElementById('file-preview-container');
+    container.innerHTML = '';
+    uploadedFiles.forEach((file, index) => {
+        const iconHtml = getFileIcon(file);
+        const card = document.createElement('div');
+        
+        // Card Body
+        card.className = "relative flex items-center p-2 bg-gray-100 rounded-xl transition-all select-none h-16 visible";
+        
+        card.innerHTML = `
+        <div class="w-10 h-10 mr-3 shrink-0 rounded-lg overflow-hidden flex items-center justify-center">
+            ${iconHtml}
+        </div>
+        
+        <div class="overflow-hidden min-w-0 flex-1 flex flex-col justify-center">
+            <div class="text-sm font-medium text-slate-700 truncate leading-tight">${file.name}</div>
+            <div class="text-[11px] font-medium text-slate-500 uppercase leading-none mt-0.5">${formatFileSize(file.size)}</div>
+        </div>
+
+        <button onclick="removeFile(${index})" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-300 text-grey-400 rounded-full flex items-center justify-center shadow-sm transition-transform active:scale-90 z-20 cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+        </button>
+    `;
+        container.appendChild(card);
+    });
+			const sendBtn = document.getElementById('send-btn');
+			const userInput = document.getElementById('user-input');
+		};
+		const removeFile = (index) => {
+			uploadedFiles.splice(index, 1);
+			renderFilePreviews();
+		};
+		// --- HELPER IKON PROFESIONAL (SVG) ---
 		const getFileIcon = (file) => {
 			const mime = file.mimeType;
 			const type = file.type;
@@ -692,71 +750,18 @@
 			// 6. Text/Lainnya (Abu-abu)
 			return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full"><path fill="#94a3b8" d="M20 8v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2h8l6 6z"/><path fill="#64748b" d="M14 2v6h6L14 2z"/><text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="7" font-family="sans-serif" font-weight="bold">FILE</text></svg>`;
 		};
-		/**
-		 * Render file previews in the UI
-		 */
-		const renderFilePreviews = () => {
-			const container = document.getElementById('file-preview-container');
-			container.innerHTML = '';
-			uploadedFiles.forEach((file, index) => {
-				const iconHtml = getFileIcon(file);
-				const card = document.createElement('div');
-				card.className = "relative flex items-center p-2 bg-gray-100 rounded-xl transition-all select-none h-16 visible";
-				card.innerHTML = `
-                    <div class="w-10 h-10 mr-3 shrink-0 rounded-lg overflow-hidden flex items-center justify-center">
-                        ${iconHtml}
-                    </div>
-                    
-                    <div class="overflow-hidden min-w-0 flex-1 flex flex-col justify-center">
-                        <div class="text-sm font-medium text-slate-700 truncate leading-tight">${file.name}</div>
-                        <div class="text-[11px] font-medium text-slate-500 uppercase leading-none mt-0.5">${formatFileSize(file.size)}</div>
-                    </div>
-
-                    <button onclick="removeFile(${index})" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-300 text-grey-400 rounded-full flex items-center justify-center shadow-sm transition-transform active:scale-90 z-20 cursor-pointer">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                `;
-				container.appendChild(card);
-			});
-		};
-		/**
-		 * Remove file from uploaded files
-		 */
-		const removeFile = (index) => {
-			uploadedFiles.splice(index, 1);
-			renderFilePreviews();
-		};
-		/**
-		 * Adjust textarea height based on content
-		 */
-		const adjustHeight = (el) => {
-			el.style.height = 'auto';
-			el.style.height = Math.min(Math.max(el.scrollHeight, 56), 128) + 'px';
-		};
-		/**
-		 * Handle Enter key in textarea
-		 */
-		const handleEnter = (e) => {
-			if(e.key === 'Enter' && !e.shiftKey) {
-				e.preventDefault();
-				sendMessage();
-			}
-		};
-		/**
-		 * Reset scroll position
-		 */
-		const resetScroll = () => {
-			window.scrollTo(0, 0);
-			setTimeout(() => document.body.scrollTop = 0, 50);
-		};
-		// ============================
-		// AUTHENTICATION FUNCTIONS
-		// ============================
-		/**
-		 * Handle user login
-		 */
+		let chatHistory = [];
+		let currentChatId = null;
+		let currentConfirmAction = null;
+		const loginPage = document.getElementById('login-page');
+		const chatPage = document.getElementById('chat-page');
+		const sidebar = document.getElementById('sidebar');
+		const overlay = document.getElementById('global-overlay');
+		const chatContainer = document.getElementById('chat-container');
+		const userInput = document.getElementById('user-input');
+		const sendBtn = document.getElementById('send-btn');
+		const settingsPage = document.getElementById('settings-page');
+		const confirmModal = document.getElementById('confirm-modal');
 		async function handleLogin(e) {
 			e.preventDefault();
 			const email = document.getElementById('email-input').value;
@@ -788,9 +793,134 @@
 				btn.textContent = "MASUK";
 			}
 		}
-		/**
-		 * Check user session on app start
-		 */
+		// Listener Global untuk Klik (Smart Copy Fix Word Layout & Tampilan)
+		document.addEventListener('click', async (e) => {
+			// --- 1. JIKA TOMBOL COPY DIKLIK ---
+			const copyBtn = e.target.closest('.copy-btn');
+			if(copyBtn) {
+				e.stopPropagation();
+				const card = copyBtn.closest('.ai-bubble');
+				const contentDiv = card.querySelector('.chat-content');
+				if(contentDiv) {
+					try {
+						// --- LOGIKA SMART COPY (OPTIMASI WORD) ---
+						const tempDiv = document.createElement('div');
+						tempDiv.innerHTML = contentDiv.innerHTML;
+						// A. STYLING DASAR KONTAINER (Arial untuk Dokumen Resmi)
+						tempDiv.style.fontFamily = 'Arial, sans-serif';
+						tempDiv.style.fontSize = '11pt'; // Standar surat dinas
+						tempDiv.style.lineHeight = '1.15'; // Jarak antar baris standar (Single/1.15)
+						tempDiv.style.color = '#000000';
+						// B. PEMBERSIHAN ELEMEN
+						const allElements = tempDiv.querySelectorAll('*');
+						allElements.forEach(el => {
+							el.removeAttribute('class');
+							el.style.fontFamily = 'Arial, sans-serif';
+							if(el.tagName === 'P') {
+								el.style.marginBottom = '6px'; // Jarak antar paragraf lebih rapat
+								el.style.textAlign = 'justify';
+							}
+							if(el.tagName === 'LI') {
+								el.style.marginBottom = '2px';
+								el.style.textAlign = 'justify';
+							}
+							if(el.tagName.startsWith('H')) {
+								el.style.fontWeight = 'bold';
+								el.style.marginTop = '12px';
+								el.style.marginBottom = '6px';
+								el.style.color = '#000000';
+								el.style.fontSize = '12pt'; // Judul sedikit lebih besar
+							}
+						});
+						// C. STYLING TABEL SPESIFIK (PADAT & 11pt)
+						const tables = tempDiv.querySelectorAll('table');
+						tables.forEach(table => {
+							// Reset Tabel
+							table.style.width = '100%';
+							table.style.borderCollapse = 'collapse';
+							table.style.marginTop = '6px';
+							table.style.marginBottom = '6px';
+							// --- UKURAN FONT 11pt (SESUAI PERMINTAAN) ---
+							table.style.fontSize = '11pt';
+							// Atribut Legacy
+							table.setAttribute('border', '1');
+							table.setAttribute('width', '100%');
+							table.setAttribute('cellpadding', '4'); // Padding HTML attribute diperkecil
+							// Styling Header (TH)
+							const headers = table.querySelectorAll('th');
+							headers.forEach(th => {
+								th.style.backgroundColor = '#f1f5f9'; // Abu Tipis
+								th.style.color = '#000000';
+								th.style.fontWeight = 'bold';
+								th.style.border = '1px solid #cbd5e1';
+								// --- PADDING RAPAT (PADAT) ---
+								th.style.padding = '4px';
+								th.style.textAlign = 'center';
+								th.style.verticalAlign = 'middle';
+							});
+							// Styling Sel Isi (TD)
+							const cells = table.querySelectorAll('td');
+							cells.forEach(td => {
+								td.style.border = '1px solid #cbd5e1';
+								// --- PADDING RAPAT (PADAT) ---
+								td.style.padding = '4px';
+								td.style.verticalAlign = 'top';
+								td.style.color = '#000000';
+								td.style.textAlign = 'left';
+								td.style.whiteSpace = 'normal';
+							});
+						});
+						// D. COPY KE CLIPBOARD
+						const finalHtml = `<div style="font-family: Arial, sans-serif; font-size: 11pt;">${tempDiv.innerHTML}</div>`;
+						const plainText = contentDiv.innerText;
+						const htmlBlob = new Blob([finalHtml], {
+							type: 'text/html'
+						});
+						const textBlob = new Blob([plainText], {
+							type: 'text/plain'
+						});
+						const item = new ClipboardItem({
+							'text/html': htmlBlob,
+							'text/plain': textBlob
+						});
+						await navigator.clipboard.write([item]);
+						// --- VISUAL FEEDBACK ---
+						if(copyBtn.dataset.copied === "true") return;
+						const originalIcon = copyBtn.innerHTML;
+						copyBtn.dataset.copied = "true";
+						copyBtn.innerHTML = `
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            `;
+						setTimeout(() => {
+							copyBtn.innerHTML = originalIcon;
+							copyBtn.dataset.copied = "false";
+						}, 2000);
+					} catch (err) {
+						console.error("Gagal copy Smart Text:", err);
+						try {
+							await navigator.clipboard.writeText(contentDiv.innerText);
+						} catch (e) {}
+					}
+				}
+				return;
+			}
+			// --- 2. RESET TAMPILAN TOMBOL ---
+			document.querySelectorAll('.copy-container').forEach(el => {
+				const btn = el.querySelector('.copy-btn');
+				if(btn && btn.dataset.copied === "true") return;
+				el.classList.add('hidden');
+			});
+			// --- 3. KLIK GELEMBUNG ---
+			const clickedBubble = e.target.closest('.ai-bubble');
+			if(clickedBubble) {
+				const btn = clickedBubble.querySelector('.copy-container');
+				if(btn) {
+					btn.classList.remove('hidden');
+				}
+			}
+		});
 		async function checkSession() {
 			const loader = document.getElementById('initial-loader');
 			try {
@@ -817,8 +947,9 @@
 				console.error("Session check error:", err);
 				loginPage.classList.remove('hidden');
 			} finally {
-				// Tunggu 2 detik (2000ms) dulu
+				// === UPDATE: JEDA 2 DETIK ===
 				if(loader) {
+					// Tunggu 2 detik (2000ms) dulu
 					setTimeout(() => {
 						// 1. Mulai efek menghilang (fade out)
 						loader.style.opacity = '0';
@@ -831,1154 +962,11 @@
 								document.getElementById('chat-page').style.opacity = '1';
 							}
 						}, 500);
-					}, 1000);
+					}, 1000); // <--- Angka 2000 ini adalah durasi jeda 2 detik
 				}
 			}
 		}
-		/**
-		 * Check if current user is admin and show/hide settings button
-		 */
-		async function checkAdminVisibility() {
-			const settingsBtn = document.getElementById('settings-btn');
-			if(!currentUser || !settingsBtn) return;
-			const isAppAdmin = currentUser.app_metadata?.role === 'admin';
-			const isUserAdmin = currentUser.user_metadata?.role === 'admin';
-			if(isAppAdmin || isUserAdmin) {
-				settingsBtn.classList.remove('hidden');
-				return;
-			}
-			try {
-				const {
-					data
-				} = await supabase.from('profiles').select('role').eq('id', currentUser.id).single();
-				if(data && data.role === 'admin') {
-					settingsBtn.classList.remove('hidden');
-				} else {
-					settingsBtn.classList.add('hidden');
-				}
-			} catch (err) {
-				console.error("Gagal cek role admin:", err);
-				settingsBtn.classList.add('hidden');
-			}
-		}
-		/**
-		 * Enter the main application after login
-		 */
-		function enterApp() {
-			loginPage.style.pointerEvents = 'none';
-			loginPage.style.opacity = '0';
-			setTimeout(() => {
-				loginPage.classList.add('hidden');
-				chatPage.classList.remove('hidden');
-				chatPage.classList.add('flex');
-				void chatPage.offsetWidth;
-				chatPage.style.opacity = '1';
-				userInput.focus();
-				startNewChat();
-			}, 300);
-		}
-		// ============================
-		// SIDEBAR FUNCTIONS
-		// ============================
-		/**
-		 * Toggle sidebar visibility
-		 */
-		function toggleSidebar() {
-			const isClosed = sidebar.classList.contains('-translate-x-full');
-			if(isClosed) {
-				sidebar.classList.remove('-translate-x-full');
-				overlay.classList.remove('hidden');
-				setTimeout(() => overlay.classList.remove('opacity-0'), 10);
-			} else {
-				sidebar.classList.add('-translate-x-full');
-				overlay.classList.add('opacity-0');
-				setTimeout(() => overlay.classList.add('hidden'), 300);
-			}
-		}
-		/**
-		 * Force close sidebar
-		 */
-		function forceCloseSidebar() {
-			sidebar.classList.add('-translate-x-full');
-			overlay.classList.add('opacity-0');
-			setTimeout(() => overlay.classList.add('hidden'), 300);
-		}
-		// ============================
-		// SETTINGS FUNCTIONS
-		// ============================
-		/**
-		 * Initialize settings from database
-		 */
-		async function initializeSettings() {
-			try {
-				const {
-					data
-				} = await supabase.from('global_settings').select('*').eq('id', 1).single();
-				if(data) {
-					const modelSelect = document.getElementById('setting-model');
-					const modelText = document.getElementById('selected-model-text');
-					const promptInput = document.getElementById('setting-prompt');
-					const tempInput = document.getElementById('setting-temp');
-					if(modelSelect) modelSelect.value = data.model;
-					if(promptInput) promptInput.value = data.custom_prompt || '';
-					if(tempInput) {
-						tempInput.value = data.temperature;
-						updateTempLabel(data.temperature);
-					}
-					// Update tampilan teks dropdown
-					if(modelText) {
-						if(data.model === 'gemini-2.5-flash') modelText.innerText = 'Gemini 2.5 Flash (Cepat)';
-						else if(data.model === 'gemini-2.5-pro') modelText.innerText = 'Gemini 2.5 Pro (Pintar)';
-						else modelText.innerText = 'Gemini 3 Pro (Preview)';
-					}
-				}
-			} catch (err) {
-				console.error("Gagal memuat konfigurasi awal:", err);
-			}
-		}
-		/**
-		 * Open settings page
-		 */
-		async function openSettings() {
-			// Hapus class invisible/opacity-0 agar muncul perlahan
-			settingsPage.classList.remove('opacity-0', 'invisible');
-			try {
-				const {
-					data
-				} = await supabase.from('global_settings').select('*').eq('id', 1).single();
-				if(data) {
-					const modelSelect = document.getElementById('setting-model');
-					const modelText = document.getElementById('selected-model-text');
-					const promptInput = document.getElementById('setting-prompt');
-					const tempInput = document.getElementById('setting-temp');
-					modelSelect.value = data.model;
-					promptInput.value = data.custom_prompt || '';
-					tempInput.value = data.temperature;
-					updateTempLabel(data.temperature);
-					if(modelText) {
-						if(data.model === 'gemini-2.5-flash') modelText.innerText = 'Gemini 2.5 Flash (Cepat)';
-						else if(data.model === 'gemini-2.5-pro') modelText.innerText = 'Gemini 2.5 Pro (Pintar)';
-						else modelText.innerText = 'Gemini 3 Pro (Preview)';
-					}
-				}
-			} catch (err) {
-				console.error(err);
-			}
-			loadUsers();
-		}
-		/**
-		 * Save settings to database
-		 */
-		async function saveSettings() {
-			const model = document.getElementById('setting-model').value;
-			const prompt = document.getElementById('setting-prompt').value;
-			const temp = document.getElementById('setting-temp').value;
-			try {
-				const {
-					error
-				} = await supabase.from('global_settings').update({
-					model: model,
-					custom_prompt: prompt,
-					temperature: parseFloat(temp)
-				}).eq('id', 1);
-				if(error) throw error;
-				closeSettings();
-			} catch (error) {
-				alert("Gagal menyimpan: " + error.message);
-			}
-		}
-		/**
-		 * Close settings page
-		 */
-		function closeSettings() {
-			// Tambahkan class agar menghilang perlahan
-			settingsPage.classList.add('opacity-0', 'invisible');
-		}
-		/**
-		 * Toggle dropdown menu
-		 */
-		function toggleDropdown() {
-			if(dropdownMenu.classList.contains('dropdown-open')) closeDropdown();
-			else openDropdown();
-		}
-		/**
-		 * Open dropdown menu
-		 */
-		function openDropdown() {
-			dropdownMenu.classList.remove('dropdown-closed');
-			dropdownMenu.classList.add('dropdown-open');
-			dropdownArrow.classList.add('rotate-180');
-		}
-		/**
-		 * Close dropdown menu
-		 */
-		function closeDropdown() {
-			dropdownMenu.classList.remove('dropdown-open');
-			dropdownMenu.classList.add('dropdown-closed');
-			dropdownArrow.classList.remove('rotate-180');
-		}
-		/**
-		 * Select dropdown option
-		 */
-		function selectOption(value, text) {
-			selectedText.textContent = text;
-			hiddenSelect.value = value;
-			closeDropdown();
-		}
-		/**
-		 * Update temperature label
-		 */
-		function updateTempLabel(val) {
-			document.getElementById('temp-label').innerText = val;
-		}
-		// ============================
-		// CHAT FUNCTIONS
-		// ============================
-		/**
-		 * Start a new chat
-		 */
-		function startNewChat(shouldReloadList = true) {
-			currentChatId = null;
-			chatHistory = [];
-			chatContainer.innerHTML = '';
-			userInput.value = '';
-			sendBtn.disabled = false;
-			const welcomeDiv = document.createElement('div');
-			welcomeDiv.className = 'flex flex-col items-center justify-center h-full pb-20 text-center p-8 select-none animate-[fadeIn_0.5s_ease-out]';
-			welcomeDiv.innerHTML = `
-                <h2 class="text-xl md:text-2xl font-sans font-bold mb-1 bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent tracking-wide leading-tight">Halo, Selamat Datang</h2>
-                <p class="text-sm md:text-base text-slate-400 font-medium font-sans">Ada yang bisa saya bantu hari ini?</p>
-            `;
-			chatContainer.appendChild(welcomeDiv);
-			forceCloseSidebar();
-			if(shouldReloadList) loadChatList();
-		}
-		/**
-		 * Send message to AI (FIX: WELCOME MESSAGE CLEARED)
-		 */
-		async function sendMessage() {
-			const text = userInput.value.trim();
-
-			// Handle Command Khusus
-			if (text.toLowerCase().startsWith('/gambar ') || text.toLowerCase().startsWith('/edit ')) {
-				await handleImageGeneration(text);
-				return;
-			}
-			if (text.toLowerCase().startsWith('/youtube ')) {
-				await handleYoutubeSearch(text);
-				return;
-			}
-
-			if ((!text && uploadedFiles.length === 0) || !currentUser) return;
-
-			const originalText = text;
-			userInput.value = '';
-			userInput.blur();
-			adjustHeight(userInput);
-			sendBtn.disabled = true;
-
-			// Bersihkan preview file di UI
-			document.getElementById('file-preview-container').innerHTML = '';
-
-            // === PERBAIKAN: HAPUS WELCOME MESSAGE JIKA CHAT BARU ===
-            if (chatHistory.length === 0) {
-                chatContainer.innerHTML = '';
-            }
-            // ========================================================
-
-			// Tampilkan Chat di UI (User Bubble)
-			let fileDisplayHtml = '';
-			if (uploadedFiles.length > 0) {
-				fileDisplayHtml = '<div class="w-full grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">';
-				uploadedFiles.forEach(f => {
-					const iconHtml = getFileIcon(f);
-					fileDisplayHtml += `
-                    <div class="relative flex items-center p-2 bg-gray-200 rounded-xl select-none overflow-hidden h-16">
-                        <div class="w-10 h-10 mr-3 shrink-0 rounded-lg overflow-hidden flex items-center justify-center">${iconHtml}</div>
-                        <div class="overflow-hidden min-w-0 flex-1 flex flex-col justify-center">
-                            <div class="text-sm font-medium text-slate-700 truncate leading-tight">${f.name}</div>
-                            <div class="text-[11px] font-medium text-slate-500 uppercase leading-none mt-0.5">${formatFileSize(f.size)}</div>
-                        </div>
-                    </div>`;
-				});
-				fileDisplayHtml += '</div>';
-			}
-			const fullUserDisplay = fileDisplayHtml + (text ? `<p class="text-slate-700 whitespace-pre-wrap leading-relaxed">${text.replace(/\n/g, '<br>')}</p>` : '');
-			appendMessage('user', fullUserDisplay, false, true);
-
-			// --- PERSIAPAN PAYLOAD (OTAK BARU) ---
-			
-			// 1. Siapkan Bagian Pesan SAAT INI (Termasuk File Lengkap)
-			const currentParts = [];
-			let fileLog = ""; // Untuk catatan sejarah
-
-			// Proses File untuk dikirim SEKARANG
-			uploadedFiles.forEach(file => {
-				fileLog += `[File: ${file.name}] `;
-				if (file.isTextContent) {
-					// Dokumen Teks (Word/Excel/PPT)
-					currentParts.push({ text: `\n\n=== ISI DOKUMEN (${file.name}) ===\n${file.data}\n=== AKHIR DOKUMEN ===\n` });
-				} else {
-					// Dokumen Gambar/PDF (Base64)
-					currentParts.push({
-						inlineData: { mimeType: file.mimeType, data: file.data }
-					});
-				}
-			});
-
-			// Masukkan teks user
-			const finalPrompt = text || (uploadedFiles.length > 0 ? "Mohon analisa dokumen yang saya lampirkan ini." : "...");
-			currentParts.push({ text: finalPrompt });
-
-			// 2. BANGUN KONTEKS UNTUK API (MEMORY SEMENTARA)
-			const payloadContents = [...chatHistory, { role: "user", parts: currentParts }];
-
-			// Kosongkan antrian file global
-			const filesProcessed = [...uploadedFiles];
-			uploadedFiles = []; 
-
-			// Tampilkan Loading
-			const loadingMsg = appendMessage('model', '', true);
-
-			try {
-				// Simpan ke Database (User Message)
-				if (!currentChatId) {
-					const title = (text ? text.substring(0, 30) : "Analisa Dokumen") + "...";
-					const { data: newConv } = await supabase.from('conversations').insert({
-						user_id: currentUser.id, title: title
-					}).select().single();
-					currentChatId = newConv.id;
-					loadChatList();
-				}
-
-				await supabase.from('messages').insert({
-					conversation_id: currentChatId,
-					role: 'user',
-					parts: [{ text: text, fileHtml: fileDisplayHtml }] 
-				});
-
-				// Konfigurasi API
-				const model = document.getElementById('setting-model').value || 'gemini-2.5-flash';
-				const customPrompt = document.getElementById('setting-prompt')?.value || '';
-				const temperature = document.getElementById('setting-temp')?.value || 0.7;
-				const functionUrl = `${SUPABASE_URL}/functions/v1/call-gemini`;
-				const { data: { session } } = await supabase.auth.getSession();
-
-				// 3. KIRIM KE GEMINI
-				const response = await fetch(functionUrl, {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-					body: JSON.stringify({
-						model: model,
-						payload: {
-							contents: payloadContents, 
-							tools: [{ googleSearch: {} }], // Grounding tetap ada
-							generationConfig: { temperature: parseFloat(temperature), maxOutputTokens: 2048 },
-							systemInstruction: { role: "system", parts: [{ text: customPrompt || "Anda adalah asisten cerdas." }] }
-						}
-					}),
-				});
-
-				if (!response.ok) throw new Error("Gagal terhubung ke AI.");
-				const data = await response.json();
-				const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, tidak ada jawaban.";
-
-				loadingMsg.remove();
-				appendMessage('model', aiText);
-
-				// --- LOGIKA KUNCI: MEMORI HEMAT (SANITASI) ---
-				const cleanUserParts = [{ text: `${text}\n\n(System Note: User telah mengupload ${filesProcessed.length} dokumen: ${fileLog}. Gunakan hasil analisismu sebelumnya untuk menjawab pertanyaan terkait dokumen ini.)` }];
-				
-				chatHistory.push({ role: "user", parts: cleanUserParts });
-				chatHistory.push({ role: "model", parts: [{ text: aiText }] });
-
-				// Simpan ke DB
-				await supabase.from('messages').insert({
-					conversation_id: currentChatId,
-					role: 'model',
-					parts: [{ text: aiText }]
-				});
-
-			} catch (error) {
-				if (loadingMsg) loadingMsg.remove();
-				console.error("Chat Error:", error);
-				const errorHtml = `<div class="bg-red-50 p-3 rounded-lg text-red-600 text-sm border border-red-100 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> <span>Gagal memproses. Coba kurangi jumlah file atau kirim ulang.</span></div>`;
-				appendMessage('model', errorHtml, false, true);
-				userInput.value = originalText;
-			} finally {
-				sendBtn.disabled = false;
-			}
-		}
-		/**
-		 * Append message to chat container - UNIVERSAL COMPATIBLE VERSION
-		 */
-		function appendMessage(role, content, isLoading = false, isRawHtml = false) {
-			const div = document.createElement('div');
-			div.className = 'w-full max-w-3xl mx-auto';
-			const isUser = role === 'user';
-			const name = isUser ? 'ANDA' : 'ASISTEN';
-			const nameColorClass = isUser ?
-				'text-slate-500' :
-				'bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent';
-			const bubbleClass = isUser ? 'user-bubble' : 'ai-bubble cursor-pointer';
-			let htmlContent;
-			if(isLoading) {
-				htmlContent = `<div class="flex items-center h-6 pl-3 gap-1"><div class="dot-flashing"></div></div>`;
-			} else if(isRawHtml) {
-				// Raw HTML langsung render
-				htmlContent = content;
-			} else if(role === 'model') {
-				// Proses markdown dengan showdown default
-				let rawHtml = converter.makeHtml(content);
-				// Simple wrapper untuk tabel (universal compatibility)
-				const tempDiv = document.createElement('div');
-				tempDiv.innerHTML = rawHtml;
-				const tables = tempDiv.querySelectorAll('table');
-				tables.forEach(tbl => {
-					const wrapper = document.createElement('div');
-					wrapper.className = 'overflow-x-auto';
-					tbl.parentNode.insertBefore(wrapper, tbl);
-					wrapper.appendChild(tbl);
-				});
-				htmlContent = tempDiv.innerHTML;
-			} else {
-				// User message - langsung render tanpa markdown
-				htmlContent = content.replace(/\n/g, '<br>');
-			}
-			// Tombol Copy (sederhana dan kompatibel)
-			const copyButtonHtml = role === 'model' && !isLoading && !isRawHtml ? `<div class="copy-container hidden absolute bottom-1.5 left-4 select-none">
-		            <button class="copy-btn text-slate-400 p-0 flex items-center transition-colors hover:text-slate-600" title="Salin">
-		                <svg viewBox="0 0 1024 1024" width="14" height="14" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-		                    <path d="M768 832a128 128 0 0 1-128 128H192A128 128 0 0 1 64 832V384a128 128 0 0 1 128-128v64a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64h64z"></path>
-		                    <path d="M384 128a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64V192a64 64 0 0 0-64-64H384zm0-64h448a128 128 0 0 1 128 128v448a128 128 0 0 1-128 128H384a128 128 0 0 1-128-128V192A128 128 0 0 1 384 64z"></path>
-		                </svg>
-		            </button>
-		        </div>` : '';
-				
-			div.innerHTML = `
-		        <div class="${bubbleClass} relative flex flex-col bg-gray-100 px-4 pt-3 pb-6 rounded-2xl shadow-sm mb-4">
-		            <div class="flex justify-between items-center mb-1 border-b-[0.5px] border-gray-300 pb-1">
-		                <span class="text-xs font-bold uppercase tracking-wide ${nameColorClass}">${name}</span>
-		                <span class="text-[10px] text-slate-400 font-sans">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-		            </div>
-		            
-		            <div class="text-sm md:text-base text-slate-700 font-medium leading-relaxed markdown-body mt-1 chat-content">${htmlContent}</div>
-		            
-		            ${copyButtonHtml}
-		        </div>`;
-			// Pastikan margin konsisten
-			const contentBody = div.querySelector('.markdown-body');
-			if(contentBody && contentBody.lastElementChild) {
-				contentBody.lastElementChild.style.marginBottom = '0';
-			}
-			chatContainer.appendChild(div);
-			chatContainer.scrollTo({
-				top: chatContainer.scrollHeight,
-				behavior: 'auto'
-			});
-			return div;
-		}
-		// MARKDOWN CONVERTER - DENGAN KONFIGURASI TABEL YANG BENAR
-		const converter = new showdown.Converter({
-			tables: true,
-			tasklists: true,
-			strikethrough: true,
-			smoothLivePreview: true,
-			simplifiedAutoLink: true,
-			tablesHeaderId: true,
-			parseImgDimensions: true,
-			simplifiedAutoLink: true,
-			excludeTrailingPunctuationFromURLs: true,
-			literalMidWordUnderscores: true,
-			strikethrough: true
-		});
-		/**
-		 * Handle image generation
-		 */
-		async function handleImageGeneration(text) {
-			const isEdit = text.toLowerCase().startsWith('/edit');
-			const cleanPrompt = text.replace(/^\/(gambar|edit)\s+/i, '').trim();
-			if(!cleanPrompt) {
-				appendMessage('model', `Mohon masukkan deskripsi.`);
-				return;
-			}
-			let imageInput = null;
-			if(isEdit) {
-				const attachedImage = uploadedFiles.find(f => f.mimeType.startsWith('image/'));
-				if(!attachedImage) {
-					appendMessage('model', "Lampirkan gambar untuk diedit.");
-					return;
-				}
-				imageInput = {
-					mimeType: attachedImage.mimeType,
-					data: attachedImage.data
-				};
-			}
-			const originalInputValue = userInput.value;
-			userInput.value = '';
-			userInput.blur();
-			adjustHeight(userInput);
-			sendBtn.disabled = false;
-			if(!currentChatId || chatHistory.length === 0) chatContainer.innerHTML = '';
-			appendMessage('user', cleanPrompt, false, false);
-			chatHistory.push({
-				role: "user",
-				parts: [{
-					text: text
-				}]
-			});
-			document.getElementById('file-preview-container').innerHTML = '';
-			uploadedFiles = [];
-			const actionText = isEdit ? "Mengedit gambar" : "Membuat gambar";
-			const loadingHtml = `
-                <div class="flex items-center gap-2.5 text-slate-500">
-                    <i class="fa-solid fa-paintbrush fa-bounce text-xs"></i>
-                    <span class="text-sm font-medium typing-dots">${actionText}</span>
-                </div>
-            `;
-			const loadingBubble = appendMessage('model', loadingHtml, false, true);
-			try {
-				const {
-					data: {
-						session
-					}
-				} = await supabase.auth.getSession();
-				if(!session) throw new Error("Sesi habis.");
-				const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-image`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'Authorization': `Bearer ${session.access_token}`
-					},
-					body: JSON.stringify({
-						prompt: cleanPrompt,
-						imageInput: imageInput
-					}),
-				});
-				const data = await response.json();
-				if(loadingBubble) loadingBubble.remove();
-				if(!response.ok) throw new Error(data.error || "Gagal memproses.");
-				if(data.type === 'image') {
-					const mime = data.mimeType || 'image/png';
-					const timestamp = Date.now();
-					// Tampilan gambar dengan tombol download
-					const imgHtml = `
-                        <div tabindex="0" class="relative group rounded-xl overflow-hidden border border-gray-200 shadow-sm mt-1 inline-block w-full outline-none cursor-pointer">
-                            <img src="data:${mime};base64,${data.image}" class="w-full h-auto bg-gray-50" alt="${cleanPrompt}">
-                            
-                            <a href="data:${mime};base64,${data.image}" 
-                               onclick="handleImageDownload(event, this.href, 'AI-${timestamp}.png')"
-                               class="absolute top-1 right-1 p-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] active:scale-90 z-10 opacity-0 invisible group-focus:opacity-100 group-focus:visible transition-all duration-300"
-                               title="Simpan Gambar">
-                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5">
-                                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-                                    <g id="SVGRepo_iconCarrier"> 
-                                        <g id="Interface / Download"> 
-                                            <path id="Vector" d="M6 21H18M12 3V17M12 17L17 12M12 17L7 12" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path> 
-                                        </g> 
-                                    </g>
-                                </svg>
-                            </a>
-                        </div>
-                    `;
-					appendMessage('model', imgHtml, false, true);
-					if(!currentChatId) {
-						const title = (isEdit ? "Edit: " : "Img: ") + cleanPrompt.substring(0, 20) + "...";
-						const {
-							data: newConv,
-							error: errConv
-						} = await supabase
-							.from('conversations')
-							.insert({
-								user_id: currentUser.id,
-								title: title
-							})
-							.select()
-							.single();
-						if(errConv) throw errConv;
-						currentChatId = newConv.id;
-						loadChatList();
-					}
-					await supabase.from('messages').insert({
-						conversation_id: currentChatId,
-						role: 'user',
-						parts: [{
-							text: text
-						}]
-					});
-					await supabase.from('messages').insert({
-						conversation_id: currentChatId,
-						role: 'model',
-						parts: [{
-							text: `[GAMBAR: ${cleanPrompt}]`,
-							fileHtml: imgHtml
-						}]
-					});
-					chatHistory.push({
-						role: "model",
-						parts: [{
-							text: `Berhasil menampilkan gambar: "${cleanPrompt}"`
-						}]
-					});
-				} else if(data.type === 'text') {
-					if(!currentChatId) {
-						const title = "Info: " + cleanPrompt.substring(0, 20);
-						const {
-							data: newConv
-						} = await supabase.from('conversations').insert({
-							user_id: currentUser.id,
-							title: title
-						}).select().single();
-						currentChatId = newConv.id;
-						loadChatList();
-					}
-					appendMessage('model', data.text);
-					await supabase.from('messages').insert({
-						conversation_id: currentChatId,
-						role: 'user',
-						parts: [{
-							text: text
-						}]
-					});
-					await supabase.from('messages').insert({
-						conversation_id: currentChatId,
-						role: 'model',
-						parts: [{
-							text: data.text
-						}]
-					});
-					chatHistory.push({
-						role: "model",
-						parts: [{
-							text: data.text
-						}]
-					});
-				}
-			} catch (error) {
-				if(loadingBubble) loadingBubble.remove();
-				console.error("Error Generate Image:", error);
-				const errorHtml = `<div class="bg-red-50 p-3 rounded-lg text-red-600 text-sm border border-red-100">Server lagi sibuk, silahkan coba lagi nanti.</div>`;
-				appendMessage('model', errorHtml, false, true);
-				userInput.value = originalInputValue;
-			} finally {
-				sendBtn.disabled = false;
-			}
-		}
-		/**
-		 * Handle YouTube search
-		 */
-		async function handleYoutubeSearch(text) {
-			const cleanQuery = text.replace(/^\/youtube\s+/i, '').trim();
-			if(!cleanQuery) {
-				appendMessage('model', `Mohon masukkan kata kunci.`);
-				return;
-			}
-			const originalInputValue = userInput.value;
-			userInput.value = '';
-			userInput.blur();
-			adjustHeight(userInput);
-			sendBtn.disabled = false;
-			if(!currentChatId || chatHistory.length === 0) chatContainer.innerHTML = '';
-			appendMessage('user', cleanQuery, false, false);
-			chatHistory.push({
-				role: "user",
-				parts: [{
-					text: text
-				}]
-			});
-			// Indikator Loading
-			const loadingHtml = `
-                <div class="flex items-center gap-2.5 text-slate-500">
-                    <i class="fa-brands fa-youtube fa-fade text-red-600 text-sm"></i>
-                    <span class="text-sm font-medium typing-dots">Mencari video YouTube</span>
-                </div>
-            `;
-			const loadingBubble = appendMessage('model', loadingHtml, false, true);
-			try {
-				const {
-					data: {
-						session
-					}
-				} = await supabase.auth.getSession();
-				if(!session) throw new Error("Sesi habis.");
-				const response = await fetch(`${SUPABASE_URL}/functions/v1/search-youtube`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'Authorization': `Bearer ${session.access_token}`
-					},
-					body: JSON.stringify({
-						query: cleanQuery
-					}),
-				});
-				const data = await response.json();
-				if(loadingBubble) loadingBubble.remove();
-				if(!response.ok) throw new Error(data.error || "Gagal mencari video.");
-				if(data.type === 'youtube' && data.videos.length > 0) {
-					// Grid 4 Video (2x2)
-					let videoHtml = `<div class="yt-embed-grid">`;
-					data.videos.forEach(video => {
-						videoHtml += `
-                            <div class="yt-container">
-                                <iframe 
-                                    src="https://www.youtube.com/embed/${video.id}" 
-                                    title="YouTube video player" 
-                                    frameborder="0" 
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                                    allowfullscreen
-                                    loading="lazy">
-                                </iframe>
-                            </div>
-                        `;
-					});
-					videoHtml += `</div>`;
-					appendMessage('model', videoHtml, false, true);
-					if(!currentChatId) {
-						const title = "YT: " + cleanQuery.substring(0, 20);
-						const {
-							data: newConv
-						} = await supabase.from('conversations').insert({
-							user_id: currentUser.id,
-							title: title
-						}).select().single();
-						currentChatId = newConv.id;
-						loadChatList();
-					}
-					await supabase.from('messages').insert({
-						conversation_id: currentChatId,
-						role: 'user',
-						parts: [{
-							text: text
-						}]
-					});
-					await supabase.from('messages').insert({
-						conversation_id: currentChatId,
-						role: 'model',
-						parts: [{
-							text: `[YOUTUBE: ${cleanQuery}]`,
-							fileHtml: videoHtml
-						}]
-					});
-					// Injek memori (4 Video)
-					chatHistory.push({
-						role: "model",
-						parts: [{
-							text: `Berhasil menampilkan 4 video YouTube tentang "${cleanQuery}". Silakan tonton langsung di sini.`
-						}]
-					});
-				} else {
-					appendMessage('model', "Tidak ditemukan video.", false, true);
-				}
-			} catch (error) {
-				if(loadingBubble) loadingBubble.remove();
-				const errorHtml = `<div class="bg-red-50 p-3 rounded-lg text-red-600 text-sm border border-red-100">Error: ${error.message}</div>`;
-				appendMessage('model', errorHtml, false, true);
-				userInput.value = originalInputValue;
-			}
-		}
-		// ============================
-		// CHAT HISTORY FUNCTIONS
-		// ============================
-		/**
-		 * Load chat list in sidebar
-		 */
-		async function loadChatList() {
-			const listContainer = document.getElementById('sidebar-content');
-			let listDiv = document.getElementById('chat-history-list');
-			if(!listDiv) {
-				listDiv = document.createElement('div');
-				listDiv.id = 'chat-history-list';
-				listDiv.className = 'flex flex-col mt-0 px-4 space-y-1 pb-4';
-				listContainer.appendChild(listDiv);
-			}
-			listDiv.innerHTML = '';
-			try {
-				const {
-					data: chats,
-					error
-				} = await supabase
-					.from('conversations')
-					.select('id, title')
-					.eq('user_id', currentUser.id)
-					.order('created_at', {
-						ascending: false
-					});
-				if(error) throw error;
-				if(!chats || chats.length === 0) {
-					listDiv.innerHTML = '<p class="text-xs text-slate-400 text-center mt-4">Belum ada riwayat.</p>';
-					return;
-				}
-				chats.forEach(chat => {
-					const isActive = chat.id === currentChatId;
-					const containerStyle = isActive ? 'bg-blue-50' : 'bg-gray-50';
-					const textClass = isActive ? 'text-blue-700 font-bold' : 'text-slate-600 font-medium';
-					const div = document.createElement('div');
-					div.className = `relative flex items-center justify-between py-2 px-3 rounded-xl cursor-pointer transition-all duration-200 group ${containerStyle}`;
-					div.onclick = () => loadMessages(chat.id);
-					div.innerHTML = `
-                        <span class="${textClass} text-sm md:text-base truncate flex-1 mr-2 select-none transition-colors">${chat.title}</span>
-                        <button onclick="confirmDeleteChat(event, '${chat.id}')" class="text-slate-400 hover:text-red-500 transition-all p-1 rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible">
-                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M4 7.00005L10.2 11.65C11.2667 12.45 12.7333 12.45 13.8 11.65L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                                <path d="M13 19H5C3.89543 19 3 18.1046 3 17V7C3 5.89543 3.89543 5 5 5H19C20.1046 5 21 5.89543 21 7V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-                                <path d="M17 16L19 18M21 20L19 18M19 18L21 16M19 18L17 20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                            </svg>
-                        </button>
-                    `;
-					listDiv.appendChild(div);
-				});
-			} catch (error) {
-				console.error(error);
-			}
-		}
-		/**
-		 * Load messages for a specific chat
-		 */
-		async function loadMessages(chatId) {
-			currentChatId = chatId;
-			loadChatList();
-			forceCloseSidebar();
-			chatContainer.innerHTML = '';
-			const loading = appendMessage('model', '', true);
-			chatHistory = [];
-			try {
-				const {
-					data: messages,
-					error
-				} = await supabase.from('messages')
-					.select('*')
-					.eq('conversation_id', chatId)
-					.order('created_at', {
-						ascending: true
-					});
-				if(error) throw error;
-				loading.remove();
-				messages.forEach(msg => {
-					let displayContent = "";
-					let isRaw = false;
-					const parts = msg.parts;
-					let foundHtml = null;
-					let foundText = "";
-					const extractData = (item) => {
-						if(!item) return;
-						if(item.fileHtml) foundHtml = item.fileHtml;
-						if(item.text) foundText = item.text;
-					};
-					if(Array.isArray(parts)) {
-						parts.forEach(p => extractData(p));
-					} else {
-						extractData(parts);
-					}
-					if(msg.role === 'user') {
-						const formattedText = foundText ? `<p class="text-slate-700 whitespace-pre-wrap leading-relaxed">${foundText.replace(/\n/g, '<br>')}</p>` : "";
-						displayContent = (foundHtml || "") + formattedText;
-						isRaw = true;
-						chatHistory.push({
-							role: "user",
-							parts: [{
-								text: foundText
-							}]
-						});
-					} else {
-						if(foundHtml) {
-							const tempDiv = document.createElement('div');
-							tempDiv.innerHTML = foundHtml;
-							const imgTag = tempDiv.querySelector('img');
-							if(imgTag && imgTag.src) {
-								const timestamp = new Date(msg.created_at).getTime();
-								displayContent = `
-                                    <div tabindex="0" class="relative group rounded-xl overflow-hidden border border-gray-200 shadow-sm mt-1 inline-block w-full outline-none cursor-pointer">
-                                        <img src="${imgTag.src}" class="w-full h-auto bg-gray-50">
-                                        
-                                        <a href="${imgTag.src}" 
-                                           onclick="handleImageDownload(event, this.href, 'AI-${timestamp}.png')"
-                                           class="absolute top-1 right-1 p-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] active:scale-90 z-10 opacity-0 invisible group-focus:opacity-100 group-focus:visible transition-all duration-300"
-                                           title="Simpan Gambar">
-                                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5">
-                                                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                                <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-                                                <g id="SVGRepo_iconCarrier"> 
-                                                    <g id="Interface / Download"> 
-                                                        <path id="Vector" d="M6 21H18M12 3V17M12 17L17 12M12 17L7 12" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path> 
-                                                    </g> 
-                                                </g>
-                                            </svg>
-                                        </a>
-                                    </div>
-                                `;
-							} else {
-								displayContent = foundHtml;
-							}
-							isRaw = true;
-						} else {
-							displayContent = foundText;
-							isRaw = false;
-						}
-						chatHistory.push({
-							role: "model",
-							parts: [{
-								text: foundText
-							}]
-						});
-					}
-					appendMessage(msg.role === 'user' ? 'user' : 'model', displayContent, false, isRaw);
-				});
-				setTimeout(() => {
-					chatContainer.scrollTo({
-						top: chatContainer.scrollHeight,
-						behavior: 'auto'
-					});
-				}, 100);
-			} catch (error) {
-				loading.remove();
-				console.error(error);
-				appendMessage('model', "Gagal memuat pesan: " + error.message);
-			}
-		}
-		// ============================
-		// ADMIN FUNCTIONS
-		// ============================
-		/**
-		 * Call admin function
-		 */
-		async function callAdminFunction(action, payload = {}) {
-			const {
-				data: {
-					session
-				}
-			} = await supabase.auth.getSession();
-			if(!session) {
-				alert("Akses ditolak.");
-				return null;
-			}
-			const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-user-manager`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'Authorization': `Bearer ${session.access_token}`
-				},
-				body: JSON.stringify({
-					action,
-					payload
-				}),
-			});
-			if(!response.ok) {
-				const err = await response.json();
-				throw new Error(err.error || "Gagal memproses permintaan admin.");
-			}
-			return response.json();
-		}
-		/**
-		 * Handle add user
-		 */
-		async function handleAddUser() {
-			const email = document.getElementById('create-email').value;
-			const password = document.getElementById('create-password').value;
-			const btn = document.getElementById('btn-add-user');
-			if(!email || password.length < 6) {
-				showCustomAlert("DATA TIDAK VALID", "Email wajib diisi dan password minimal 6 karakter.", false);
-				return;
-			}
-			btn.textContent = "Menambahkan...";
-			btn.disabled = true;
-			try {
-				await callAdminFunction('create_user', {
-					email,
-					password
-				});
-				// Sukses = False (Biru) - Sudah Benar
-				showCustomAlert("BERHASIL", `User ${email} berhasil ditambahkan!`, false);
-				document.getElementById('create-email').value = '';
-				document.getElementById('create-password').value = '';
-				loadUsers();
-			} catch (error) {
-				// Jika Error Server/Sistem, tetap Merah (True) agar user tahu ini masalah serius
-				showCustomAlert("GAGAL", error.message, true);
-			} finally {
-				btn.innerHTML = `<i class="fa-solid fa-user-plus text-slate-300 group-hover:text-white transition-colors"></i><span>TAMBAH USER</span>`;
-				btn.disabled = false;
-			}
-		}
-		/**
-		 * Load users list
-		 */
-		async function loadUsers() {
-			const container = document.getElementById('user-list-container');
-			container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4"><i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Memuat data...</p>';
-			try {
-				const users = await callAdminFunction('list_users');
-				const {
-					data: {
-						user: currentUser
-					}
-				} = await supabase.auth.getUser();
-				container.innerHTML = '';
-				if(!users || users.length === 0) {
-					container.innerHTML = '<p class="text-xs text-slate-400 text-center">Tidak ada pengguna lain.</p>';
-					return;
-				}
-				users.forEach(user => {
-					const isSelf = user.id === currentUser?.id;
-					const isFrozen = user.banned_until && (new Date(user.banned_until) > new Date());
-					const div = document.createElement('div');
-					div.className = `flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-xl ${isFrozen ? 'opacity-60' : ''}`;
-					div.innerHTML = `
-                        <div class="overflow-hidden mr-2">
-                            <p class="text-xs md:text-sm font-bold text-slate-700 truncate">${user.email}</p>
-                            <p class="text-[10px] md:text-xs text-slate-400 uppercase font-bold tracking-wider mt-0.5">${isFrozen ? '<span class="text-red-500">DIBEKUKAN</span>' : 'AKTIF'} ${isSelf ? '(ANDA)' : ''}</p>
-                        </div>
-                        <div class="flex items-center gap-2 shrink-0">
-                            <button onclick="toggleFreeze('${user.id}', ${isFrozen})" ${isSelf ? 'disabled' : ''} 
-                                class="w-8 h-8 flex items-center justify-center rounded-lg transition-colors bg-blue-100 text-blue-600 hover:bg-blue-200 disabled:opacity-30" 
-                                title="${isFrozen ? 'Buka Akun' : 'Bekukan Akun'}">
-                                
-                                <svg class="w-5 h-5" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-                                   <g stroke-width="0"></g><g stroke-linecap="round" stroke-linejoin="round"></g><g><defs><style>.a{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;}</style></defs><path class="a" d="M29.535,33.5623l-5.5344-1.8331-5.5345,1.8331L17.29,27.8649l-4.3588-3.8643L17.29,20.1363l1.1757-5.6973,5.5345,1.833,5.5344-1.833,1.1757,5.6973L35.07,24.0006l-4.3588,3.8643Z"></path><path class="a" d="M24.0006,31.7292l0-29.2292"></path><path class="a" d="M17.6613,7.151l6.3392,3.0277"></path><path class="a" d="M30.34,7.151l-6.3392,3.0277"></path><path class="a" d="M24.0006,31.7292V45.5013"></path><path class="a" d="M30.34,40.85l-6.3392-3.0277"></path><path class="a" d="M17.6613,40.85l6.3392-3.0277"></path><path class="a" d="M17.29,27.8649,42.668,13.25"></path><path class="a" d="M35.46,10.1l.5409,6.99"></path><path class="a" d="M41.8,21.0519,36.0011,17.09"></path><path class="a" d="M17.29,27.8649,5.3331,34.751"></path><path class="a" d="M12.5409,37.9015,12,30.9116"></path><path class="a" d="M6.2016,26.9494,12,30.9116"></path><path class="a" d="M30.7107,27.8649,42.668,34.751"></path><path class="a" d="M41.8,26.9494l-5.7984,3.9622"></path><path class="a" d="M35.46,37.9015l.5409-6.99"></path><path class="a" d="M30.7107,27.8649,5.3331,13.25"></path><path class="a" d="M6.2016,21.0519,12,17.09"></path><path class="a" d="M12.5409,10.1,12,17.09"></path></g>
-                                </svg>
-                            </button>
-                            <button onclick="deleteUser('${user.id}', '${user.email}')" ${isSelf ? 'disabled' : ''} class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors disabled:opacity-30">
-                                <i class="fa-solid fa-trash text-sm"></i>
-                            </button>
-                        </div>
-                    `;
-					container.appendChild(div);
-				});
-			} catch (error) {
-				container.innerHTML = `<p class="text-xs text-red-400 text-center">Error: ${error.message}</p>`;
-			}
-		}
-		/**
-		 * Delete user
-		 */
-		async function deleteUser(userId, userEmail) {
-			// Hapus: Merah, Batal: Biru
-			showCustomConfirm("Hapus User?", `Hapus permanen akun ${userEmail}?`, async () => {
-				try {
-					await callAdminFunction('delete_user', {
-						id: userId
-					});
-					loadUsers();
-				} catch (err) {
-					showCustomAlert("GAGAL", err.message, true);
-				}
-			}, "HAPUS", "text-red-600", "text-blue-600");
-		}
-		/**
-		 * Toggle user freeze status
-		 */
-		async function toggleFreeze(userId, isCurrentlyFrozen) {
-			const actionName = isCurrentlyFrozen ? 'unfreeze_user' : 'freeze_user';
-			const title = isCurrentlyFrozen ? "Buka Akun?" : "Bekukan Akun?";
-			const msg = isCurrentlyFrozen ? "User ini akan bisa login kembali." : "User ini tidak akan bisa login aplikasi sampai akun dibuka kembali.";
-			// Aturan warna: Hanya merah & biru
-			if(isCurrentlyFrozen) {
-				// MEMBUKA AKUN (UNFREEZE): Tombol BUKA (Biru) | Batal: MERAH
-				showCustomConfirm(title, msg, async () => {
-					try {
-						await callAdminFunction(actionName, {
-							id: userId
-						});
-						loadUsers();
-					} catch (err) {
-						showCustomAlert("GAGAL", err.message, true);
-					}
-				}, "BUKA", "text-blue-600", "text-red-600");
-			} else {
-				// MEMBEKUKAN AKUN (FREEZE): Tombol BEKUKAN (Merah) | Batal: BIRU
-				showCustomConfirm(title, msg, async () => {
-					try {
-						await callAdminFunction(actionName, {
-							id: userId
-						});
-						loadUsers();
-					} catch (err) {
-						showCustomAlert("GAGAL", err.message, true);
-					}
-				}, "BEKUKAN", "text-red-600", "text-blue-600");
-			}
-		}
-		// ============================
-		// MODAL FUNCTIONS
-		// ============================
-		/**
-		 * Show custom confirmation modal
-		 */
-		function showCustomConfirm(title, message, actionCallback, btnText = "HAPUS", btnColorClass = "text-red-600", cancelColorClass = "text-blue-600") {
-			document.getElementById('confirm-title').textContent = title;
-			document.getElementById('confirm-message').textContent = message;
-			const agreeBtn = document.getElementById('modal-agree-button');
-			const cancelBtn = document.getElementById('modal-cancel-button');
-			// 1. Setup Tombol KANAN (Aksi Utama)
-			agreeBtn.textContent = btnText;
-			agreeBtn.className = `w-1/2 py-2.5 text-center text-sm md:text-base font-semibold hover:bg-gray-200 transition-colors ${btnColorClass}`;
-			// 2. Setup Tombol KIRI (Batal) - DINAMIS (Merah/Biru)
-			cancelBtn.textContent = "BATAL";
-			cancelBtn.className = `w-1/2 py-2.5 text-center text-sm md:text-base font-semibold hover:bg-gray-200 border-r border-gray-200 transition-colors ${cancelColorClass}`;
-			currentConfirmAction = actionCallback;
-			confirmModal.classList.remove('hidden');
-		}
-		/**
-		 * Hide confirmation modal
-		 */
-		function hideConfirmModal() {
-			confirmModal.classList.add('hidden');
-			currentConfirmAction = null;
-			// Proteksi agar confirm tidak rusak
-			const cancelBtn = document.getElementById('modal-cancel-button');
-			const agreeBtn = document.getElementById('modal-agree-button');
-			// 1. Munculkan kembali tombol Batal (jika sebelumnya disembunyikan oleh Alert)
-			cancelBtn.classList.remove('hidden');
-			// 2. Kembalikan tombol 'Ya/OK' menjadi setengah lebar (w-1/2)
-			agreeBtn.classList.remove('w-full');
-			agreeBtn.classList.add('w-1/2');
-		}
-		/**
-		 * Show custom alert modal
-		 */
-		function showCustomAlert(title, message, isError = false) {
-			// Set Teks Judul & Pesan
-			document.getElementById('confirm-title').textContent = title;
-			document.getElementById('confirm-message').textContent = message;
-			const cancelBtn = document.getElementById('modal-cancel-button');
-			const agreeBtn = document.getElementById('modal-agree-button');
-			// Modifikasi tampilan sementara
-			// 1. Sembunyikan tombol 'BATAL'
-			cancelBtn.classList.add('hidden');
-			// 2. Ubah tombol 'YA' menjadi 'OK' dan Lebar Penuh (w-full)
-			agreeBtn.textContent = "OK";
-			agreeBtn.classList.remove('w-1/2');
-			agreeBtn.classList.add('w-full');
-			// 3. Atur Warna (Merah jika Error, Biru jika Sukses)
-			agreeBtn.className = `w-full py-2.5 text-center text-sm md:text-base font-semibold hover:bg-gray-200 transition-colors ${isError ? 'text-red-600' : 'text-blue-600'}`;
-			// 4. Pastikan tidak ada aksi callback (Hanya tutup)
-			currentConfirmAction = null;
-			// 5. Tampilkan Modal
-			confirmModal.classList.remove('hidden');
-		}
-		/**
-		 * Confirm delete chat
-		 */
-		function confirmDeleteChat(e, chatId) {
-			e.stopPropagation();
-			forceCloseSidebar();
-			// Hapus: Merah, Batal: Biru
-			showCustomConfirm("Hapus Percakapan?", "Tindakan ini tidak dapat dibatalkan. Yakin hapus?", async () => {
-				try {
-					await supabase.from('conversations').delete().eq('id', chatId);
-					if(currentChatId === chatId) startNewChat();
-					else loadChatList();
-				} catch (err) {
-					showCustomAlert("GAGAL", err.message, true);
-				}
-			}, "HAPUS", "text-red-600", "text-blue-600");
-		}
-		// ============================
-		// FILE HANDLING
-		// ============================
-		/**
-		 * Handle file input change
-		 */
+		// --- EVENT LISTENER UNTUK INPUT FILE ---
 		document.getElementById('file-input').addEventListener('change', async (e) => {
 			const files = e.target.files;
 			if(!files.length) return;
@@ -2062,9 +1050,904 @@
 			renderFilePreviews();
 			e.target.value = ''; // Reset input
 		});
-		/**
-		 * Handle image download
-		 */
+		async function checkAdminVisibility() {
+			const settingsBtn = document.getElementById('settings-btn');
+			if(!currentUser || !settingsBtn) return;
+			const isAppAdmin = currentUser.app_metadata?.role === 'admin';
+			const isUserAdmin = currentUser.user_metadata?.role === 'admin';
+			if(isAppAdmin || isUserAdmin) {
+				settingsBtn.classList.remove('hidden');
+				return;
+			}
+			try {
+				const {
+					data
+				} = await supabase.from('profiles').select('role').eq('id', currentUser.id).single();
+				if(data && data.role === 'admin') {
+					settingsBtn.classList.remove('hidden');
+				} else {
+					settingsBtn.classList.add('hidden');
+				}
+			} catch (err) {
+				console.error("Gagal cek role admin:", err);
+				settingsBtn.classList.add('hidden');
+			}
+		}
+		
+		function enterApp() {
+			loginPage.style.pointerEvents = 'none';
+			loginPage.style.opacity = '0';
+			setTimeout(() => {
+				loginPage.classList.add('hidden');
+				chatPage.classList.remove('hidden');
+				chatPage.classList.add('flex');
+				void chatPage.offsetWidth;
+				chatPage.style.opacity = '1';
+				userInput.focus();
+				startNewChat();
+			}, 300);
+		}
+		
+		function toggleSidebar() {
+			const isClosed = sidebar.classList.contains('-translate-x-full');
+			if(isClosed) {
+				sidebar.classList.remove('-translate-x-full');
+				overlay.classList.remove('hidden');
+				setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+			} else {
+				sidebar.classList.add('-translate-x-full');
+				overlay.classList.add('opacity-0');
+				setTimeout(() => overlay.classList.add('hidden'), 300);
+			}
+		}
+		
+		function forceCloseSidebar() {
+			sidebar.classList.add('-translate-x-full');
+			overlay.classList.add('opacity-0');
+			setTimeout(() => overlay.classList.add('hidden'), 300);
+		}
+		async function initializeSettings() {
+			try {
+				const {
+					data
+				} = await supabase.from('global_settings').select('*').eq('id', 1).single();
+				if(data) {
+					const modelSelect = document.getElementById('setting-model');
+					const modelText = document.getElementById('selected-model-text');
+					const promptInput = document.getElementById('setting-prompt');
+					const tempInput = document.getElementById('setting-temp');
+					if(modelSelect) modelSelect.value = data.model;
+					if(promptInput) promptInput.value = data.custom_prompt || '';
+					if(tempInput) {
+						tempInput.value = data.temperature;
+						updateTempLabel(data.temperature);
+					}
+					// Update tampilan teks dropdown
+					if(modelText) {
+						if(data.model === 'gemini-2.5-flash') modelText.innerText = 'Gemini 2.5 Flash (Cepat)';
+						else if(data.model === 'gemini-2.5-pro') modelText.innerText = 'Gemini 2.5 Pro (Pintar)';
+						else modelText.innerText = 'Gemini 3 Pro (Preview)';
+					}
+				}
+			} catch (err) {
+				console.error("Gagal memuat konfigurasi awal:", err);
+			}
+		}
+		async function openSettings() {
+			// Hapus class invisible/opacity-0 agar muncul perlahan
+			settingsPage.classList.remove('opacity-0', 'invisible');
+			try {
+				const {
+					data
+				} = await supabase.from('global_settings').select('*').eq('id', 1).single();
+				if(data) {
+					const modelSelect = document.getElementById('setting-model');
+					const modelText = document.getElementById('selected-model-text');
+					const promptInput = document.getElementById('setting-prompt');
+					const tempInput = document.getElementById('setting-temp');
+					modelSelect.value = data.model;
+					promptInput.value = data.custom_prompt || '';
+					tempInput.value = data.temperature;
+					updateTempLabel(data.temperature);
+					if(modelText) {
+						if(data.model === 'gemini-2.5-flash') modelText.innerText = 'Gemini 2.5 Flash (Cepat)';
+						else if(data.model === 'gemini-2.5-pro') modelText.innerText = 'Gemini 2.5 Pro (Pintar)';
+						else modelText.innerText = 'Gemini 3 Pro (Preview)';
+					}
+				}
+			} catch (err) {
+				console.error(err);
+			}
+			loadUsers();
+		}
+		async function saveSettings() {
+			const model = document.getElementById('setting-model').value;
+			const prompt = document.getElementById('setting-prompt').value;
+			const temp = document.getElementById('setting-temp').value;
+			try {
+				const {
+					error
+				} = await supabase.from('global_settings').update({
+					model: model,
+					custom_prompt: prompt,
+					temperature: parseFloat(temp)
+				}).eq('id', 1);
+				if(error) throw error;
+				closeSettings();
+			} catch (error) {
+				alert("Gagal menyimpan: " + error.message);
+			}
+		}
+		
+		function closeSettings() {
+			// Tambahkan class agar menghilang perlahan
+			settingsPage.classList.add('opacity-0', 'invisible');
+		}
+		const dropdownMenu = document.getElementById('dropdown-menu');
+		const dropdownArrow = document.getElementById('dropdown-arrow');
+		const selectedText = document.getElementById('selected-model-text');
+		const hiddenSelect = document.getElementById('setting-model');
+		const dropdownWrapper = document.getElementById('dropdown-wrapper');
+		
+		function toggleDropdown() {
+			if(dropdownMenu.classList.contains('dropdown-open')) closeDropdown();
+			else openDropdown();
+		}
+		
+		function openDropdown() {
+			dropdownMenu.classList.remove('dropdown-closed');
+			dropdownMenu.classList.add('dropdown-open');
+			dropdownArrow.classList.add('rotate-180');
+		}
+		
+		function closeDropdown() {
+			dropdownMenu.classList.remove('dropdown-open');
+			dropdownMenu.classList.add('dropdown-closed');
+			dropdownArrow.classList.remove('rotate-180');
+		}
+		
+		function selectOption(value, text) {
+			selectedText.textContent = text;
+			hiddenSelect.value = value;
+			closeDropdown();
+		}
+		document.addEventListener('click', function(e) {
+			if(!dropdownWrapper.contains(e.target)) closeDropdown();
+		});
+		
+		function updateTempLabel(val) {
+			document.getElementById('temp-label').innerText = val;
+		}
+		
+		function startNewChat(shouldReloadList = true) {
+			currentChatId = null;
+			chatHistory = [];
+			chatContainer.innerHTML = '';
+			userInput.value = '';
+			sendBtn.disabled = false;
+			const welcomeDiv = document.createElement('div');
+			welcomeDiv.className = 'flex flex-col items-center justify-center h-full pb-20 text-center p-8 select-none animate-[fadeIn_0.5s_ease-out]';
+			welcomeDiv.innerHTML = `
+                    <h2 class="text-xl md:text-2xl font-sans font-bold mb-1 bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent tracking-wide leading-tight">Halo, Selamat Datang</h2>
+              <p class="text-sm md:text-base text-slate-400 font-medium font-sans">Ada yang bisa saya bantu hari ini?</p>
+          `;
+			chatContainer.appendChild(welcomeDiv);
+			forceCloseSidebar();
+			if(shouldReloadList) loadChatList();
+		}
+		async function handleImageGeneration(text) {
+			const isEdit = text.toLowerCase().startsWith('/edit');
+			const cleanPrompt = text.replace(/^\/(gambar|edit)\s+/i, '').trim();
+			if(!cleanPrompt) {
+				appendMessage('model', `Mohon masukkan deskripsi.`);
+				return;
+			}
+			let imageInput = null;
+			if(isEdit) {
+				const attachedImage = uploadedFiles.find(f => f.mimeType.startsWith('image/'));
+				if(!attachedImage) {
+					appendMessage('model', "Lampirkan gambar untuk diedit.");
+					return;
+				}
+				imageInput = {
+					mimeType: attachedImage.mimeType,
+					data: attachedImage.data
+				};
+			}
+			const originalInputValue = userInput.value;
+			userInput.value = '';
+			userInput.blur();
+			adjustHeight(userInput);
+			sendBtn.disabled = false;
+			if(!currentChatId || chatHistory.length === 0) chatContainer.innerHTML = '';
+			appendMessage('user', cleanPrompt, false, false);
+			chatHistory.push({
+				role: "user",
+				parts: [{
+					text: text
+				}]
+			});
+			document.getElementById('file-preview-container').innerHTML = '';
+			uploadedFiles = [];
+			const actionText = isEdit ? "Mengedit gambar" : "Membuat gambar";
+			const loadingHtml = `
+    <div class="flex items-center gap-2.5 text-slate-500">
+        <i class="fa-solid fa-paintbrush fa-bounce text-xs"></i>
+        <span class="text-sm font-medium typing-dots">${actionText}</span>
+    </div>
+    `;
+			const loadingBubble = appendMessage('model', loadingHtml, false, true);
+			try {
+				const {
+					data: {
+						session
+					}
+				} = await supabase.auth.getSession();
+				if(!session) throw new Error("Sesi habis.");
+				const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-image`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': `Bearer ${session.access_token}`
+					},
+					body: JSON.stringify({
+						prompt: cleanPrompt,
+						imageInput: imageInput
+					}),
+				});
+				const data = await response.json();
+				if(loadingBubble) loadingBubble.remove();
+				if(!response.ok) throw new Error(data.error || "Gagal memproses.");
+				if(data.type === 'image') {
+					const mime = data.mimeType || 'image/png';
+					const timestamp = Date.now();
+					// --- TAMPILAN GAMBAR DENGAN TOMBOL DOWNLOAD PUTIH (FIXED) ---
+					const imgHtml = `
+            <div tabindex="0" class="relative group rounded-xl overflow-hidden border border-gray-200 shadow-sm mt-1 inline-block w-full outline-none cursor-pointer">
+                <img src="data:${mime};base64,${data.image}" class="w-full h-auto bg-gray-50" alt="${cleanPrompt}">
+                
+                <a href="data:${mime};base64,${data.image}" 
+                   onclick="handleImageDownload(event, this.href, 'AI-${timestamp}.png')"
+                   class="absolute top-1 right-1 p-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] active:scale-90 z-10 opacity-0 invisible group-focus:opacity-100 group-focus:visible transition-all duration-300"
+                   title="Simpan Gambar">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5">
+                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                        <g id="SVGRepo_iconCarrier"> 
+                            <g id="Interface / Download"> 
+                                <path id="Vector" d="M6 21H18M12 3V17M12 17L17 12M12 17L7 12" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path> 
+                            </g> 
+                        </g>
+                    </svg>
+                </a>
+            </div>
+            `;
+					// -----------------------------------------------------------
+					appendMessage('model', imgHtml, false, true);
+					if(!currentChatId) {
+						const title = (isEdit ? "Edit: " : "Img: ") + cleanPrompt.substring(0, 20) + "...";
+						const {
+							data: newConv,
+							error: errConv
+						} = await supabase
+							.from('conversations')
+							.insert({
+								user_id: currentUser.id,
+								title: title
+							})
+							.select()
+							.single();
+						if(errConv) throw errConv;
+						currentChatId = newConv.id;
+						loadChatList();
+					}
+					await supabase.from('messages').insert({
+						conversation_id: currentChatId,
+						role: 'user',
+						parts: [{
+							text: text
+						}]
+					});
+					await supabase.from('messages').insert({
+						conversation_id: currentChatId,
+						role: 'model',
+						parts: [{
+							text: `[GAMBAR: ${cleanPrompt}]`,
+							fileHtml: imgHtml
+						}]
+					});
+					chatHistory.push({
+						role: "model",
+						parts: [{
+							text: `Berhasil menampilkan gambar: "${cleanPrompt}"`
+						}]
+					});
+				} else if(data.type === 'text') {
+					if(!currentChatId) {
+						const title = "Info: " + cleanPrompt.substring(0, 20);
+						const {
+							data: newConv
+						} = await supabase.from('conversations').insert({
+							user_id: currentUser.id,
+							title: title
+						}).select().single();
+						currentChatId = newConv.id;
+						loadChatList();
+					}
+					appendMessage('model', data.text);
+					await supabase.from('messages').insert({
+						conversation_id: currentChatId,
+						role: 'user',
+						parts: [{
+							text: text
+						}]
+					});
+					await supabase.from('messages').insert({
+						conversation_id: currentChatId,
+						role: 'model',
+						parts: [{
+							text: data.text
+						}]
+					});
+					chatHistory.push({
+						role: "model",
+						parts: [{
+							text: data.text
+						}]
+					});
+				}
+			} catch (error) {
+				// === BAGIAN PESAN ERROR YANG SUDAH DIPERBAIKI ===
+				if(loadingBubble) loadingBubble.remove();
+				console.error("Error Generate Image:", error); // Tetap log ke console untuk admin
+				const errorHtml = `<div class="bg-red-50 p-3 rounded-lg text-red-600 text-sm border border-red-100">Server lagi sibuk, silahkan coba lagi nanti.</div>`;
+				appendMessage('model', errorHtml, false, true);
+				userInput.value = originalInputValue;
+			} finally {
+				sendBtn.disabled = false;
+			}
+		}
+		async function handleYoutubeSearch(text) {
+			const cleanQuery = text.replace(/^\/youtube\s+/i, '').trim();
+			if(!cleanQuery) {
+				appendMessage('model', `Mohon masukkan kata kunci.`);
+				return;
+			}
+			const originalInputValue = userInput.value;
+			userInput.value = '';
+			userInput.blur();
+			adjustHeight(userInput);
+			sendBtn.disabled = false;
+			if(!currentChatId || chatHistory.length === 0) chatContainer.innerHTML = '';
+			appendMessage('user', cleanQuery, false, false);
+			chatHistory.push({
+				role: "user",
+				parts: [{
+					text: text
+				}]
+			});
+			// Indikator Loading
+			const loadingHtml = `
+            <div class="flex items-center gap-2.5 text-slate-500">
+                <i class="fa-brands fa-youtube fa-fade text-red-600 text-sm"></i>
+                <span class="text-sm font-medium typing-dots">Mencari video YouTube</span>
+            </div>
+        `;
+			const loadingBubble = appendMessage('model', loadingHtml, false, true);
+			try {
+				const {
+					data: {
+						session
+					}
+				} = await supabase.auth.getSession();
+				if(!session) throw new Error("Sesi habis.");
+				const response = await fetch(`${SUPABASE_URL}/functions/v1/search-youtube`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': `Bearer ${session.access_token}`
+					},
+					body: JSON.stringify({
+						query: cleanQuery
+					}),
+				});
+				const data = await response.json();
+				if(loadingBubble) loadingBubble.remove();
+				if(!response.ok) throw new Error(data.error || "Gagal mencari video.");
+				if(data.type === 'youtube' && data.videos.length > 0) {
+					// --- GRID 4 VIDEO (2x2) ---
+					let videoHtml = `<div class="yt-embed-grid">`;
+					data.videos.forEach(video => {
+						videoHtml += `
+                        <div class="yt-container">
+                            <iframe 
+                                src="https://www.youtube.com/embed/${video.id}" 
+                                title="YouTube video player" 
+                                frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                allowfullscreen
+                                loading="lazy">
+                            </iframe>
+                        </div>
+                    `;
+					});
+					videoHtml += `</div>`;
+					appendMessage('model', videoHtml, false, true);
+					if(!currentChatId) {
+						const title = "YT: " + cleanQuery.substring(0, 20);
+						const {
+							data: newConv
+						} = await supabase.from('conversations').insert({
+							user_id: currentUser.id,
+							title: title
+						}).select().single();
+						currentChatId = newConv.id;
+						loadChatList();
+					}
+					await supabase.from('messages').insert({
+						conversation_id: currentChatId,
+						role: 'user',
+						parts: [{
+							text: text
+						}]
+					});
+					await supabase.from('messages').insert({
+						conversation_id: currentChatId,
+						role: 'model',
+						parts: [{
+							text: `[YOUTUBE: ${cleanQuery}]`,
+							fileHtml: videoHtml
+						}]
+					});
+					// INJEKSI MEMORI (4 Video)
+					chatHistory.push({
+						role: "model",
+						parts: [{
+							text: `Berhasil menampilkan 4 video YouTube tentang "${cleanQuery}". Silakan tonton langsung di sini.`
+						}]
+					});
+				} else {
+					appendMessage('model', "Tidak ditemukan video.", false, true);
+				}
+			} catch (error) {
+				if(loadingBubble) loadingBubble.remove();
+				const errorHtml = `<div class="bg-red-50 p-3 rounded-lg text-red-600 text-sm border border-red-100">Error: ${error.message}</div>`;
+				appendMessage('model', errorHtml, false, true);
+				userInput.value = originalInputValue;
+			}
+		}
+		async function sendMessage() {
+    const text = userInput.value.trim();
+
+    if (text.toLowerCase().startsWith('/gambar ') || text.toLowerCase().startsWith('/edit ')) {
+        await handleImageGeneration(text);
+        return;
+    }
+
+    if (text.toLowerCase().startsWith('/youtube ')) {
+        await handleYoutubeSearch(text);
+        return;
+    }
+
+    if ((!text && uploadedFiles.length === 0) || !currentUser) return;
+
+    // Simpan teks asli untuk dikembalikan jika error
+    const originalText = text;
+
+    userInput.value = '';
+    userInput.blur();
+    adjustHeight(userInput);
+    sendBtn.disabled = true;
+
+    document.getElementById('file-preview-container').innerHTML = '';
+
+    if (chatHistory.length === 0) chatContainer.innerHTML = '';
+
+    let fileDisplayHtml = '';
+    if (uploadedFiles.length > 0) {
+        fileDisplayHtml = '<div class="w-full grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">';
+        uploadedFiles.forEach(f => {
+            const iconHtml = getFileIcon(f);
+            
+            fileDisplayHtml += `
+            <div class="relative flex items-center p-2 bg-gray-200 rounded-xl select-none overflow-hidden h-16">
+                <div class="w-10 h-10 mr-3 shrink-0 rounded-lg overflow-hidden flex items-center justify-center">
+                    ${iconHtml}
+                </div>
+                <div class="overflow-hidden min-w-0 flex-1 flex flex-col justify-center">
+                    <div class="text-sm font-medium text-slate-700 truncate leading-tight">${f.name}</div>
+                    <div class="text-[11px] font-medium text-slate-500 uppercase leading-none mt-0.5">${formatFileSize(f.size)}</div>
+                </div>
+            </div>`;
+        });
+        fileDisplayHtml += '</div>';
+    }
+
+    const textHtml = text ? `<p class="text-slate-700 whitespace-pre-wrap leading-relaxed">${text.replace(/\n/g, '<br>')}</p>` : '';
+    const fullUserDisplay = fileDisplayHtml + textHtml;
+
+    appendMessage('user', fullUserDisplay, false, true);
+
+    const userParts = [];
+    const dbParts = [];
+    const currentPayloadFiles = [...uploadedFiles];
+    uploadedFiles = []; // Kosongkan antrian file
+
+    let documentContext = "";
+
+    currentPayloadFiles.forEach(file => {
+        if (file.isTextContent) {
+            documentContext += `\n\n[DOKUMEN: ${file.name}]\nISI:\n${file.data}\n----------------\n`;
+        } else {
+            // PDF & Gambar masuk lewat sini (Base64)
+            userParts.push({
+                inlineData: {
+                    mimeType: file.mimeType,
+                    data: file.data
+                }
+            });
+        }
+    });
+
+    const finalPrompt = text + documentContext;
+    if (finalPrompt.trim() !== "") userParts.push({ text: finalPrompt });
+
+    // 1. MASUKKAN KE MEMORI CHAT (Push)
+    // Di sinilah file 70MB masuk ke memori
+    chatHistory.push({
+        role: "user",
+        parts: userParts
+    });
+
+    if (text) dbParts.push({ text: text });
+    if (fileDisplayHtml) dbParts.push({ fileHtml: fileDisplayHtml });
+    if (dbParts.length === 0) dbParts.push({ text: "..." });
+
+    const loadingMsg = appendMessage('model', '', true);
+
+    try {
+        if (!currentChatId) {
+            const title = (text ? text.substring(0, 30) : "Lampiran File") + "...";
+            const { data: newConv } = await supabase.from('conversations').insert({
+                user_id: currentUser.id,
+                title: title
+            }).select().single();
+            currentChatId = newConv.id;
+            loadChatList();
+        }
+
+        await supabase.from('messages').insert({
+            conversation_id: currentChatId,
+            role: 'user',
+            parts: dbParts
+        });
+
+        const model = document.getElementById('setting-model').value || 'gemini-2.5-flash';
+        const customPrompt = document.getElementById('setting-prompt')?.value || '';
+        const temperature = document.getElementById('setting-temp')?.value || 0.7;
+
+        const functionUrl = `${SUPABASE_URL}/functions/v1/call-gemini`;
+        const { data: { session } } = await supabase.auth.getSession();
+
+        // 2. KIRIM KE SERVER (Jika 70MB, ini akan gagal/timeout)
+        const response = await fetch(functionUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({
+                model: model,
+                payload: {
+                    contents: chatHistory, // Mengirim file besar
+                    tools: [{ googleSearch: {} }],
+                    generationConfig: {
+                        temperature: parseFloat(temperature),
+                        maxOutputTokens: 2048
+                    },
+                    systemInstruction: {
+                        role: "system",
+                        parts: [{ text: customPrompt || "You are a helpful AI." }]
+                    }
+                }
+            }),
+        });
+
+        if (!response.ok) throw new Error("Gagal terhubung ke AI (File mungkin terlalu besar).");
+
+        const data = await response.json();
+        const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, saya tidak bisa menjawab.";
+
+        loadingMsg.remove();
+        appendMessage('model', aiText);
+
+        chatHistory.push({ role: "model", parts: [{ text: aiText }] });
+
+        await supabase.from('messages').insert({
+            conversation_id: currentChatId,
+            role: 'model',
+            parts: [{ text: aiText }]
+        });
+
+    } catch (error) {
+        if (loadingMsg) loadingMsg.remove();
+
+        // === PERBAIKAN PENTING: AMNESIA OTOMATIS ===
+        // Buang pesan terakhir (file 70MB tadi) dari ingatan
+        // Agar chat selanjutnya bersih dan tidak stuck
+        chatHistory.pop();
+
+        console.error("Chat Error:", error);
+
+        // Tampilkan pesan error
+        const errorHtml = `<div class="bg-red-50 p-3 rounded-lg text-red-600 text-sm border border-red-100 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> <span>Server sibuk atau file terlalu besar. Silakan coba lagi nanti.</span></div>`;
+        appendMessage('model', errorHtml, false, true);
+
+        // Kembalikan teks yang sudah diketik user agar tidak hilang
+        userInput.value = originalText;
+
+    } finally {
+        sendBtn.disabled = false;
+    }
+}
+		
+		function appendMessage(role, content, isLoading = false, isRawHtml = false) {
+			const div = document.createElement('div');
+			div.className = 'w-full max-w-3xl mx-auto';
+			const isUser = role === 'user';
+			const name = isUser ? 'ANDA' : 'ASISTEN';
+			const nameColorClass = isUser ?
+				'text-slate-500' :
+				'bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent';
+			const bubbleClass = isUser ? 'user-bubble' : 'ai-bubble cursor-pointer';
+			let htmlContent;
+			// --- LOGIKA PERBAIKAN DI SINI ---
+			if(isLoading) {
+				htmlContent = `<div class="flex items-center h-6 pl-3 gap-1"><div class="dot-flashing"></div></div>`;
+			} else if(isRawHtml) {
+				// PRIORITAS: Jika isRawHtml = true, jangan proses markdown! Langsung render HTML.
+				htmlContent = content;
+			} else if(role === 'model') {
+				// Jika bukan raw HTML, baru proses Markdown
+				let rawHtml = converter.makeHtml(content);
+				const tempDiv = document.createElement('div');
+				tempDiv.innerHTML = rawHtml;
+				// Pembungkus Tabel
+				const tables = tempDiv.querySelectorAll('table');
+				tables.forEach(tbl => {
+					const wrapper = document.createElement('div');
+					wrapper.className = 'overflow-x-auto w-full block mb-2';
+					tbl.parentNode.insertBefore(wrapper, tbl);
+					wrapper.appendChild(tbl);
+					tbl.style.marginTop = '0';
+					tbl.style.marginBottom = '0';
+				});
+				htmlContent = tempDiv.innerHTML;
+			} else {
+				htmlContent = content.replace(/\n/g, '<br>');
+			}
+			// -------------------------------
+			// Tombol Copy (Sama seperti sebelumnya)
+			const copyButtonHtml = role === 'model' && !isLoading && !isRawHtml ? `
+        <div class="copy-container hidden absolute bottom-1.5 left-4 select-none">
+            <button class="copy-btn text-slate-400 p-0 flex items-center transition-colors hover:text-slate-600" title="Salin">
+                <svg viewBox="0 0 1024 1024" width="14" height="14" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                    <path d="M768 832a128 128 0 0 1-128 128H192A128 128 0 0 1 64 832V384a128 128 0 0 1 128-128v64a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64h64z"></path>
+                    <path d="M384 128a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64V192a64 64 0 0 0-64-64H384zm0-64h448a128 128 0 0 1 128 128v448a128 128 0 0 1-128 128H384a128 128 0 0 1-128-128V192A128 128 0 0 1 384 64z"></path>
+                </svg>
+            </button>
+        </div>` : '';
+			div.innerHTML = `
+        <div class="${bubbleClass} relative flex flex-col bg-gray-100 px-4 pt-3 pb-6 rounded-2xl shadow-sm mb-4">
+            <div class="flex justify-between items-center mb-1 border-b-[0.5px] border-gray-300 pb-1">
+                <span class="text-xs font-bold uppercase tracking-wide ${nameColorClass}">${name}</span>
+                <span class="text-[10px] text-slate-400 font-sans">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+            
+            <div class="text-sm md:text-base text-slate-700 font-medium leading-relaxed markdown-body mt-1 chat-content">${htmlContent}</div>
+            
+            ${copyButtonHtml}
+        </div>`;
+			const contentBody = div.querySelector('.markdown-body');
+			if(contentBody && contentBody.lastElementChild) {
+				contentBody.lastElementChild.style.marginBottom = '0px';
+				if(contentBody.lastElementChild.classList.contains('overflow-x-auto')) {
+					contentBody.lastElementChild.classList.remove('mb-6');
+				}
+			}
+			chatContainer.appendChild(div);
+			chatContainer.scrollTo({
+				top: chatContainer.scrollHeight,
+				behavior: 'auto'
+			});
+			return div;
+		}
+		
+		function adjustHeight(el) {
+			el.style.height = 'auto';
+			el.style.height = Math.min(Math.max(el.scrollHeight, 56), 128) + 'px';
+		}
+		
+		function handleEnter(e) {
+			if(e.key === 'Enter' && !e.shiftKey) {
+				e.preventDefault();
+				sendMessage();
+			}
+		}
+		async function loadChatList() {
+			const listContainer = document.getElementById('sidebar-content');
+			let listDiv = document.getElementById('chat-history-list');
+			if(!listDiv) {
+				listDiv = document.createElement('div');
+				listDiv.id = 'chat-history-list';
+				listDiv.className = 'flex flex-col mt-0 px-4 space-y-1 pb-4';
+				listContainer.appendChild(listDiv);
+			}
+			listDiv.innerHTML = '';
+			try {
+				const {
+					data: chats,
+					error
+				} = await supabase.from('conversations').select('id, title').eq('user_id', currentUser.id).order('created_at', {
+					ascending: false
+				});
+				if(error) throw error;
+				if(!chats || chats.length === 0) {
+					listDiv.innerHTML = '<p class="text-xs text-slate-400 text-center mt-4">Belum ada riwayat.</p>';
+					return;
+				}
+				chats.forEach(chat => {
+					const isActive = chat.id === currentChatId;
+					const containerStyle = isActive ? 'bg-blue-50' : 'bg-gray-50';
+					const textClass = isActive ? 'text-blue-700 font-bold' : 'text-slate-600 font-medium';
+					const div = document.createElement('div');
+					div.className = `relative flex items-center justify-between py-2 px-3 rounded-xl cursor-pointer transition-all duration-200 group ${containerStyle}`;
+					div.onclick = () => loadMessages(chat.id);
+					div.innerHTML = `
+      	            <span class="${textClass} text-sm md:text-base truncate flex-1 mr-2 select-none transition-colors">${chat.title}</span>
+      	            <button onclick="confirmDeleteChat(event, '${chat.id}')" class="text-slate-400 hover:text-red-500 transition-all p-1 rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible">
+      	                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      	                    <path d="M4 7.00005L10.2 11.65C11.2667 12.45 12.7333 12.45 13.8 11.65L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+      	                    <path d="M13 19H5C3.89543 19 3 18.1046 3 17V7C3 5.89543 3.89543 5 5 5H19C20.1046 5 21 5.89543 21 7V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+      	                    <path d="M17 16L19 18M21 20L19 18M19 18L21 16M19 18L17 20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+      	                </svg>
+      	            </button>
+      	        `;
+					listDiv.appendChild(div);
+				});
+			} catch (error) {
+				console.error(error);
+			}
+		}
+		async function loadMessages(chatId) {
+			currentChatId = chatId;
+			loadChatList();
+			forceCloseSidebar();
+			chatContainer.innerHTML = '';
+			const loading = appendMessage('model', '', true);
+			chatHistory = [];
+			try {
+				const {
+					data: messages,
+					error
+				} = await supabase.from('messages')
+					.select('*')
+					.eq('conversation_id', chatId)
+					.order('created_at', {
+						ascending: true
+					});
+				if(error) throw error;
+				loading.remove();
+				messages.forEach(msg => {
+					let displayContent = "";
+					let isRaw = false;
+					const parts = msg.parts;
+					let foundHtml = null;
+					let foundText = "";
+					const extractData = (item) => {
+						if(!item) return;
+						if(item.fileHtml) foundHtml = item.fileHtml;
+						if(item.text) foundText = item.text;
+					};
+					if(Array.isArray(parts)) {
+						parts.forEach(p => extractData(p));
+					} else {
+						extractData(parts);
+					}
+					if(msg.role === 'user') {
+						const formattedText = foundText ? `<p class="text-slate-700 whitespace-pre-wrap leading-relaxed">${foundText.replace(/\n/g, '<br>')}</p>` : "";
+						displayContent = (foundHtml || "") + formattedText;
+						isRaw = true;
+						chatHistory.push({
+							role: "user",
+							parts: [{
+								text: foundText
+							}]
+						});
+					} else {
+						if(foundHtml) {
+							const tempDiv = document.createElement('div');
+							tempDiv.innerHTML = foundHtml;
+							const imgTag = tempDiv.querySelector('img');
+							if(imgTag && imgTag.src) {
+								const timestamp = new Date(msg.created_at).getTime();
+								displayContent = `
+        <div tabindex="0" class="relative group rounded-xl overflow-hidden border border-gray-200 shadow-sm mt-1 inline-block w-full outline-none cursor-pointer">
+            <img src="${imgTag.src}" class="w-full h-auto bg-gray-50">
+            
+            <a href="${imgTag.src}" 
+               onclick="handleImageDownload(event, this.href, 'AI-${timestamp}.png')"
+               class="absolute top-1 right-1 p-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] active:scale-90 z-10 opacity-0 invisible group-focus:opacity-100 group-focus:visible transition-all duration-300"
+               title="Simpan Gambar">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5">
+                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                    <g id="SVGRepo_iconCarrier"> 
+                        <g id="Interface / Download"> 
+                            <path id="Vector" d="M6 21H18M12 3V17M12 17L17 12M12 17L7 12" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path> 
+                        </g> 
+                    </g>
+                </svg>
+            </a>
+        </div>
+      `;
+							} else {
+								displayContent = foundHtml;
+							}
+							isRaw = true;
+						} else {
+							displayContent = foundText;
+							isRaw = false;
+						}
+						chatHistory.push({
+							role: "model",
+							parts: [{
+								text: foundText
+							}]
+						});
+					}
+					appendMessage(msg.role === 'user' ? 'user' : 'model', displayContent, false, isRaw);
+				});
+				setTimeout(() => {
+					chatContainer.scrollTo({
+						top: chatContainer.scrollHeight,
+						behavior: 'auto'
+					});
+				}, 100);
+			} catch (error) {
+				loading.remove();
+				console.error(error);
+				appendMessage('model', "Gagal memuat pesan: " + error.message);
+			}
+		}
+		async function callAdminFunction(action, payload = {}) {
+			const {
+				data: {
+					session
+				}
+			} = await supabase.auth.getSession();
+			if(!session) {
+				alert("Akses ditolak.");
+				return null;
+			}
+			const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-user-manager`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${session.access_token}`
+				},
+				body: JSON.stringify({
+					action,
+					payload
+				}),
+			});
+			if(!response.ok) {
+				const err = await response.json();
+				throw new Error(err.error || "Gagal memproses permintaan admin.");
+			}
+			return response.json();
+		}
+		// === FUNGSI DOWNLOAD KHUSUS iOS PWA (ANTI ERROR LOG) ===
 		async function handleImageDownload(e, dataUrl, fileName) {
 			e.preventDefault();
 			e.stopPropagation();
@@ -2093,6 +1976,7 @@
 					window.URL.revokeObjectURL(blobUrl);
 				}
 			} catch (err) {
+				// === PERBAIKAN DI SINI ===
 				// Jika user menekan tombol 'Batal' atau 'X', jangan dianggap error
 				if(err.name === 'AbortError') {
 					return; // Keluar diam-diam (Silent exit)
@@ -2100,378 +1984,227 @@
 				console.error('Download error:', err);
 			}
 		}
-		// ==========================================
-		// SOLUSI FINAL IOS 15: TRUE PUSH UP + BOTTOM ANCHOR
-		// ==========================================
-		(function() {
-			const ua = navigator.userAgent;
-			const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
-
-			if(isIOS15) {
-				console.log("🚀 iOS 15: Mode True Push Up (Keyboard Anchor)...");
-
-				const viewport = window.visualViewport;
-				const chatPage = document.getElementById('chat-page');
-				const chatContainer = document.getElementById('chat-container');
-				const sidebarContent = document.getElementById('sidebar-content');
-				const header = document.querySelector('header');
-				const inputField = document.getElementById('user-input');
-
-				// FUNGSI SCROLL INSTAN (UNTUK EFEK PUSH)
-				// Kita butuh yang instan (auto) saat keyboard naik agar terlihat menyatu
-				const jumpToBottom = () => {
-					if(chatContainer) {
-						chatContainer.scrollTop = chatContainer.scrollHeight;
-					}
-				};
-
-				// FUNGSI SCROLL HALUS (UNTUK CHAT BARU)
-				const smoothScrollToBottom = () => {
-					if(chatContainer) {
-						chatContainer.scrollTo({
-							top: chatContainer.scrollHeight,
-							behavior: 'smooth'
-						});
-					}
-				};
-
-				// 1. INJEKSI CSS PERMANEN (PAKU BETON)
-				const style = document.createElement('style');
-				style.innerHTML = `
-	                html, body {
-	                    position: fixed !important;
-	                    overflow: hidden !important;
-	                    width: 100% !important;
-	                    height: 100% !important;
-	                    touch-action: none; 
-	                }
-	                #chat-page {
-	                    position: absolute !important;
-	                    left: 0;
-	                    right: 0;
-	                    top: 0;
-	                    bottom: 0;
-	                    overflow: hidden !important;
-	                    z-index: 10;
-	                    transition: none !important; /* Wajib mati agar instan */
-	                }
-	                #chat-container {
-	                    overflow-y: scroll !important;
-	                    -webkit-overflow-scrolling: touch;
-	                    height: 100%;
-	                    touch-action: pan-y;
-	                    padding-bottom: 15px !important;
-	                }
-                    #sidebar-content {
-                        overflow-y: scroll !important;
-                        -webkit-overflow-scrolling: touch;
-                        touch-action: pan-y;
-                        height: 100%;
-                    }
-	                header {
-	                    box-sizing: border-box !important; 
-	                    width: 100% !important;
-	                    max-width: 100vw !important;
-	                    padding-right: 16px !important; 
-	                }
-	            `;
-				document.head.appendChild(style);
-
-				// 2. LOGIKA PUSH UP + ANCHORING
-				if(inputField && header && chatPage) {
-					const getHeaderHeight = () => header.offsetHeight || 0;
-
-                    // SAAT KEYBOARD NAIK (FOCUS)
-					inputField.addEventListener('focus', () => {
-                        const hHeight = getHeaderHeight();
-                        
-                        // A. DORONG UI KE ATAS (Header Keluar)
-						chatPage.style.top = `-${hHeight}px`;
-                        
-                        // B. PERBESAR CONTAINER (Agar Input tetap di bawah)
-						if(viewport) {
-                            // Rumus: Tinggi Viewport + Tinggi Header yg dibuang
-                            chatPage.style.height = `${viewport.height + hHeight}px`;
-                        }
-						
-                        // C. KUNCI SCROLL WINDOW
-                        window.scrollTo(0, 0);
-
-                        // D. DORONG CHAT KE BAWAH (INI KUNCINYA!)
-                        // Agar pesan terakhir ikut naik bersama keyboard
-                        // Kita panggil berulang sedikit untuk menangani animasi keyboard native
-                        jumpToBottom(); 
-                        setTimeout(jumpToBottom, 50);
-                        setTimeout(jumpToBottom, 300); // Final check saat keyboard mentok
-					});
-
-                    // SAAT KEYBOARD TURUN (BLUR)
-					inputField.addEventListener('blur', () => {
-                        // Kembalikan Posisi
-						chatPage.style.top = '0px';
-						if(viewport) {
-                            chatPage.style.height = `${viewport.height}px`;
-                        }
-						window.scrollTo(0, 0);
-					});
-				}
-
-				// 3. LOGIKA RESIZE (SIFAT RESPONSIF REAL-TIME)
-                // Ini menangani perubahan tinggi saat keyboard sedang bergerak naik
-				const handleResize = () => {
-					if(!viewport || !chatPage) return;
-                    
-                    const hHeight = (header && inputField === document.activeElement) ? (header.offsetHeight || 0) : 0;
-                    
-                    // Update tinggi container
-                    chatPage.style.height = `${viewport.height + hHeight}px`;
-                    
-                    if (inputField === document.activeElement) {
-                        chatPage.style.top = `-${hHeight}px`;
-                        // Pastikan chat selalu 'nempel' bawah saat resize terjadi
-                        jumpToBottom(); 
-                    } else {
-                        chatPage.style.top = '0px';
-                    }
-
-					window.scrollTo(0, 0);
-				};
-
-				if(viewport) {
-					viewport.addEventListener('resize', handleResize);
-					setTimeout(handleResize, 100);
-				}
-
-				// 4. SATPAM SCROLL (Chat & Sidebar)
-                const preventRubberBand = (element) => {
-                    if (!element) return;
-                    element.addEventListener('touchmove', function(e) {
-						const el = this;
-						const scrollTop = el.scrollTop;
-						const scrollHeight = el.scrollHeight;
-						const height = el.clientHeight;
-						const deltaY = e.touches[0].pageY - (el.lastY || e.touches[0].pageY);
-						el.lastY = e.touches[0].pageY;
-
-						if(scrollHeight <= height) { e.preventDefault(); return; }
-						if(scrollTop <= 0 && deltaY > 0) { e.preventDefault(); }
-						if(scrollTop + height >= scrollHeight && deltaY < 0) { e.preventDefault(); }
-					}, { passive: false });
-					element.addEventListener('touchstart', function(e) {
-						this.lastY = e.touches[0].pageY;
-					}, { passive: true });
-                };
-
-                if (chatContainer) preventRubberBand(chatContainer);
-                if (sidebarContent) preventRubberBand(sidebarContent);
-
-				// 5. BLOKIR SENTUHAN LUAR
-				document.addEventListener('touchmove', function(e) {
-                    const isChat = e.target.closest('#chat-container');
-                    const isSidebar = e.target.closest('#sidebar-content');
-					if(!isChat && !isSidebar) { e.preventDefault(); }
-				}, { passive: false });
-
-				// 6. AUTO SCROLL (MUTATION OBSERVER - CHAT BARU)
-				if(chatContainer) {
-					const observer = new MutationObserver((mutations) => {
-						const hasNewNodes = mutations.some(m => m.addedNodes.length > 0);
-						if(hasNewNodes) {
-                            // Gunakan smooth scroll hanya untuk pesan baru
-							smoothScrollToBottom();
-							setTimeout(smoothScrollToBottom, 100);
-						}
-					});
-					observer.observe(chatContainer, { childList: true, subtree: true });
-				}
-
-                // 7. ANTI-DOUBLE TAP ZOOM
-                let lastTouchEnd = 0;
-                document.addEventListener('touchend', function(event) {
-                    const now = (new Date()).getTime();
-                    if (now - lastTouchEnd <= 300) { event.preventDefault(); }
-                    lastTouchEnd = now;
-                }, { passive: false });
-			}
-		})();
-		// ============================
-		// EVENT LISTENERS
-		// ============================
-		/**
-		 * Global click listener for copy buttons and chat bubbles
-		 */
-		document.addEventListener('click', async (e) => {
-			// 1. JIKA TOMBOL COPY DIKLIK
-			const copyBtn = e.target.closest('.copy-btn');
-			if(copyBtn) {
-				e.stopPropagation();
-				const card = copyBtn.closest('.ai-bubble');
-				const contentDiv = card.querySelector('.chat-content');
-				if(contentDiv) {
-					try {
-						// LOGIKA SMART COPY (OPTIMASI WORD)
-						const tempDiv = document.createElement('div');
-						tempDiv.innerHTML = contentDiv.innerHTML;
-						// A. STYLING DASAR KONTAINER (Arial untuk Dokumen Resmi)
-						tempDiv.style.fontFamily = 'Arial, sans-serif';
-						tempDiv.style.fontSize = '11pt'; // Standar surat dinas
-						tempDiv.style.lineHeight = '1.15'; // Jarak antar baris standar (Single/1.15)
-						tempDiv.style.color = '#000000';
-						// B. PEMBERSIHAN ELEMEN
-						const allElements = tempDiv.querySelectorAll('*');
-						allElements.forEach(el => {
-							el.removeAttribute('class');
-							el.style.fontFamily = 'Arial, sans-serif';
-							if(el.tagName === 'P') {
-								el.style.marginBottom = '6px'; // Jarak antar paragraf lebih rapat
-								el.style.textAlign = 'justify';
-							}
-							if(el.tagName === 'LI') {
-								el.style.marginBottom = '2px';
-								el.style.textAlign = 'justify';
-							}
-							if(el.tagName.startsWith('H')) {
-								el.style.fontWeight = 'bold';
-								el.style.marginTop = '12px';
-								el.style.marginBottom = '6px';
-								el.style.color = '#000000';
-								el.style.fontSize = '12pt'; // Judul sedikit lebih besar
-							}
-						});
-						// C. STYLING TABEL SPESIFIK (PADAT & 11pt)
-						const tables = tempDiv.querySelectorAll('table');
-						tables.forEach(table => {
-							// Reset Tabel
-							table.style.width = '100%';
-							table.style.borderCollapse = 'collapse';
-							table.style.marginTop = '6px';
-							table.style.marginBottom = '6px';
-							// UKURAN FONT 11pt (SESUAI PERMINTAAN)
-							table.style.fontSize = '11pt';
-							// Atribut Legacy
-							table.setAttribute('border', '1');
-							table.setAttribute('width', '100%');
-							table.setAttribute('cellpadding', '4'); // Padding HTML attribute diperkecil
-							// Styling Header (TH)
-							const headers = table.querySelectorAll('th');
-							headers.forEach(th => {
-								th.style.backgroundColor = '#f1f5f9'; // Abu Tipis
-								th.style.color = '#000000';
-								th.style.fontWeight = 'bold';
-								th.style.border = '1px solid #cbd5e1';
-								// PADDING RAPAT (PADAT)
-								th.style.padding = '4px';
-								th.style.textAlign = 'center';
-								th.style.verticalAlign = 'middle';
-							});
-							// Styling Sel Isi (TD)
-							const cells = table.querySelectorAll('td');
-							cells.forEach(td => {
-								td.style.border = '1px solid #cbd5e1';
-								// PADDING RAPAT (PADAT)
-								td.style.padding = '4px';
-								td.style.verticalAlign = 'top';
-								td.style.color = '#000000';
-								td.style.textAlign = 'left';
-								td.style.whiteSpace = 'normal';
-							});
-						});
-						// D. COPY KE CLIPBOARD
-						const finalHtml = `<div style="font-family: Arial, sans-serif; font-size: 11pt;">${tempDiv.innerHTML}</div>`;
-						const plainText = contentDiv.innerText;
-						const htmlBlob = new Blob([finalHtml], {
-							type: 'text/html'
-						});
-						const textBlob = new Blob([plainText], {
-							type: 'text/plain'
-						});
-						const item = new ClipboardItem({
-							'text/html': htmlBlob,
-							'text/plain': textBlob
-						});
-						await navigator.clipboard.write([item]);
-						// VISUAL FEEDBACK
-						if(copyBtn.dataset.copied === "true") return;
-						const originalIcon = copyBtn.innerHTML;
-						copyBtn.dataset.copied = "true";
-						copyBtn.innerHTML = `
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500">
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                        `;
-						setTimeout(() => {
-							copyBtn.innerHTML = originalIcon;
-							copyBtn.dataset.copied = "false";
-						}, 2000);
-					} catch (err) {
-						console.error("Gagal copy Smart Text:", err);
-						try {
-							await navigator.clipboard.writeText(contentDiv.innerText);
-						} catch (e) {
-							// Fallback jika clipboard gagal
-						}
-					}
-				}
+		async function handleAddUser() {
+			const email = document.getElementById('create-email').value;
+			const password = document.getElementById('create-password').value;
+			const btn = document.getElementById('btn-add-user');
+			if(!email || password.length < 6) {
+				// --- PERBAIKAN DI SINI ---
+				// Parameter terakhir diubah jadi 'false' agar tombol OK berwarna BIRU
+				showCustomAlert("DATA TIDAK VALID", "Email wajib diisi dan password minimal 6 karakter.", false);
 				return;
 			}
-			// 2. RESET TAMPILAN TOMBOL
-			document.querySelectorAll('.copy-container').forEach(el => {
-				const btn = el.querySelector('.copy-btn');
-				if(btn && btn.dataset.copied === "true") return;
-				el.classList.add('hidden');
-			});
-			// 3. KLIK GELEMBUNG
-			const clickedBubble = e.target.closest('.ai-bubble');
-			if(clickedBubble) {
-				const btn = clickedBubble.querySelector('.copy-container');
-				if(btn) {
-					btn.classList.remove('hidden');
-				}
+			btn.textContent = "Menambahkan...";
+			btn.disabled = true;
+			try {
+				await callAdminFunction('create_user', {
+					email,
+					password
+				});
+				// Sukses = False (Biru) - Sudah Benar
+				showCustomAlert("BERHASIL", `User ${email} berhasil ditambahkan!`, false);
+				document.getElementById('create-email').value = '';
+				document.getElementById('create-password').value = '';
+				loadUsers();
+			} catch (error) {
+				// Jika Error Server/Sistem, tetap Merah (True) agar user tahu ini masalah serius
+				// Kecuali jika Anda mau ini biru juga, ubah jadi false.
+				showCustomAlert("GAGAL", error.message, true);
+			} finally {
+				btn.innerHTML = `<i class="fa-solid fa-user-plus text-slate-300 group-hover:text-white transition-colors"></i><span>TAMBAH USER</span>`;
+				btn.disabled = false;
 			}
+		}
+		async function loadUsers() {
+			const container = document.getElementById('user-list-container');
+			container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4"><i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Memuat data...</p>';
+			try {
+				const users = await callAdminFunction('list_users');
+				const {
+					data: {
+						user: currentUser
+					}
+				} = await supabase.auth.getUser();
+				container.innerHTML = '';
+				if(!users || users.length === 0) {
+					container.innerHTML = '<p class="text-xs text-slate-400 text-center">Tidak ada pengguna lain.</p>';
+					return;
+				}
+				users.forEach(user => {
+					const isSelf = user.id === currentUser?.id;
+					const isFrozen = user.banned_until && (new Date(user.banned_until) > new Date());
+					const div = document.createElement('div');
+					div.className = `flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-xl ${isFrozen ? 'opacity-60' : ''}`;
+					div.innerHTML = `
+    <div class="overflow-hidden mr-2">
+        <p class="text-xs md:text-sm font-bold text-slate-700 truncate">${user.email}</p>
+        <p class="text-[10px] md:text-xs text-slate-400 uppercase font-bold tracking-wider mt-0.5">${isFrozen ? '<span class="text-red-500">DIBEKUKAN</span>' : 'AKTIF'} ${isSelf ? '(ANDA)' : ''}</p>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+        <button onclick="toggleFreeze('${user.id}', ${isFrozen})" ${isSelf ? 'disabled' : ''} 
+    class="w-8 h-8 flex items-center justify-center rounded-lg transition-colors bg-blue-100 text-blue-600 hover:bg-blue-200 disabled:opacity-30" 
+    title="${isFrozen ? 'Buka Akun' : 'Bekukan Akun'}">
+    
+    <svg class="w-5 h-5" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+       <g stroke-width="0"></g><g stroke-linecap="round" stroke-linejoin="round"></g><g><defs><style>.a{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;}</style></defs><path class="a" d="M29.535,33.5623l-5.5344-1.8331-5.5345,1.8331L17.29,27.8649l-4.3588-3.8643L17.29,20.1363l1.1757-5.6973,5.5345,1.833,5.5344-1.833,1.1757,5.6973L35.07,24.0006l-4.3588,3.8643Z"></path><path class="a" d="M24.0006,31.7292l0-29.2292"></path><path class="a" d="M17.6613,7.151l6.3392,3.0277"></path><path class="a" d="M30.34,7.151l-6.3392,3.0277"></path><path class="a" d="M24.0006,31.7292V45.5013"></path><path class="a" d="M30.34,40.85l-6.3392-3.0277"></path><path class="a" d="M17.6613,40.85l6.3392-3.0277"></path><path class="a" d="M17.29,27.8649,42.668,13.25"></path><path class="a" d="M35.46,10.1l.5409,6.99"></path><path class="a" d="M41.8,21.0519,36.0011,17.09"></path><path class="a" d="M17.29,27.8649,5.3331,34.751"></path><path class="a" d="M12.5409,37.9015,12,30.9116"></path><path class="a" d="M6.2016,26.9494,12,30.9116"></path><path class="a" d="M30.7107,27.8649,42.668,34.751"></path><path class="a" d="M41.8,26.9494l-5.7984,3.9622"></path><path class="a" d="M35.46,37.9015l.5409-6.99"></path><path class="a" d="M30.7107,27.8649,5.3331,13.25"></path><path class="a" d="M6.2016,21.0519,12,17.09"></path><path class="a" d="M12.5409,10.1,12,17.09"></path></g>
+    </svg>
+
+</button>
+        <button onclick="deleteUser('${user.id}', '${user.email}')" ${isSelf ? 'disabled' : ''} class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors disabled:opacity-30">
+            <i class="fa-solid fa-trash text-sm"></i>
+        </button>
+    </div>
+`;
+					container.appendChild(div);
+				});
+			} catch (error) {
+				container.innerHTML = `<p class="text-xs text-red-400 text-center">Error: ${error.message}</p>`;
+			}
+		}
+		// Tambahkan parameter terakhir: cancelColorClass
+		function showCustomConfirm(title, message, actionCallback, btnText = "HAPUS", btnColorClass = "text-red-600", cancelColorClass = "text-blue-600") {
+			document.getElementById('confirm-title').textContent = title;
+			document.getElementById('confirm-message').textContent = message;
+			const agreeBtn = document.getElementById('modal-agree-button');
+			const cancelBtn = document.getElementById('modal-cancel-button');
+			// 1. Setup Tombol KANAN (Aksi Utama)
+			agreeBtn.textContent = btnText;
+			agreeBtn.className = `w-1/2 py-2.5 text-center text-sm md:text-base font-semibold hover:bg-gray-200 transition-colors ${btnColorClass}`;
+			// 2. Setup Tombol KIRI (Batal) - DINAMIS (Merah/Biru)
+			cancelBtn.textContent = "BATAL";
+			cancelBtn.className = `w-1/2 py-2.5 text-center text-sm md:text-base font-semibold hover:bg-gray-200 border-r border-gray-200 transition-colors ${cancelColorClass}`;
+			currentConfirmAction = actionCallback;
+			confirmModal.classList.remove('hidden');
+		}
+		// === LOGIKA MODAL (CONFIRM & ALERT) ===
+		function hideConfirmModal() {
+			confirmModal.classList.add('hidden');
+			currentConfirmAction = null;
+			// --- PROTEKSI AGAR CONFIRM TIDAK RUSAK ---
+			// Kita wajib mengembalikan tombol ke bentuk asalnya (2 Tombol berdampingan)
+			const cancelBtn = document.getElementById('modal-cancel-button');
+			const agreeBtn = document.getElementById('modal-agree-button');
+			// 1. Munculkan kembali tombol Batal (jika sebelumnya disembunyikan oleh Alert)
+			cancelBtn.classList.remove('hidden');
+			// 2. Kembalikan tombol 'Ya/OK' menjadi setengah lebar (w-1/2)
+			agreeBtn.classList.remove('w-full');
+			agreeBtn.classList.add('w-1/2');
+		}
+		// Fungsi Baru: Menggunakan Modal Confirm sebagai Alert Info
+		function showCustomAlert(title, message, isError = false) {
+			// Set Teks Judul & Pesan
+			document.getElementById('confirm-title').textContent = title;
+			document.getElementById('confirm-message').textContent = message;
+			const cancelBtn = document.getElementById('modal-cancel-button');
+			const agreeBtn = document.getElementById('modal-agree-button');
+			// --- MODIFIKASI TAMPILAN SEMENTARA ---
+			// 1. Sembunyikan tombol 'BATAL'
+			cancelBtn.classList.add('hidden');
+			// 2. Ubah tombol 'YA' menjadi 'OK' dan Lebar Penuh (w-full)
+			agreeBtn.textContent = "OK";
+			agreeBtn.classList.remove('w-1/2');
+			agreeBtn.classList.add('w-full');
+			// 3. Atur Warna (Merah jika Error, Biru jika Sukses)
+			// Kita reset dulu semua class warna agar tidak bertumpuk
+			agreeBtn.className = `w-full py-2.5 text-center text-sm md:text-base font-semibold hover:bg-gray-200 transition-colors ${isError ? 'text-red-600' : 'text-blue-600'}`;
+			// 4. Pastikan tidak ada aksi callback (Hanya tutup)
+			currentConfirmAction = null;
+			// 5. Tampilkan Modal
+			confirmModal.classList.remove('hidden');
+		}
+		document.getElementById('modal-cancel-button').addEventListener('click', hideConfirmModal);
+		document.getElementById('modal-agree-button').addEventListener('click', async () => {
+			if(currentConfirmAction) await currentConfirmAction();
+			hideConfirmModal();
 		});
-		/**
-		 * Handle send button click
-		 */
+		
+		function confirmDeleteChat(e, chatId) {
+			e.stopPropagation();
+			forceCloseSidebar();
+			// Hapus: Merah, Batal: Biru
+			showCustomConfirm("Hapus Percakapan?", "Tindakan ini tidak dapat dibatalkan. Yakin hapus?", async () => {
+				try {
+					await supabase.from('conversations').delete().eq('id', chatId);
+					if(currentChatId === chatId) startNewChat();
+					else loadChatList();
+				} catch (err) {
+					showCustomAlert("GAGAL", err.message, true);
+				}
+			}, "HAPUS", "text-red-600", "text-blue-600"); // <--- Batal diset Biru
+		}
+		async function deleteUser(userId, userEmail) {
+			// Hapus: Merah, Batal: Biru
+			showCustomConfirm("Hapus User?", `Hapus permanen akun ${userEmail}?`, async () => {
+				try {
+					await callAdminFunction('delete_user', {
+						id: userId
+					});
+					loadUsers();
+				} catch (err) {
+					showCustomAlert("GAGAL", err.message, true);
+				}
+			}, "HAPUS", "text-red-600", "text-blue-600"); // <--- Batal diset Biru
+		}
+		async function toggleFreeze(userId, isCurrentlyFrozen) {
+			const actionName = isCurrentlyFrozen ? 'unfreeze_user' : 'freeze_user';
+			const title = isCurrentlyFrozen ? "Buka Akun?" : "Bekukan Akun?";
+			const msg = isCurrentlyFrozen ? "User ini akan bisa login kembali." : "User ini tidak akan bisa login aplikasi sampai akun dibuka kembali.";
+			// --- ATURAN WARNA: HANYA MERAH & BIRU ---
+			// SKENARIO 1: MEMBUKA AKUN (UNFREEZE)
+			// Tombol: BUKA (Biru) | Batal: MERAH
+			if(isCurrentlyFrozen) {
+				showCustomConfirm(title, msg, async () => {
+					try {
+						await callAdminFunction(actionName, {
+							id: userId
+						});
+						loadUsers();
+					} catch (err) {
+						showCustomAlert("GAGAL", err.message, true);
+					}
+				}, "BUKA", "text-blue-600", "text-red-600"); // <--- Aksi Biru, Batal Merah
+			}
+			// SKENARIO 2: MEMBEKUKAN AKUN (FREEZE)
+			// Tombol: BEKUKAN (Merah) | Batal: BIRU
+			else {
+				showCustomConfirm(title, msg, async () => {
+					try {
+						await callAdminFunction(actionName, {
+							id: userId
+						});
+						loadUsers();
+					} catch (err) {
+						showCustomAlert("GAGAL", err.message, true);
+					}
+				}, "BEKUKAN", "text-red-600", "text-blue-600"); // <--- Aksi Merah, Batal Biru
+			}
+		}
+		const resetScroll = () => {
+			window.scrollTo(0, 0);
+			setTimeout(() => document.body.scrollTop = 0, 50);
+		};
+		document.querySelectorAll('input, textarea').forEach(el => {
+			el.addEventListener('blur', resetScroll);
+		});
+		userInput.addEventListener('input', function() {
+			adjustHeight(this);
+		});
+		
 		function handleSend(e) {
 			e.preventDefault();
 			if(!sendBtn.disabled) {
 				sendMessage();
 			}
 		}
-		// Modal event listeners
-		document.getElementById('modal-cancel-button').addEventListener('click', hideConfirmModal);
-		document.getElementById('modal-agree-button').addEventListener('click', async () => {
-			if(currentConfirmAction) await currentConfirmAction();
-			hideConfirmModal();
-		});
-		// Dropdown click outside listener
-		document.addEventListener('click', function(e) {
-			if(!dropdownWrapper.contains(e.target)) closeDropdown();
-		});
-		// Input/textarea blur listeners for scroll reset
-		document.querySelectorAll('input, textarea').forEach(el => {
-			el.addEventListener('blur', resetScroll);
-		});
-		// User input listener for auto-resize
-		userInput.addEventListener('input', function() {
-			adjustHeight(this);
-		});
-		// Send button event listeners
 		sendBtn.addEventListener('click', handleSend);
 		sendBtn.addEventListener('touchend', handleSend);
-		// Prevent double-tap zoom
 		let lastTouchEnd = 0;
 		document.addEventListener('touchend', (e) => {
 			const now = (new Date()).getTime();
 			if(now - lastTouchEnd <= 300) e.preventDefault();
 			lastTouchEnd = now;
 		}, false);
-		// Enable send button initially
 		sendBtn.disabled = false;
-		// ============================
-		// INITIALIZATION
-		// ============================
-		// Check session on app start
 		checkSession();
 	</script>
 </body>
