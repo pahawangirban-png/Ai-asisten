@@ -1054,7 +1054,7 @@
 			if(shouldReloadList) loadChatList();
 		}
 		/**
-		 * Send message to AI (SMART LOGIC: ONE-TIME READ)
+		 * Send message to AI (FIX: WELCOME MESSAGE CLEARED)
 		 */
 		async function sendMessage() {
 			const text = userInput.value.trim();
@@ -1079,6 +1079,12 @@
 
 			// Bersihkan preview file di UI
 			document.getElementById('file-preview-container').innerHTML = '';
+
+            // === PERBAIKAN: HAPUS WELCOME MESSAGE JIKA CHAT BARU ===
+            if (chatHistory.length === 0) {
+                chatContainer.innerHTML = '';
+            }
+            // ========================================================
 
 			// Tampilkan Chat di UI (User Bubble)
 			let fileDisplayHtml = '';
@@ -1125,8 +1131,6 @@
 			currentParts.push({ text: finalPrompt });
 
 			// 2. BANGUN KONTEKS UNTUK API (MEMORY SEMENTARA)
-			// Kita ambil history lama, TAPI kita gabungkan dengan pesan 'berat' saat ini
-			// HANYA untuk panggilan API kali ini.
 			const payloadContents = [...chatHistory, { role: "user", parts: currentParts }];
 
 			// Kosongkan antrian file global
@@ -1150,7 +1154,7 @@
 				await supabase.from('messages').insert({
 					conversation_id: currentChatId,
 					role: 'user',
-					parts: [{ text: text, fileHtml: fileDisplayHtml }] // Simpan HTML saja di DB, jangan file raw
+					parts: [{ text: text, fileHtml: fileDisplayHtml }] 
 				});
 
 				// Konfigurasi API
@@ -1167,7 +1171,8 @@
 					body: JSON.stringify({
 						model: model,
 						payload: {
-							contents: payloadContents, // Kirim history + file lengkap
+							contents: payloadContents, 
+							tools: [{ googleSearch: {} }], // Grounding tetap ada
 							generationConfig: { temperature: parseFloat(temperature), maxOutputTokens: 2048 },
 							systemInstruction: { role: "system", parts: [{ text: customPrompt || "Anda adalah asisten cerdas." }] }
 						}
@@ -1182,14 +1187,9 @@
 				appendMessage('model', aiText);
 
 				// --- LOGIKA KUNCI: MEMORI HEMAT (SANITASI) ---
-				
-				// 1. Simpan Pesan User ke History TAPI VERSI RINGAN (Tanpa File Content)
-				// Kita ganti isi file dengan 'Catatan' agar AI ingat user pernah upload, tapi tidak membebani token.
 				const cleanUserParts = [{ text: `${text}\n\n(System Note: User telah mengupload ${filesProcessed.length} dokumen: ${fileLog}. Gunakan hasil analisismu sebelumnya untuk menjawab pertanyaan terkait dokumen ini.)` }];
 				
 				chatHistory.push({ role: "user", parts: cleanUserParts });
-
-				// 2. Simpan Jawaban AI ke History (Penting: Hasil Analisa ada di sini)
 				chatHistory.push({ role: "model", parts: [{ text: aiText }] });
 
 				// Simpan ke DB
