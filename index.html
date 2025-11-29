@@ -43,6 +43,40 @@
             openLinksInNewWindow: true,
             emoji: true
         });
+		
+		const isIOS15 = /iPhone/.test(navigator.userAgent) && /OS 15_/.test(navigator.userAgent);
+
+        // 2. Siapkan Parser Cadangan (Hanya dipakai jika iOS 15)
+        class SafeMark {
+            render(text) {
+                if (!text) return '';
+                // Bersihkan baris baru
+                let html = text.replace(/\r\n|\r/g, '\n');
+                
+                // Escape HTML dasar (Keamanan)
+                html = html.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+                // Code Block (```)
+                html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre style="background:#f1f5f9;padding:10px;border-radius:8px;overflow:auto;"><code>$2</code></pre>');
+
+                // Heading (#)
+                html = html.replace(/^# (.*$)/gm, '<h1 style="font-weight:bold;font-size:1.5em;margin:10px 0;">$1</h1>');
+                html = html.replace(/^## (.*$)/gm, '<h2 style="font-weight:bold;font-size:1.3em;margin:10px 0;">$1</h2>');
+                html = html.replace(/^### (.*$)/gm, '<h3 style="font-weight:bold;font-size:1.1em;margin:10px 0;">$1</h3>');
+
+                // Bold & Italic
+                html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+                // List Item (-)
+                html = html.replace(/^\- (.*$)/gm, '<li style="margin-left:20px;">$1</li>');
+                
+                html = html.replace(/\n/g, '<br>');
+                
+                return html;
+            }
+        }
+        const safeParser = new SafeMark();
     </script>
     
     <style>
@@ -1408,7 +1442,18 @@
                 htmlContent = content;
             } else if (role === 'model') {
                 // Jika bukan raw HTML, baru proses Markdown
-                let rawHtml = converter.makeHtml(content);
+                
+                // [MODIFIKASI] Cek iOS 15 sebelum convert
+                let rawHtml;
+                if (isIOS15) {
+                    // JALUR A: iOS 15 pakai parser sederhana (SafeMark)
+                    rawHtml = safeParser.render(content); 
+                } else {
+                    // JALUR B: Android/iOS 16+ TETAP pakai Showdown (Fitur Lengkap)
+                    rawHtml = converter.makeHtml(content); 
+                }
+                // [AKHIR MODIFIKASI]
+
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = rawHtml;
                 
