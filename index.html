@@ -2309,96 +2309,195 @@
 	</script>
 	<script>
 		// ============
-		// PATCH IOS 15 (NATURAL PUSH - NO JUMP FIX)
+		// PATCH IOS 15
 		// ============
 		(function() {
 			const ua = navigator.userAgent;
 			const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
-			
 			if(isIOS15) {
-				console.log("🔧 iOS 15: Mode Natural Push (Anti-Jump)...");
-
+				console.log("🚀 iOS 15: Mode True Push Up (Keyboard Anchor)...");
 				const viewport = window.visualViewport;
 				const chatPage = document.getElementById('chat-page');
 				const chatContainer = document.getElementById('chat-container');
+				const sidebarContent = document.getElementById('sidebar-content');
 				const header = document.querySelector('header');
 				const inputField = document.getElementById('user-input');
-
-				// 1. CSS FIX: Kunci Body agar tidak ikut scroll (Penyebab utama loncat)
-				document.body.style.position = 'fixed';
-				document.body.style.width = '100%';
-				document.body.style.height = '100%';
-				document.body.style.overflow = 'hidden';
-				
-				// Tambahkan transisi halus ke header agar naiknya natural
-				if(header) {
-					header.style.transition = 'margin-top 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
-					header.style.willChange = 'margin-top';
-				}
-
-				// 2. LOGIKA VIEWPORT (INTI PERBAIKAN)
-				const handleResize = () => {
-					if (!viewport || !chatPage) return;
-					
-					// A. Pastikan Top SELALU 0 (Jangan digeser-geser manual)
-					chatPage.style.top = '0px';
-					
-					// B. Sesuaikan tinggi aplikasi dengan area terlihat (Visible Area)
-					// Ini otomatis membuat input naik pas di atas keyboard
-					chatPage.style.height = `${viewport.height}px`;
-					
-					// C. Reset Scroll Window (Pencegah layar loncat keluar)
-					window.scrollTo(0, 0);
-
-					// D. Deteksi Keyboard: Jika tinggi viewport < tinggi layar asli, berarti keyboard aktif
-					const isKeyboardOpen = viewport.height < window.innerHeight;
-
-					if (isKeyboardOpen) {
-						// Keyboard Muncul: Sembunyikan Header dengan Margin (Animasi Halus)
-						if (header) {
-							const hHeight = header.offsetHeight;
-							header.style.marginTop = `-${hHeight}px`;
-						}
-						
-						// Scroll chat ke bawah agar pesan terakhir terlihat
-						if(chatContainer) {
-							setTimeout(() => {
-								chatContainer.scrollTop = chatContainer.scrollHeight;
-							}, 100);
-						}
-					} else {
-						// Keyboard Tutup: Kembalikan Header
-						if (header) {
-							header.style.marginTop = '0px';
-						}
+				// FUNGSI SCROLL INSTAN (UNTUK EFEK PUSH)
+				// Kita butuh yang instan (auto) saat keyboard naik agar terlihat menyatu
+				const jumpToBottom = () => {
+					if(chatContainer) {
+						chatContainer.scrollTop = chatContainer.scrollHeight;
 					}
 				};
-
-				// 3. PASANG EVENT LISTENER
-				if (viewport) {
-					viewport.addEventListener('resize', handleResize);
-					viewport.addEventListener('scroll', () => window.scrollTo(0, 0)); // Double lock scroll
-				}
-
-				// Trigger saat fokus input (Untuk memicu animasi header lebih responsif)
-				if(inputField) {
+				// FUNGSI SCROLL HALUS (UNTUK CHAT BARU)
+				const smoothScrollToBottom = () => {
+					if(chatContainer) {
+						chatContainer.scrollTo({
+							top: chatContainer.scrollHeight,
+							behavior: 'smooth'
+						});
+					}
+				};
+				// 1. INJEKSI CSS PERMANEN (PAKU BETON)
+				const style = document.createElement('style');
+				style.innerHTML = `
+	                html, body {
+	                    position: fixed !important;
+	                    overflow: hidden !important;
+	                    width: 100% !important;
+	                    height: 100% !important;
+	                    touch-action: none; 
+	                }
+	                #chat-page {
+	                    position: absolute !important;
+	                    left: 0;
+	                    right: 0;
+	                    top: 0;
+	                    bottom: 0;
+	                    overflow: hidden !important;
+	                    z-index: 10;
+	                    transition: none !important; /* Wajib mati agar instan */
+	                }
+	                #chat-container {
+	                    overflow-y: scroll !important;
+	                    -webkit-overflow-scrolling: touch;
+	                    height: 100%;
+	                    touch-action: pan-y;
+	                    padding-bottom: 15px !important;
+	                }
+                    #sidebar-content {
+                        overflow-y: scroll !important;
+                        -webkit-overflow-scrolling: touch;
+                        touch-action: pan-y;
+                        height: 100%;
+                    }
+	                header {
+	                    box-sizing: border-box !important; 
+	                    width: 100% !important;
+	                    max-width: 100vw !important;
+	                    padding-right: 16px !important; 
+	                }
+	            `;
+				document.head.appendChild(style);
+				// 2. LOGIKA PUSH UP + ANCHORING
+				if(inputField && header && chatPage) {
+					const getHeaderHeight = () => header.offsetHeight || 0;
+					// SAAT KEYBOARD NAIK (FOCUS)
 					inputField.addEventListener('focus', () => {
-						// Paksa cek resize segera
-						handleResize();
+						const hHeight = getHeaderHeight();
+						// A. DORONG UI KE ATAS (Header Keluar)
+						chatPage.style.top = `-${hHeight}px`;
+						// B. PERBESAR CONTAINER (Agar Input tetap di bawah)
+						if(viewport) {
+							// Rumus: Tinggi Viewport + Tinggi Header yg dibuang
+							chatPage.style.height = `${viewport.height + hHeight}px`;
+						}
+						// C. KUNCI SCROLL WINDOW
+						window.scrollTo(0, 0);
+						// D. DORONG CHAT KE BAWAH (INI KUNCINYA!)
+						// Agar pesan terakhir ikut naik bersama keyboard
+						// Kita panggil berulang sedikit untuk menangani animasi keyboard native
+						jumpToBottom();
+						setTimeout(jumpToBottom, 50);
+						setTimeout(jumpToBottom, 300); // Final check saat keyboard mentok
 					});
-
+					// SAAT KEYBOARD TURUN (BLUR)
 					inputField.addEventListener('blur', () => {
-						// Reset saat blur
-						if(header) header.style.marginTop = '0px';
-						setTimeout(() => {
-							window.scrollTo(0, 0);
-							if(chatPage) chatPage.style.height = '100%';
-						}, 300);
+						// Kembalikan Posisi
+						chatPage.style.top = '0px';
+						if(viewport) {
+							chatPage.style.height = `${viewport.height}px`;
+						}
+						window.scrollTo(0, 0);
 					});
 				}
-
-				// Eksekusi awal
-				handleResize();
+				// 3. LOGIKA RESIZE (SIFAT RESPONSIF REAL-TIME)
+				// Ini menangani perubahan tinggi saat keyboard sedang bergerak naik
+				const handleResize = () => {
+					if(!viewport || !chatPage) return;
+					const hHeight = (header && inputField === document.activeElement) ? (header.offsetHeight || 0) : 0;
+					// Update tinggi container
+					chatPage.style.height = `${viewport.height + hHeight}px`;
+					if(inputField === document.activeElement) {
+						chatPage.style.top = `-${hHeight}px`;
+						// Pastikan chat selalu 'nempel' bawah saat resize terjadi
+						jumpToBottom();
+					} else {
+						chatPage.style.top = '0px';
+					}
+					window.scrollTo(0, 0);
+				};
+				if(viewport) {
+					viewport.addEventListener('resize', handleResize);
+					setTimeout(handleResize, 100);
+				}
+				// 4. SATPAM SCROLL (Chat & Sidebar)
+				const preventRubberBand = (element) => {
+					if(!element) return;
+					element.addEventListener('touchmove', function(e) {
+						const el = this;
+						const scrollTop = el.scrollTop;
+						const scrollHeight = el.scrollHeight;
+						const height = el.clientHeight;
+						const deltaY = e.touches[0].pageY - (el.lastY || e.touches[0].pageY);
+						el.lastY = e.touches[0].pageY;
+						if(scrollHeight <= height) {
+							e.preventDefault();
+							return;
+						}
+						if(scrollTop <= 0 && deltaY > 0) {
+							e.preventDefault();
+						}
+						if(scrollTop + height >= scrollHeight && deltaY < 0) {
+							e.preventDefault();
+						}
+					}, {
+						passive: false
+					});
+					element.addEventListener('touchstart', function(e) {
+						this.lastY = e.touches[0].pageY;
+					}, {
+						passive: true
+					});
+				};
+				if(chatContainer) preventRubberBand(chatContainer);
+				if(sidebarContent) preventRubberBand(sidebarContent);
+				// 5. BLOKIR SENTUHAN LUAR
+				document.addEventListener('touchmove', function(e) {
+					const isChat = e.target.closest('#chat-container');
+					const isSidebar = e.target.closest('#sidebar-content');
+					if(!isChat && !isSidebar) {
+						e.preventDefault();
+					}
+				}, {
+					passive: false
+				});
+				// 6. AUTO SCROLL (MUTATION OBSERVER - CHAT BARU)
+				if(chatContainer) {
+					const observer = new MutationObserver((mutations) => {
+						const hasNewNodes = mutations.some(m => m.addedNodes.length > 0);
+						if(hasNewNodes) {
+							// Gunakan smooth scroll hanya untuk pesan baru
+							smoothScrollToBottom();
+							setTimeout(smoothScrollToBottom, 100);
+						}
+					});
+					observer.observe(chatContainer, {
+						childList: true,
+						subtree: true
+					});
+				}
+				// 7. ANTI-DOUBLE TAP ZOOM
+				let lastTouchEnd = 0;
+				document.addEventListener('touchend', function(event) {
+					const now = (new Date()).getTime();
+					if(now - lastTouchEnd <= 300) {
+						event.preventDefault();
+					}
+					lastTouchEnd = now;
+				}, {
+					passive: false
+				});
 			}
 		})();
 		(function() {
