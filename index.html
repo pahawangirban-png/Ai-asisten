@@ -423,7 +423,7 @@
 		<main id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"></main>
 		<div class="flex-none bg-white border-t border-gray-100 px-4 pt-2 pb-6 safe-pb z-30 w-full select-none">
 			<div id="file-preview-container" class="w-full max-w-3xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-2 mb-2 empty:hidden"></div>
-			<input type="file" id="file-input" accept=".pdf,.docx,.xls,.xlsx,.pptx,.txt,image/*" multiple class="absolute opacity-0 w-0 h-0 overflow-hidden pointer-events-none" />
+			<input type="file" id="file-input" onclick="this.value=null" accept=".pdf,.docx,.xls,.xlsx,.pptx,.txt,image/*" multiple class="absolute opacity-0 w-0 h-0 overflow-hidden pointer-events-none" />
 			<div class="w-full max-w-3xl mx-auto relative flex items-end bg-gray-100 rounded-[2rem] border border-transparent transition-all">
 				<button onclick="document.getElementById('file-input').click()" class="absolute left-2 bottom-2 w-10 h-10 flex items-center justify-center rounded-full text-slate-400 z-10">
 					<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1996,13 +1996,13 @@
 			}, "HAPUS", "text-red-600", "text-blue-600");
 		}
 		// ============================
-// FILE HANDLING (FIX STABIL IOS 15)
+// FILE HANDLING - IOS 15 GALLERY METADATA FIX
 // ============================
 document.getElementById('file-input').addEventListener('change', async (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    // Reset value manual agar tombol tidak macet untuk upload berikutnya
+    // Reset value (Backup di JS)
     e.target.value = '';
 
     try {
@@ -2010,22 +2010,26 @@ document.getElementById('file-input').addEventListener('change', async (e) => {
             // Cek duplikasi
             if (uploadedFiles.find(f => f.name === file.name && f.size === file.size)) continue;
 
-            let fileName = file.name;
-            let fileType = file.type;
+            let finalName = file.name;
+            let finalType = file.type;
+            let finalExt = "";
 
-            // --- FIX KHUSUS IOS 15 ---
-            // Jika tipe kosong (bug galeri iOS), paksa jadi JPEG
-            if (!fileType || fileType === "") {
-                fileType = "image/jpeg";
-                // Jika nama file tidak ada ekstensinya, tambahkan .jpg
-                if (fileName && !fileName.includes('.')) fileName += ".jpg";
+            // --- PERBAIKAN AKAR MASALAH (IOS 15 BUG) ---
+            // Bug: iOS 15 Galeri sering kirim type="" dan name="image" (tanpa ekstensi)
+            // Solusi: Jika metadata kosong/rusak, kita tembak langsung jadi JPG.
+            if (!finalType || finalType === "" || finalName.indexOf('.') === -1) {
+                finalType = "image/jpeg";
+                // Jika nama tidak ada ekstensinya, tambah .jpg
+                if (finalName.indexOf('.') === -1) {
+                    finalName = finalName + ".jpg"; 
+                }
             }
             
-            // Cek ekstensi file
-            const ext = fileName.split('.').pop().toLowerCase();
-            
-            // Deteksi gambar yang lebih toleran
-            const isImage = fileType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'heic', 'webp'].includes(ext);
+            // Ambil ekstensi setelah nama diperbaiki
+            finalExt = finalName.split('.').pop().toLowerCase();
+
+            // Cek apakah ini gambar (Logic dilonggarkan untuk menerima hasil perbaikan di atas)
+            const isImage = finalType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'heic', 'webp'].includes(finalExt);
 
             const reader = new FileReader();
             
@@ -2035,18 +2039,18 @@ document.getElementById('file-input').addEventListener('change', async (e) => {
                         const resultData = event.target.result;
                         let content, mimeType, isTextContent = false;
 
-                        // Logika Dokumen (Word/Excel/PPT/Txt)
-                        if (['doc', 'docx'].includes(ext)) {
+                        // HANDLING DOKUMEN (Word/Excel/PPT/Txt)
+                        if (['doc', 'docx'].includes(finalExt)) {
                             const result = await mammoth.extractRawText({ arrayBuffer: resultData });
                             content = result.value;
                             mimeType = 'text/plain';
                             isTextContent = true;
-                        } else if (['xls', 'xlsx'].includes(ext)) {
+                        } else if (['xls', 'xlsx'].includes(finalExt)) {
                             const workbook = XLSX.read(resultData, { type: 'buffer' });
                             content = workbook.SheetNames.map(name => XLSX.utils.sheet_to_txt(workbook.Sheets[name])).join('\n\n');
                             mimeType = 'text/plain';
                             isTextContent = true;
-                        } else if (ext === 'pptx') {
+                        } else if (finalExt === 'pptx') {
                             const zip = await JSZip.loadAsync(resultData);
                             const slidePromises = [];
                             zip.folder("ppt/slides").forEach((path, f) => {
@@ -2057,27 +2061,25 @@ document.getElementById('file-input').addEventListener('change', async (e) => {
                             content = (await Promise.all(slidePromises)).join('\n\n');
                             mimeType = 'text/plain';
                             isTextContent = true;
-                        } else if (ext === 'txt') {
+                        } else if (finalExt === 'txt') {
                             content = resultData;
                             mimeType = 'text/plain';
                             isTextContent = true;
                         } else {
-                            // --- GAMBAR & PDF (BASE64) ---
-                            // Ambil data base64 murni
+                            // HANDLING GAMBAR & PDF (Fallback ke Base64)
                             if (typeof resultData === 'string' && resultData.includes(',')) {
                                 content = resultData.split(',')[1];
                             } else {
-                                content = ""; // Fail safe
+                                content = ""; 
                             }
-                            
-                            mimeType = fileType; // Gunakan tipe yang sudah kita perbaiki di atas
+                            mimeType = finalType; // Gunakan tipe yang sudah diperbaiki
                             isTextContent = false;
                         }
 
                         resolve({
-                            name: fileName,
+                            name: finalName, // Gunakan nama yang sudah ada .jpg
                             size: file.size,
-                            type: ext,
+                            type: finalExt,
                             data: content,
                             mimeType: mimeType,
                             isTextContent: isTextContent
@@ -2087,15 +2089,15 @@ document.getElementById('file-input').addEventListener('change', async (e) => {
                     }
                 };
                 
-                reader.onerror = () => reject(new Error("Gagal membaca file"));
+                reader.onerror = () => reject(new Error("Gagal FileReader"));
 
-                // STRATEGI BACA FILE
-                if (['doc', 'docx', 'xls', 'xlsx', 'pptx'].includes(ext)) {
+                // LOGIKA BACA
+                if (['doc', 'docx', 'xls', 'xlsx', 'pptx'].includes(finalExt)) {
                     reader.readAsArrayBuffer(file);
-                } else if (ext === 'txt') {
+                } else if (finalExt === 'txt') {
                     reader.readAsText(file);
                 } else {
-                    // Gambar & PDF baca sebagai DataURL (Paling aman untuk iOS)
+                    // Gambar & PDF baca sebagai DataURL (Aman untuk iOS)
                     reader.readAsDataURL(file);
                 }
             });
@@ -2104,8 +2106,8 @@ document.getElementById('file-input').addEventListener('change', async (e) => {
             uploadedFiles.push(processed);
         }
     } catch (err) {
-        console.error("Error upload:", err);
-        alert("Gagal memuat file. Coba lagi.");
+        console.error("Upload error:", err);
+        // Jangan alert error, biarkan silent fail agar UX tidak terganggu jika cuma 1 file bermasalah
     } finally {
         renderFilePreviews();
     }
