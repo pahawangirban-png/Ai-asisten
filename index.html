@@ -2350,73 +2350,98 @@
         }
 		
 		// ============================
-        // PATCH KHUSUS IOS 15 (Versi Anti-Karet/Rubber Band)
+        // PATCH KHUSUS IOS 15 (Versi Lock-Body / Anti-Karet)
         // ============================
         function applyIOS15SpecificFix() {
             const ua = navigator.userAgent || navigator.vendor || window.opera;
-            // Deteksi Spesifik iOS 15
+            // 1. Deteksi Spesifik iOS 15 (iPhone + OS 15)
             const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
 
             if (isIOS15) {
-                console.log("⚠️ iOS 15 Detected: Activating Anti-Rubber Band Patch");
+                console.log("⚠️ iOS 15 Detected: Mengaktifkan Anti-Rubber Band Patch...");
 
                 // Referensi elemen penting
                 const viewport = window.visualViewport;
-                const chatPage = document.getElementById('chat-page');
                 const chatContainer = document.getElementById('chat-container');
+                const chatPage = document.getElementById('chat-page');
 
-                // Fungsi untuk "Memaku" Layar saat Keyboard Muncul
+                // Variabel untuk menyimpan posisi scroll terakhir sebelum dikunci
+                let lastScrollY = 0;
+
+                // Fungsi Reset (Normal Mode)
+                const resetStyles = () => {
+                    document.body.style.position = '';
+                    document.body.style.width = '';
+                    document.body.style.height = '';
+                    document.body.style.top = '';
+                    document.body.style.overflow = '';
+                    
+                    if (chatPage) chatPage.style.height = '100%';
+                    window.scrollTo(0, lastScrollY); // Kembalikan posisi scroll
+                };
+
+                // Fungsi Kunci (Keyboard Mode)
+                const lockStyles = () => {
+                    if (!viewport) return;
+                    
+                    // Simpan posisi scroll saat ini agar tidak loncat
+                    lastScrollY = window.scrollY;
+
+                    // 1. KUNCI BODY (Paku Utama)
+                    // position: fixed membuat body 'lepas' dari aliran scroll browser native
+                    // sehingga user tidak bisa menarik header/footer lagi.
+                    document.body.style.position = 'fixed';
+                    document.body.style.width = '100%';
+                    document.body.style.height = `${viewport.height}px`; // Tinggi pas sesuai area terlihat
+                    document.body.style.top = '0';
+                    document.body.style.overflow = 'hidden'; // Matikan scroll di body level
+
+                    // 2. SESUAIKAN HALAMAN CHAT
+                    if (chatPage) {
+                        chatPage.style.height = `${viewport.height}px`;
+                    }
+
+                    // 3. PASTIKAN KONTEN CHAT TETAP BISA SCROLL
+                    if (chatContainer) {
+                        chatContainer.style.height = '100%'; 
+                        chatContainer.style.overflowY = 'auto'; 
+                        chatContainer.style.webkitOverflowScrolling = 'touch'; // Momentum scroll tetap aktif
+                    }
+                    
+                    // Paksa scroll window ke paling atas untuk menghindari gap putih
+                    window.scrollTo(0, 0);
+                };
+
+                // Handler Utama
                 const handleResize = () => {
-                    // Cek apakah keyboard kira-kira sedang aktif 
-                    // (Tinggi viewport lebih kecil dari tinggi layar asli)
-                    const isKeyboardOpen = viewport.height < window.innerHeight;
+                    if (!viewport) return;
+
+                    // Deteksi Keyboard:
+                    // Jika tinggi visual viewport lebih kecil dari tinggi layar asli (selisih > 150px),
+                    // maka kemungkinan besar keyboard sedang aktif.
+                    const isKeyboardOpen = viewport.height < (window.innerHeight - 150);
 
                     if (isKeyboardOpen) {
-                        // KUNCI BODY AGAR TIDAK BISA DITARIK (MENGHILANGKAN KARET)
-                        document.body.style.height = `${viewport.height}px`;
-                        document.body.style.overflow = 'hidden'; 
-                        document.body.style.position = 'fixed'; // Ini paku utamanya
-                        document.body.style.width = '100%';
-                        document.body.style.top = '0';
-                        document.body.style.left = '0';
-
-                        // Paksa Chat Page menyesuaikan ukuran viewport keyboard
-                        if (chatPage) {
-                            chatPage.style.height = `${viewport.height}px`;
-                            chatPage.style.overflow = 'hidden'; // Kunci scroll di wrapper
-                        }
-                        
-                        // Pastikan container chat tetap bisa di-scroll
-                        if (chatContainer) {
-                            chatContainer.style.height = 'auto'; // Biarkan flex mengatur
-                            chatContainer.style.overflowY = 'auto';
-                        }
-                        
-                        // Kembalikan scroll window ke 0 agar header tidak terbang
-                        window.scrollTo(0, 0);
-
+                        lockStyles();
                     } else {
-                        // RESET SAAT KEYBOARD TURUN (KEMBALI NORMAL)
-                        document.body.style.height = '100%';
-                        document.body.style.overflow = ''; // Lepas kunci
-                        document.body.style.position = ''; // Lepas paku
-                        document.body.style.width = '';
-                        document.body.style.top = '';
-                        document.body.style.left = '';
-
-                        if (chatPage) {
-                            chatPage.style.height = '100%';
-                        }
+                        resetStyles();
                     }
                 };
 
+                // Pasang Event Listener
                 if (viewport) {
                     viewport.addEventListener('resize', handleResize);
-                    viewport.addEventListener('scroll', () => window.scrollTo(0, 0)); // Double protection
+                    // Event 'scroll' di window seringkali menjadi penyebab 'bocor', 
+                    // kita paksa balik ke 0 saat keyboard aktif
+                    window.addEventListener('scroll', () => {
+                        if (document.body.style.position === 'fixed') {
+                            window.scrollTo(0, 0);
+                        }
+                    });
                 }
                 
-                // Set warna tema putih untuk status bar
-                document.body.style.backgroundColor = "#ffffff";
+                // Tambahan: Meta tag warna untuk status bar (sudah solved, tapi kita pertahankan agar konsisten)
+                // document.body.style.backgroundColor = "#ffffff"; 
             }
         }
 
