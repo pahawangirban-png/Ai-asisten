@@ -2350,98 +2350,63 @@
         }
 		
 		// ============================
-        // PATCH KHUSUS IOS 15 (Versi Lock-Body / Anti-Karet)
+        // PATCH KHUSUS IOS 15 (Anti-Rubber Band & Input Fix)
         // ============================
         function applyIOS15SpecificFix() {
             const ua = navigator.userAgent || navigator.vendor || window.opera;
-            // 1. Deteksi Spesifik iOS 15 (iPhone + OS 15)
+            // Deteksi iOS 15
             const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
 
             if (isIOS15) {
-                console.log("⚠️ iOS 15 Detected: Mengaktifkan Anti-Rubber Band Patch...");
+                console.log("⚠️ iOS 15 Detected: Mengaktifkan Smart Scroll Lock...");
 
-                // Referensi elemen penting
-                const viewport = window.visualViewport;
-                const chatContainer = document.getElementById('chat-container');
                 const chatPage = document.getElementById('chat-page');
+                const chatContainer = document.getElementById('chat-container');
+                const viewport = window.visualViewport;
 
-                // Variabel untuk menyimpan posisi scroll terakhir sebelum dikunci
-                let lastScrollY = 0;
-
-                // Fungsi Reset (Normal Mode)
-                const resetStyles = () => {
-                    document.body.style.position = '';
-                    document.body.style.width = '';
-                    document.body.style.height = '';
-                    document.body.style.top = '';
-                    document.body.style.overflow = '';
+                // 1. KUNCI MATI EFEK KARET (RUBBER BAND)
+                // Logika: Jika jari bergerak DI LUAR area chat (misal di Header/Footer),
+                // batalkan event-nya (preventDefault). Ini membuat Header/Footer "keras" tak bisa ditarik.
+                document.addEventListener('touchmove', function(e) {
+                    // Cek apakah yang disentuh adalah bagian dari chat-container yang bisa discroll
+                    const isScrollable = e.target.closest('#chat-container');
                     
-                    if (chatPage) chatPage.style.height = '100%';
-                    window.scrollTo(0, lastScrollY); // Kembalikan posisi scroll
-                };
-
-                // Fungsi Kunci (Keyboard Mode)
-                const lockStyles = () => {
-                    if (!viewport) return;
-                    
-                    // Simpan posisi scroll saat ini agar tidak loncat
-                    lastScrollY = window.scrollY;
-
-                    // 1. KUNCI BODY (Paku Utama)
-                    // position: fixed membuat body 'lepas' dari aliran scroll browser native
-                    // sehingga user tidak bisa menarik header/footer lagi.
-                    document.body.style.position = 'fixed';
-                    document.body.style.width = '100%';
-                    document.body.style.height = `${viewport.height}px`; // Tinggi pas sesuai area terlihat
-                    document.body.style.top = '0';
-                    document.body.style.overflow = 'hidden'; // Matikan scroll di body level
-
-                    // 2. SESUAIKAN HALAMAN CHAT
-                    if (chatPage) {
-                        chatPage.style.height = `${viewport.height}px`;
+                    // Jika BUKAN area scroll (berarti Header/Footer/Input), MATIKAN gerakan karetnya
+                    if (!isScrollable) {
+                        e.preventDefault();
                     }
+                }, { passive: false }); // passive: false wajib untuk iOS agar preventDefault jalan
 
-                    // 3. PASTIKAN KONTEN CHAT TETAP BISA SCROLL
-                    if (chatContainer) {
-                        chatContainer.style.height = '100%'; 
-                        chatContainer.style.overflowY = 'auto'; 
-                        chatContainer.style.webkitOverflowScrolling = 'touch'; // Momentum scroll tetap aktif
-                    }
+                // 2. KOREKSI POSISI INPUT (Agar tidak tertimbun keyboard)
+                // Mengubah tinggi wrapper utama ('chat-page') mengikuti tinggi visual viewport
+                const handleResize = () => {
+                    if (!viewport || !chatPage) return;
                     
-                    // Paksa scroll window ke paling atas untuk menghindari gap putih
+                    // Paksa tinggi chat-page sama persis dengan ruang visual yang tersedia
+                    // Ini akan otomatis mengangkat input ke atas keyboard
+                    chatPage.style.height = `${viewport.height}px`;
+                    chatPage.style.overflow = 'hidden'; // Pastikan wrapper tidak bocor
+                    
+                    // Scroll window ke 0 untuk memastikan header nempel di atas
                     window.scrollTo(0, 0);
                 };
 
-                // Handler Utama
-                const handleResize = () => {
-                    if (!viewport) return;
-
-                    // Deteksi Keyboard:
-                    // Jika tinggi visual viewport lebih kecil dari tinggi layar asli (selisih > 150px),
-                    // maka kemungkinan besar keyboard sedang aktif.
-                    const isKeyboardOpen = viewport.height < (window.innerHeight - 150);
-
-                    if (isKeyboardOpen) {
-                        lockStyles();
-                    } else {
-                        resetStyles();
-                    }
-                };
-
-                // Pasang Event Listener
+                // Pasang listener resize
                 if (viewport) {
                     viewport.addEventListener('resize', handleResize);
-                    // Event 'scroll' di window seringkali menjadi penyebab 'bocor', 
-                    // kita paksa balik ke 0 saat keyboard aktif
-                    window.addEventListener('scroll', () => {
-                        if (document.body.style.position === 'fixed') {
-                            window.scrollTo(0, 0);
-                        }
-                    });
+                    // Jalankan sekali di awal
+                    handleResize();
                 }
+
+                // 3. GLOBAL STYLE LOCK
+                // Kunci html dan body agar tidak bisa discroll sama sekali
+                document.documentElement.style.height = '100%';
+                document.documentElement.style.overflow = 'hidden';
+                document.body.style.height = '100%';
+                document.body.style.overflow = 'hidden';
                 
-                // Tambahan: Meta tag warna untuk status bar (sudah solved, tapi kita pertahankan agar konsisten)
-                // document.body.style.backgroundColor = "#ffffff"; 
+                // Pastikan status bar tetap benar
+                document.body.style.backgroundColor = "#ffffff";
             }
         }
 
