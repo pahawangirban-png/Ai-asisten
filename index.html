@@ -1255,8 +1255,7 @@
 				htmlContent = content.replace(/\n/g, '<br>');
 			}
 			// Tombol Copy (sederhana dan kompatibel)
-			const copyButtonHtml = role === 'model' && !isLoading && !isRawHtml ? `
-		        <div class="copy-container hidden absolute bottom-1.5 left-4 select-none">
+			const copyButtonHtml = role === 'model' && !isLoading && !isRawHtml ? `<div class="copy-container hidden absolute bottom-1.5 left-4 select-none">
 		            <button class="copy-btn text-slate-400 p-0 flex items-center transition-colors hover:text-slate-600" title="Salin">
 		                <svg viewBox="0 0 1024 1024" width="14" height="14" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
 		                    <path d="M768 832a128 128 0 0 1-128 128H192A128 128 0 0 1 64 832V384a128 128 0 0 1 128-128v64a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64h64z"></path>
@@ -1264,7 +1263,8 @@
 		                </svg>
 		            </button>
 		        </div>` : '';
-					div.innerHTML = `
+				
+			div.innerHTML = `
 		        <div class="${bubbleClass} relative flex flex-col bg-gray-100 px-4 pt-3 pb-6 rounded-2xl shadow-sm mb-4">
 		            <div class="flex justify-between items-center mb-1 border-b-[0.5px] border-gray-300 pb-1">
 		                <span class="text-xs font-bold uppercase tracking-wide ${nameColorClass}">${name}</span>
@@ -2110,18 +2110,22 @@
 			}
 		}
 		// ==========================================
-		// SOLUSI FINAL IOS 15: PAKU BETON + BOX MODEL FIX (PERMANEN)
+		// SOLUSI FINAL IOS 15: PAKU BETON + SIDEBAR + ANTI-ZOOM LAG
 		// ==========================================
 		(function() {
 			const ua = navigator.userAgent;
 			const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
+
 			if(isIOS15) {
-				console.log("iOS 15: Mode Presisi + Box Model Fix...");
+				console.log("🛡️ iOS 15: Mode Paku Beton + Anti-Zoom Lag...");
+
 				const viewport = window.visualViewport;
 				const chatPage = document.getElementById('chat-page');
 				const chatContainer = document.getElementById('chat-container');
+				const sidebarContent = document.getElementById('sidebar-content');
 				const header = document.querySelector('header');
 				const inputField = document.getElementById('user-input');
+
 				// FUNGSI BANTUAN: SCROLL HALUS
 				const scrollToBottom = () => {
 					if(chatContainer) {
@@ -2131,16 +2135,17 @@
 						});
 					}
 				};
+
 				// 1. INJEKSI CSS PERMANEN
 				const style = document.createElement('style');
 				style.innerHTML = `
-	                /* KUNCI LAYAR TOTAL */
+	                /* KUNCI BODY TOTAL */
 	                html, body {
 	                    position: fixed !important;
 	                    overflow: hidden !important;
 	                    width: 100% !important;
 	                    height: 100% !important;
-	                    touch-action: none; 
+	                    touch-action: none; /* Matikan gesture bawaan */
 	                }
 	                
 	                /* WRAPPER CHAT */
@@ -2160,42 +2165,43 @@
 	                    -webkit-overflow-scrolling: touch;
 	                    height: 100%;
 	                    touch-action: pan-y;
-	                    padding-bottom: 15px !important; /* Jarak aman footer */
+	                    padding-bottom: 15px !important;
 	                }
+
+                    /* AREA SCROLL SIDEBAR */
+                    #sidebar-content {
+                        overflow-y: scroll !important;
+                        -webkit-overflow-scrolling: touch;
+                        touch-action: pan-y;
+                        height: 100%;
+                    }
 	
-	                /* --- PERBAIKAN HEADER (ROOT CAUSE FIX) --- */
+	                /* HEADER FIX (BOX MODEL) */
 	                header {
 	                    will-change: margin-top;
-	                    
-	                    /* INI KUNCINYA: Memaksa padding dihitung di DALAM lebar layar */
-	                    /* Mengalahkan class 'box-content' bawaan Tailwind */
 	                    box-sizing: border-box !important; 
-	                    
-	                    /* Pastikan lebar tidak bablas */
 	                    width: 100% !important;
 	                    max-width: 100vw !important;
-	                    
-	                    /* Reset Padding Kanan agar konsisten */
 	                    padding-right: 16px !important; 
 	                }
 	            `;
 				document.head.appendChild(style);
-				// 2. LOGIKA INTERAKSI (SNAP TANPA ANIMASI - SOLID)
+
+				// 2. LOGIKA INTERAKSI HEADER (SOLID SNAP)
 				if(inputField && header) {
 					const headerHeight = header.offsetHeight || 80;
 					inputField.addEventListener('focus', () => {
-						// Header Naik Instan (Solid)
 						header.style.marginTop = `-${headerHeight}px`;
 						if(viewport) chatPage.style.height = `${viewport.height}px`;
 						window.scrollTo(0, 0);
 					});
 					inputField.addEventListener('blur', () => {
-						// Header Turun Instan (Solid)
 						header.style.marginTop = '0px';
 						if(viewport) chatPage.style.height = `${viewport.height}px`;
 						window.scrollTo(0, 0);
 					});
 				}
+
 				// 3. LOGIKA RESIZE VIEWPORT
 				const handleResize = () => {
 					if(!viewport || !chatPage) return;
@@ -2206,15 +2212,19 @@
 					viewport.addEventListener('resize', handleResize);
 					setTimeout(handleResize, 100);
 				}
-				// 4. SATPAM SCROLL (MENCEGAH KARET)
-				if(chatContainer) {
-					chatContainer.addEventListener('touchmove', function(e) {
+
+				// 4. FUNGSI SATPAM SCROLL (Mencegah Mentok Tarik Body)
+                const preventRubberBand = (element) => {
+                    if (!element) return;
+                    
+                    element.addEventListener('touchmove', function(e) {
 						const el = this;
 						const scrollTop = el.scrollTop;
 						const scrollHeight = el.scrollHeight;
 						const height = el.clientHeight;
 						const deltaY = e.touches[0].pageY - (el.lastY || e.touches[0].pageY);
 						el.lastY = e.touches[0].pageY;
+
 						if(scrollHeight <= height) {
 							e.preventDefault();
 							return;
@@ -2225,23 +2235,26 @@
 						if(scrollTop + height >= scrollHeight && deltaY < 0) {
 							e.preventDefault();
 						}
-					}, {
-						passive: false
-					});
-					chatContainer.addEventListener('touchstart', function(e) {
+					}, { passive: false });
+
+					element.addEventListener('touchstart', function(e) {
 						this.lastY = e.touches[0].pageY;
-					}, {
-						passive: true
-					});
-				}
+					}, { passive: true });
+                };
+
+                if (chatContainer) preventRubberBand(chatContainer);
+                if (sidebarContent) preventRubberBand(sidebarContent);
+
 				// 5. BLOKIR SENTUHAN LUAR
 				document.addEventListener('touchmove', function(e) {
-					if(!e.target.closest('#chat-container')) {
+                    const isChat = e.target.closest('#chat-container');
+                    const isSidebar = e.target.closest('#sidebar-content');
+
+					if(!isChat && !isSidebar) {
 						e.preventDefault();
 					}
-				}, {
-					passive: false
-				});
+				}, { passive: false });
+
 				// 6. AUTO SCROLL (MUTATION OBSERVER)
 				if(chatContainer) {
 					const observer = new MutationObserver((mutations) => {
@@ -2256,6 +2269,19 @@
 						subtree: true
 					});
 				}
+
+                // ==========================================
+                // 7. ANTI-DOUBLE TAP ZOOM (FIX MACET)
+                // ==========================================
+                let lastTouchEnd = 0;
+                document.addEventListener('touchend', function(event) {
+                    const now = (new Date()).getTime();
+                    // Jika selisih waktu ketukan < 300ms, itu double tap
+                    if (now - lastTouchEnd <= 300) {
+                        event.preventDefault(); // Matikan Zoom!
+                    }
+                    lastTouchEnd = now;
+                }, { passive: false }); // Wajib passive: false agar preventDefault jalan
 			}
 		})();
 		// ============================
