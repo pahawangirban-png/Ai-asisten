@@ -2504,7 +2504,7 @@
 			// 1. Deteksi iOS 15
 			const isIOS15 = /iPhone/.test(navigator.userAgent) && /OS 15_/.test(navigator.userAgent);
 			if(isIOS15) {
-				console.log("🛡️ iOS 15 Detected: Mengaktifkan Parser V4 (Clean Table)");
+				console.log("🛡️ iOS 15 Detected: Mengaktifkan Parser V5 (Table Border + HR Fix)");
 				if(typeof converter !== 'undefined') {
 					converter.makeHtml = function(text) {
 						if(!text) return "";
@@ -2535,13 +2535,19 @@
 									output.push(line + '\n');
 									continue;
 								}
-								// B. TABEL (CLEAN LOOK)
+								// B. GARIS BAWAH (HORIZONTAL RULE) - FIX BARU
+								// Mendeteksi --- atau *** atau ___
+								if(line.trim().match(/^[-*_]{3,}$/)) {
+									// Ganti dengan garis HTML asli
+									output.push('<hr class="my-4 border-t border-gray-300">');
+									continue;
+								}
+								// C. TABEL (FIX BORDER KANAN)
 								if(line.trim().startsWith('|')) {
 									if(!inTable) {
 										inTable = true;
 										tableHeaderProcessed = false;
-										// PERBAIKAN 1: Hapus 'border' dari div pembungkus
-										output.push('<div class="overflow-x-auto my-3"><table class="w-full text-sm text-left border-collapse">');
+										output.push('<div class="overflow-x-auto my-3"><table class="w-full text-sm text-left border-collapse border-l border-t border-gray-300">'); // Tambah border kiri/atas di wrapper table
 									}
 									const cells = line.split('|').filter(cell => cell.trim() !== '');
 									const isSeparator = cells.every(c => c.trim().match(/^[-: ]+$/));
@@ -2554,11 +2560,11 @@
 									cells.forEach(cell => {
 										const content = cell.trim();
 										if(isHeaderRow) {
-											// PERBAIKAN 2: Header bg-gray-200 & Teks Hitam
-											output.push(`<th class="bg-gray-200 px-4 py-2 border-b border-gray-300 font-bold text-black border-r last:border-r-0 whitespace-nowrap">${content}</th>`);
+											// Header: Border Kanan ADA (Hapus last:border-r-0)
+											output.push(`<th class="bg-gray-200 px-4 py-2 border-b border-r border-gray-300 font-bold text-black whitespace-nowrap">${content}</th>`);
 										} else {
-											// Body: Border bawah & kanan, tapi border kanan hilang di kolom terakhir
-											output.push(`<td class="px-4 py-2 border-b border-gray-200 text-gray-900 border-r border-gray-200 last:border-r-0 min-w-[100px]">${content}</td>`);
+											// Body: Border Kanan ADA (Hapus last:border-r-0)
+											output.push(`<td class="px-4 py-2 border-b border-r border-gray-200 text-gray-900 min-w-[100px]">${content}</td>`);
 										}
 									});
 									output.push('</tr>');
@@ -2569,7 +2575,7 @@
 										inTable = false;
 									}
 								}
-								// C. LIST RAPI (Black & Hierarchy)
+								// D. LIST RAPI
 								const listMatch = line.match(/^(\s*)([-*]|\d+\.)\s+(.*)$/);
 								if(listMatch) {
 									const indent = listMatch[1].length;
@@ -2590,7 +2596,7 @@
                                     <span class="flex-1">${content}</span>
                                 </div>`);
 								}
-								// D. TEXT BIASA
+								// E. TEXT BIASA
 								else {
 									if(line.trim() === '') {
 										output.push('<div class="h-2"></div>');
@@ -2604,7 +2610,7 @@
 							}
 							return output.join('');
 						} catch (e) {
-							console.error("V4 Parser Error:", e);
+							console.error("V5 Parser Error:", e);
 							return text;
 						}
 					};
@@ -2612,5 +2618,6 @@
 			}
 		})();
 	</script>
+	
 </body>
 </html>
