@@ -1974,53 +1974,39 @@
 			}, "HAPUS", "text-red-600", "text-blue-600");
 		}
 		// ============================
-		// FILE HANDLING (FINAL STABLE IOS 15 - ARRAY BUFFER MODE)
+		// FILE HANDLING (FIX: IOS 15 MULTI-SELECT ENABLED)
 		// ============================
 		
-		// Fungsi Helper: Ubah ArrayBuffer ke Base64 (Manual)
-        // Ini lebih aman di iOS 15 daripada mengandalkan FileReader.readAsDataURL
-		const arrayBufferToBase64 = (buffer) => {
-            let binary = '';
-            const bytes = new Uint8Array(buffer);
-            const len = bytes.byteLength;
-            // Gunakan chunking untuk performa jika file besar
-            for (let i = 0; i < len; i++) {
-                binary += String.fromCharCode(bytes[i]);
+        // --- PATCH KHUSUS IOS 15: FIX MULTI-SELECT ---
+        (function() {
+            const ua = navigator.userAgent;
+            const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
+            
+            if (isIOS15) {
+                const fileInput = document.getElementById('file-input');
+                if (fileInput) {
+                    // Hapus atribut 'accept' khusus di iOS 15.
+                    // Ini memaksa iOS 15 mengaktifkan mode 'Select Multiple'
+                    // meskipun jadi menampilkan semua jenis file.
+                    fileInput.removeAttribute('accept');
+                    console.log("🔓 iOS 15: Atribut 'accept' dihapus untuk mengaktifkan Multi-Select.");
+                }
             }
-            return window.btoa(binary);
-		};
+        })();
 
-        // Fungsi Helper: Baca File sebagai ArrayBuffer (Paling Stabil)
-        const readFileAsBuffer = (file) => {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target.result);
-                reader.onerror = (e) => reject(e);
-                reader.readAsArrayBuffer(file); // KUNCI: BACA SEBAGAI BINARY, BUKAN URL
-            });
-        };
-
-        // Fungsi Helper: Baca Text
-        const readFileAsText = (file) => {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target.result);
-                reader.onerror = (e) => reject(e);
-                reader.readAsText(file);
-            });
-        };
-
-		// ============================
-		// FILE HANDLING (IOS 15 ANTI-DEADLOCK / TIMEOUT PROTECTION)
-		// ============================
-		
 		/**
 		 * Handle file input change
 		 */
 		document.getElementById('file-input').addEventListener('change', async (e) => {
-			const files = e.target.files;
-			if (!files || !files.length) return;
+			// 1. AMBIL FILE & AMANKAN KE ARRAY
+            const rawFiles = e.target.files;
+			if (!rawFiles || !rawFiles.length) return;
+            const files = Array.from(rawFiles);
 
+            // 2. RESET TOMBOL DETIK ITU JUGA (ANTI-MACET)
+            e.target.value = ''; 
+
+            // Indikator loading
             const btn = e.target.parentElement.querySelector('button');
             const originalIcon = btn.innerHTML;
             btn.innerHTML = `<div class="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>`;
@@ -2029,59 +2015,56 @@
                 for (const file of files) {
                     if (uploadedFiles.find(f => f.name === file.name)) continue;
 
-                    // --- INI MEKANISME BOM WAKTU (TIMEOUT) ---
-                    // Kita buat janji: Jika baca file > 5 detik, kita anggap GAGAL (Reject)
-                    // agar kode tidak macet selamanya menunggu iOS 15.
-                    const readFileWithTimeout = (fileToRead, type) => {
-                        return new Promise((resolve, reject) => {
-                            const reader = new FileReader();
-                            
-                            // 1. Timer Bom (5 Detik)
-                            const timer = setTimeout(() => {
-                                reader.abort(); // Hentikan paksa pembacaan
-                                reject(new Error("Timeout: iOS 15 terlalu lama memproses gambar."));
-                            }, 5000); // 5000ms = 5 detik
+                    const fileType = file.name.split('.').pop().toLowerCase();
+                    const isImage = file.type.startsWith('image/');
 
-                            // 2. Jika Berhasil
-                            reader.onload = (event) => {
-                                clearTimeout(timer); // Matikan bom
-                                resolve(event.target.result);
-                            };
+                    // --- VALIDASI MANUAL (KARENA ACCEPT DIHAPUS DI IOS 15) ---
+                    // Kita harus saring manual di sini karena picker menampilkan semua file
+                    const allowedExts = ['pdf','doc','docx','xls','xlsx','pptx','txt','jpg','jpeg','png','gif','webp','heic'];
+                    if (!allowedExts.includes(fileType) && !isImage) {
+                        alert(`Format file tidak didukung: .${fileType}`);
+                        continue;
+                    }
 
-                            // 3. Jika Error Native
-                            reader.onerror = (err) => {
-                                clearTimeout(timer);
-                                reject(err);
-                            };
+                    // --- TRIK PREVIEW INSTAN (BLOB URL) ---
+                    let previewUrl = null;
+                    if (isImage) {
+                        previewUrl = URL.createObjectURL(file);
+                    }
 
-                            // Eksekusi Baca Sesuai Tipe
-                            if (type === 'binary') reader.readAsArrayBuffer(fileToRead);
-                            else if (type === 'text') reader.readAsText(fileToRead);
-                            else reader.readAsDataURL(fileToRead);
-                        });
-                    };
-                    // ------------------------------------------
+                    // --- PROSES BACA DATA (UNTUK AI) ---
+                    const readFileData = new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        
+                        reader.onload = (evt) => resolve(evt.target.result);
+                        reader.onerror = (err) => reject(err);
+
+                        // Strategi Baca
+                        if (['doc', 'docx', 'xls', 'xlsx', 'pptx'].includes(fileType)) {
+                            reader.readAsArrayBuffer(file);
+                        } else if (fileType === 'txt') {
+                            reader.readAsText(file);
+                        } else {
+                            reader.readAsDataURL(file); // Gambar/PDF
+                        }
+                    });
 
                     try {
-                        const fileType = file.name.split('.').pop().toLowerCase();
-                        const isImage = file.type.startsWith('image/');
+                        const result = await readFileData;
                         
                         let content, mimeType, isTextContent = false;
 
-                        // PROSES DENGAN PENGAMAN TIMEOUT
+                        // Parsing Data
                         if (['doc', 'docx', 'xls', 'xlsx', 'pptx'].includes(fileType)) {
-                            // Dokumen (Binary)
-                            const buffer = await readFileWithTimeout(file, 'binary');
-                            
                             if (['doc', 'docx'].includes(fileType)) {
-                                const res = await mammoth.extractRawText({ arrayBuffer: buffer });
+                                const res = await mammoth.extractRawText({ arrayBuffer: result });
                                 content = res.value; mimeType = 'text/plain'; isTextContent = true;
                             } else if (['xls', 'xlsx'].includes(fileType)) {
-                                const wb = XLSX.read(buffer, { type: 'buffer' });
+                                const wb = XLSX.read(result, { type: 'buffer' });
                                 content = wb.SheetNames.map(n => XLSX.utils.sheet_to_txt(wb.Sheets[n])).join('\n\n');
                                 mimeType = 'text/plain'; isTextContent = true;
                             } else if (fileType === 'pptx') {
-                                const zip = await JSZip.loadAsync(buffer);
+                                const zip = await JSZip.loadAsync(result);
                                 const slides = [];
                                 zip.folder("ppt/slides").forEach((path, f) => {
                                     if (path.startsWith("slide") && path.endsWith(".xml")) {
@@ -2091,52 +2074,37 @@
                                 content = (await Promise.all(slides)).join('\n\n');
                                 mimeType = 'text/plain'; isTextContent = true;
                             }
-                        } 
-                        else if (fileType === 'txt') {
-                            // Text
-                            content = await readFileWithTimeout(file, 'text');
-                            mimeType = 'text/plain'; isTextContent = true;
-                        } 
-                        else if (fileType === 'pdf' || isImage) {
-                            // Gambar/PDF (Base64) - INI YANG SERING MACET
-                            // Kita pakai 'slice' sedikit untuk memancing iOS merespon, lalu baca dengan timeout
-                            const blob = file.slice(0, file.size, file.type);
-                            const result = await readFileWithTimeout(blob, 'url');
-                            
+                        } else if (fileType === 'txt') {
+                            content = result; mimeType = 'text/plain'; isTextContent = true;
+                        } else {
+                            // Gambar/PDF
                             content = result.split(',')[1];
                             mimeType = isImage ? file.type : 'application/pdf';
                             isTextContent = false;
-                        } 
-                        else {
-                            continue; // Skip file tak dikenal
                         }
 
-                        // Jika lolos timeout, simpan
+                        // Simpan
                         uploadedFiles.push({
                             name: file.name,
                             size: file.size,
                             type: fileType,
                             data: content,
                             mimeType: mimeType,
-                            isTextContent: isTextContent
+                            isTextContent: isTextContent,
+                            previewUrl: previewUrl
                         });
 
                     } catch (err) {
-                        console.error(`Gagal memuat ${file.name}:`, err);
-                        alert(`Gagal memuat ${file.name}. Sistem iOS lambat merespon (Timeout). Silakan coba pilih ulang.`);
-                        // Kita catch error di sini agar loop for tidak berhenti total
-                        // dan tombol tetap kereset di finally
+                        console.error("Gagal baca data file:", file.name);
                     }
                 }
 
+                // Render Preview
                 renderFilePreviews();
 
             } catch (globalErr) {
-                console.error("Upload process error:", globalErr);
+                console.error("Error Upload:", globalErr);
             } finally {
-                // === RESET TOMBOL (YANG PALING PENTING) ===
-                // Apapun yang terjadi (Sukses/Timeout/Error), tombol harus bersih kembali.
-                e.target.value = ''; 
                 btn.innerHTML = originalIcon;
             }
 		});
