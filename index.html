@@ -2349,6 +2349,42 @@
             }
         }
 		
+		// ==========================================
+	    // SOLUSI FINAL IOS 15: ANTI-KARET (BOUNCER)
+	    // ==========================================
+	    (function() {
+	        // Cek apakah ini iOS 15
+	        const ua = navigator.userAgent;
+	        const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
+	
+	        if (isIOS15) {
+	            console.log("🛡️ iOS 15 Detected: Mengaktifkan Anti-Karet...");
+	
+	            // Matikan scroll/karet pada HTML & Body secara paksa
+	            // Ini mencegah layar ditarik dari luar
+	            document.documentElement.style.overflow = 'hidden';
+	            document.body.style.overflow = 'hidden';
+	            document.body.style.height = '100%';
+	            
+	            // Event Listener: Mencegah 'tarikan' pada Header & Footer
+	            document.addEventListener('touchmove', function(e) {
+	                const target = e.target;
+	                
+	                // Cari apakah jari menyentuh area Chat Container
+	                const scrollableArea = target.closest('#chat-container');
+	
+	                // Jika jari TIDAK di area chat (misal di Header/Footer/Input)
+	                if (!scrollableArea) {
+	                    // BLOKIR total! Jangan biarkan layar bergerak (Karet Mati)
+	                    e.preventDefault();
+	                } else {
+	                    // Jika jari di area chat, biarkan scrolling terjadi secara alami
+	                    // (Browser akan menanganinya)
+	                    e.stopPropagation();
+	                }
+	            }, { passive: false }); // 'passive: false' wajib untuk iOS agar blokir jalan
+	        }
+	    })();
         // ============================
         // EVENT LISTENERS
         // ============================
