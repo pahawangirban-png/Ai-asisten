@@ -2350,41 +2350,59 @@
         }
 		
 		// ==========================================
-	    // SOLUSI FINAL IOS 15: ANTI-KARET (BOUNCER)
-	    // ==========================================
-	    (function() {
-	        // Cek apakah ini iOS 15
-	        const ua = navigator.userAgent;
-	        const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
-	
-	        if (isIOS15) {
-	            console.log("🛡️ iOS 15 Detected: Mengaktifkan Anti-Karet...");
-	
-	            // Matikan scroll/karet pada HTML & Body secara paksa
-	            // Ini mencegah layar ditarik dari luar
-	            document.documentElement.style.overflow = 'hidden';
-	            document.body.style.overflow = 'hidden';
-	            document.body.style.height = '100%';
-	            
-	            // Event Listener: Mencegah 'tarikan' pada Header & Footer
-	            document.addEventListener('touchmove', function(e) {
-	                const target = e.target;
-	                
-	                // Cari apakah jari menyentuh area Chat Container
-	                const scrollableArea = target.closest('#chat-container');
-	
-	                // Jika jari TIDAK di area chat (misal di Header/Footer/Input)
-	                if (!scrollableArea) {
-	                    // BLOKIR total! Jangan biarkan layar bergerak (Karet Mati)
-	                    e.preventDefault();
-	                } else {
-	                    // Jika jari di area chat, biarkan scrolling terjadi secara alami
-	                    // (Browser akan menanganinya)
-	                    e.stopPropagation();
-	                }
-	            }, { passive: false }); // 'passive: false' wajib untuk iOS agar blokir jalan
-	        }
-	    })();
+    // SOLUSI FINAL IOS 15: JEBAKAN 1 PIKSEL & KUNCI TOTAL
+    // ==========================================
+    (function() {
+        // 1. Deteksi iOS 15
+        const ua = navigator.userAgent;
+        const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
+
+        if (isIOS15) {
+            console.log("🛡️ iOS 15 Detected: Mengaktifkan Jebakan Scroll...");
+
+            const chatContainer = document.getElementById('chat-container');
+
+            // A. LOGIKA UTAMA: CEGAH KARET DI HEADER/FOOTER/KOSONG
+            document.addEventListener('touchmove', function(e) {
+                const target = e.target;
+                const scrollable = target.closest('#chat-container');
+
+                // Kondisi 1: Jari di luar area chat (Header/Footer) -> BLOKIR
+                if (!scrollable) {
+                    e.preventDefault();
+                    return;
+                }
+
+                // Kondisi 2: Jari di area chat, TAPI chatnya kosong (gak ada scrollbar) -> BLOKIR
+                // (scrollHeight <= clientHeight artinya konten muat di layar, gak perlu scroll)
+                if (chatContainer.scrollHeight <= chatContainer.clientHeight) {
+                    e.preventDefault();
+                    return;
+                }
+
+                // Jika chat ada isinya dan panjang, biarkan jalan (nanti diurus poin B)
+                e.stopPropagation();
+            }, { passive: false });
+
+            // B. LOGIKA TAMBAHAN: JEBAKAN 1 PIKSEL (Agar mentok gak narik Header)
+            if (chatContainer) {
+                chatContainer.addEventListener('touchstart', function() {
+                    const top = chatContainer.scrollTop;
+                    const totalScroll = chatContainer.scrollHeight;
+                    const currentScroll = top + chatContainer.offsetHeight;
+
+                    // Jika mentok ATAS, geser turun 1px
+                    if (top === 0) {
+                        chatContainer.scrollTop = 1;
+                    }
+                    // Jika mentok BAWAH, geser naik 1px
+                    else if (currentScroll === totalScroll) {
+                        chatContainer.scrollTop = top - 1;
+                    }
+                });
+            }
+        }
+    })();
         // ============================
         // EVENT LISTENERS
         // ============================
