@@ -2350,122 +2350,126 @@
         }
 		
 		// ==========================================
-	    // SOLUSI FINAL IOS 15: PAKU BETON + LEGAH (AUTO-HIDE HEADER)
-	    // ==========================================
-	    (function() {
-	        const ua = navigator.userAgent;
-	        // Deteksi iOS 15
-	        const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
-	
-	        if (isIOS15) {
-	            console.log("iOS 15: Mode Paku Beton + Tampilan Legah Aktif...");
-	
-	            const viewport = window.visualViewport;
-	            const chatPage = document.getElementById('chat-page');
-	            const chatContainer = document.getElementById('chat-container');
-	            const header = document.querySelector('header'); // Ambil elemen Header
-	
-	            // 1. INJEKSI CSS KERAS (PAKU BETON BODY)
-	            const style = document.createElement('style');
-	            style.innerHTML = `
-	                html, body {
-	                    position: fixed !important;
-	                    overflow: hidden !important;
-	                    width: 100% !important;
-	                    height: 100% !important;
-	                    touch-action: none;
-	                }
-	                #chat-page {
-	                    position: absolute !important;
-	                    left: 0;
-	                    right: 0;
-	                    top: 0;
-	                    bottom: 0;
-	                    overflow: hidden !important;
-	                }
-	                #chat-container {
-	                    overflow-y: scroll !important;
-	                    -webkit-overflow-scrolling: touch;
-	                    height: 100%;
-	                    touch-action: pan-y;
-	                }
-	            `;
-	            document.head.appendChild(style);
-	
-	            // 2. JS: MENGURUS UKURAN & VISIBILITAS HEADER (LOGIKA BARU)
-	            const handleResize = () => {
-	                if (!viewport || !chatPage) return;
-	
-	                // Hitung tinggi saat ini
-	                const currentHeight = viewport.height;
-	                const windowHeight = window.innerHeight;
-	                
-	                // Cek apakah keyboard kira-kira sedang NAIK
-	                // (Jika tinggi visual jauh lebih kecil dari tinggi layar asli)
-	                const isKeyboardOpen = currentHeight < (windowHeight - 100);
-	
-	                // A. ATUR TINGGI CHAT PAGE AGAR INPUT PAS DI ATAS KEYBOARD
-	                chatPage.style.height = `${currentHeight}px`;
-	
-	                // B. LOGIKA "LEGAH": SEMBUNYIKAN HEADER SAAT KEYBOARD NAIK
-	                if (header) {
-	                    if (isKeyboardOpen) {
-	                        // Sembunyikan header agar area chat lebih luas (mirip iOS 16)
-	                        header.style.display = 'none';
-	                    } else {
-	                        // Kembalikan header saat keyboard turun
-	                        header.style.display = ''; // Reset ke default CSS (flex)
-	                    }
-	                }
-	
-	                // C. JAGA-JAGA SCROLL
-	                window.scrollTo(0, 0);
-	            };
-	
-	            if (viewport) {
-	                viewport.addEventListener('resize', handleResize);
-	                // Jalankan sekali saat load
-	                handleResize();
-	            }
-	
-	            // 3. JS: SATPAM SCROLL (MENCEGAH MOMENTUM BOCOR)
-	            if (chatContainer) {
-	                chatContainer.addEventListener('touchmove', function(e) {
-	                    const el = this;
-	                    const scrollTop = el.scrollTop;
-	                    const scrollHeight = el.scrollHeight;
-	                    const height = el.clientHeight;
-	                    const deltaY = e.touches[0].pageY - (el.lastY || e.touches[0].pageY);
-	                    el.lastY = e.touches[0].pageY;
-	
-	                    if (scrollHeight <= height) {
-	                        e.preventDefault();
-	                        return;
-	                    }
-	
-	                    // Blokir mentok atas
-	                    if (scrollTop <= 0 && deltaY > 0) {
-	                        e.preventDefault();
-	                    }
-	                    // Blokir mentok bawah
-	                    if (scrollTop + height >= scrollHeight && deltaY < 0) {
-	                        e.preventDefault();
-	                    }
-	                }, { passive: false });
-	
-	                chatContainer.addEventListener('touchstart', function(e) {
-	                    this.lastY = e.touches[0].pageY;
-	                }, { passive: true });
-	            }
-	
-	            // 4. BLOKIR SENTUHAN LUAR
-	            document.addEventListener('touchmove', function(e) {
-	                if (!e.target.closest('#chat-container')) {
-	                    e.preventDefault();
-	                }
-	            }, { passive: false });
-	        }
-	    })();
+    // SOLUSI FINAL IOS 15: PAKU BETON + GAYA IOS 16 (AUTO-FULLSCREEN)
+    // ==========================================
+    (function() {
+        const ua = navigator.userAgent;
+        const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
+
+        if (isIOS15) {
+            console.log("🚀 iOS 15: Mode Paku Beton + Auto-Fullscreen Chat...");
+
+            const viewport = window.visualViewport;
+            const chatPage = document.getElementById('chat-page');
+            const chatContainer = document.getElementById('chat-container');
+            const header = document.querySelector('header'); 
+            const inputField = document.getElementById('user-input');
+
+            // 1. INJEKSI CSS "PAKU BETON" (ANTI-KARET)
+            const style = document.createElement('style');
+            style.innerHTML = `
+                html, body {
+                    position: fixed !important;
+                    overflow: hidden !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    touch-action: none; /* Matikan gesture body */
+                }
+                #chat-page {
+                    position: absolute !important;
+                    left: 0;
+                    right: 0;
+                    top: 0;
+                    bottom: 0;
+                    overflow: hidden !important;
+                    z-index: 10;
+                }
+                #chat-container {
+                    overflow-y: scroll !important;
+                    -webkit-overflow-scrolling: touch;
+                    height: 100%;
+                    touch-action: pan-y;
+                    padding-bottom: 0px !important; /* Reset padding */
+                }
+            `;
+            document.head.appendChild(style);
+
+            // 2. LOGIKA "LEGA": SEMBUNYIKAN HEADER SAAT MENGETIK
+            // Ini meniru perilaku iOS 16 dimana header "minggir" agar chat luas
+            if (inputField && header) {
+                // Saat mau ngetik -> Header HILANG -> Chat jadi FULLSCREEN
+                inputField.addEventListener('focus', () => {
+                    header.style.display = 'none'; 
+                    // Paksa update ukuran chat page detik itu juga
+                    if (viewport) chatPage.style.height = `${viewport.height}px`;
+                    window.scrollTo(0, 0);
+                });
+
+                // Saat selesai ngetik (blur) -> Header MUNCUL LAGI
+                inputField.addEventListener('blur', () => {
+                    // Kasih jeda dikit biar keyboard turun dulu baru header muncul
+                    // Biar gak 'glitch' atau lompat
+                    setTimeout(() => {
+                        header.style.display = ''; // Balik ke display awal (flex)
+                        if (viewport) chatPage.style.height = `${viewport.height}px`;
+                        window.scrollTo(0, 0);
+                    }, 100);
+                });
+            }
+
+            // 3. LOGIKA RESIZE: INPUT SELALU DI ATAS KEYBOARD
+            const handleResize = () => {
+                if (!viewport || !chatPage) return;
+                
+                // Tinggi aplikasi = Tinggi Visual (Layar - Keyboard)
+                chatPage.style.height = `${viewport.height}px`;
+                window.scrollTo(0, 0);
+            };
+
+            if (viewport) {
+                viewport.addEventListener('resize', handleResize);
+                setTimeout(handleResize, 100); // Jalankan di awal
+            }
+
+            // 4. SATPAM SCROLL (MENCEGAH KARET SAAT MENTOK)
+            if (chatContainer) {
+                chatContainer.addEventListener('touchmove', function(e) {
+                    const el = this;
+                    const scrollTop = el.scrollTop;
+                    const scrollHeight = el.scrollHeight;
+                    const height = el.clientHeight;
+                    const deltaY = e.touches[0].pageY - (el.lastY || e.touches[0].pageY);
+                    el.lastY = e.touches[0].pageY;
+
+                    // Kalau chat pendek/kosong -> Jangan boleh scroll
+                    if (scrollHeight <= height) {
+                        e.preventDefault();
+                        return;
+                    }
+
+                    // Kalau mentok atas ditarik ke bawah -> TAHAN
+                    if (scrollTop <= 0 && deltaY > 0) {
+                        e.preventDefault();
+                    }
+                    // Kalau mentok bawah ditarik ke atas -> TAHAN
+                    if (scrollTop + height >= scrollHeight && deltaY < 0) {
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+
+                chatContainer.addEventListener('touchstart', function(e) {
+                    this.lastY = e.touches[0].pageY;
+                }, { passive: true });
+            }
+
+            // 5. BLOKIR SENTUHAN LIAR DI LUAR CHAT
+            document.addEventListener('touchmove', function(e) {
+                if (!e.target.closest('#chat-container')) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+        }
+    })();
         // ============================
         // EVENT LISTENERS
         // ============================
