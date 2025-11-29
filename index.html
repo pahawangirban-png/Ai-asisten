@@ -2309,14 +2309,14 @@
 	</script>
 	<script>
 		// ============
-		// PATCH IOS 15 (FINAL: NATURAL - SCROLL ON MESSAGE ONLY)
+		// PATCH IOS 15 (FINAL: SMOOTH KEYBOARD PUSH)
 		// ============
 		(function() {
 			const ua = navigator.userAgent;
 			const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
 			
 			if(isIOS15) {
-				console.log("🚀 iOS 15: Mode Natural (Scroll on Message Only)...");
+				console.log("🚀 iOS 15: Mode Smooth Push Up...");
 				
 				const viewport = window.visualViewport;
 				const chatPage = document.getElementById('chat-page');
@@ -2328,14 +2328,17 @@
 				// Simpan tinggi layar asli
 				const originalScreenHeight = window.innerHeight;
 
-				// FUNGSI SCROLL HALUS (Hanya dipanggil saat ada pesan baru)
+				// FUNGSI SCROLL
+				const jumpToBottom = () => {
+					if(chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+				};
 				const smoothScrollToBottom = () => {
 					if(chatContainer) {
 						chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
 					}
 				};
 				
-				// 1. INJEKSI CSS
+				// 1. INJEKSI CSS DENGAN TRANSISI HALUS
 				const style = document.createElement('style');
 				style.innerHTML = `
 	                html, body {
@@ -2354,6 +2357,9 @@
 	                    height: ${originalScreenHeight}px !important; 
 	                    overflow: hidden !important;
 	                    z-index: 10;
+	                    
+	                    /* --- TRANSISI HALUS (Sesuai Request) --- */
+	                    /* 0.25s adalah kecepatan standar animasi iOS */
 	                    transition: top 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
                         will-change: top;
 	                }
@@ -2379,7 +2385,7 @@
 	            `;
 				document.head.appendChild(style);
 				
-				// 2. LOGIKA LAYOUT (HANYA URUS POSISI, TIDAK URUS SCROLL)
+				// 2. LOGIKA HITUNG TINGGI (TETAP SAMA KARENA SUDAH SEMPURNA)
 				const handleResize = () => {
 					if(!viewport || !chatPage) return;
 
@@ -2387,10 +2393,11 @@
 					const isKeyboardOpen = currentKeyboardHeight > 150;
 
 					if(inputField === document.activeElement && isKeyboardOpen) {
-						// Dorong UI ke atas agar input tidak tertutup
+						// Dorong ke atas (Smooth karena ada CSS transition)
 						chatPage.style.top = `-${currentKeyboardHeight}px`;
+						jumpToBottom();
 					} else {
-						// Reset posisi
+						// Turun kembali (Smooth)
 						chatPage.style.top = '0px';
 					}
 					window.scrollTo(0, 0);
@@ -2399,6 +2406,7 @@
 				// 3. PASANG LISTENER
 				if(viewport) {
 					viewport.addEventListener('resize', handleResize);
+					// Interval penjaga posisi
 					setInterval(() => {
 						if(inputField === document.activeElement) window.scrollTo(0, 0);
 					}, 500);
@@ -2407,9 +2415,11 @@
 				// 4. LOGIKA FOKUS
 				if(inputField) {
 					inputField.addEventListener('focus', () => {
-                        // Hanya hitung ulang layout, JANGAN paksa scroll
 						setTimeout(handleResize, 50);
+						// Panggil lagi saat animasi keyboard iOS selesai (sekitar 300ms)
+						// untuk memastikan posisi akhir presisi
 						setTimeout(handleResize, 300); 
+						setTimeout(jumpToBottom, 350);
 					});
 
 					inputField.addEventListener('blur', () => {
@@ -2418,25 +2428,7 @@
 					});
 				}
 				
-				// 5. AUTO SCROLL (HANYA SAAT ADA PESAN BARU)
-				if(chatContainer) {
-					const observer = new MutationObserver((mutations) => {
-						// Cek apakah ada elemen baru yang ditambahkan (User chat atau AI reply)
-						const hasNewMessage = mutations.some(m => m.addedNodes.length > 0);
-						
-						if(hasNewMessage) {
-							// Scroll ke bawah HANYA jika pesan bertambah
-							smoothScrollToBottom();
-                            // Double check agar pasti turun
-							setTimeout(smoothScrollToBottom, 100);
-						}
-					});
-					
-					// Pantau perubahan isi chat container
-					observer.observe(chatContainer, { childList: true, subtree: true });
-				}
-				
-				// 6. SATPAM (Blokir sentuhan luar & double tap)
+				// 5. SATPAM SCROLL & BLOKIR SENTUHAN LUAR (FITUR LAMA)
 				const preventRubberBand = (element) => {
 					if(!element) return;
 					element.addEventListener('touchmove', function(e) {
@@ -2462,7 +2454,18 @@
 					const isSidebar = e.target.closest('#sidebar-content');
 					if(!isChat && !isSidebar) { e.preventDefault(); }
 				}, { passive: false });
-
+				
+				// 6. AUTO SCROLL & ANTI DOUBLE TAP
+				if(chatContainer) {
+					const observer = new MutationObserver((mutations) => {
+						if(mutations.some(m => m.addedNodes.length > 0)) {
+							smoothScrollToBottom();
+							setTimeout(smoothScrollToBottom, 100);
+						}
+					});
+					observer.observe(chatContainer, { childList: true, subtree: true });
+				}
+				
 				let lastTouchEnd = 0;
 				document.addEventListener('touchend', function(event) {
 					const now = (new Date()).getTime();
