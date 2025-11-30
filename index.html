@@ -2514,10 +2514,28 @@
 							for(let i = 0; i < lines.length; i++) {
 								let line = lines[i];
 
-								// A. CODE BLOCK
+								// A. CODE BLOCK (DENGAN HEADER & STYLE RAPI)
 								if(line.trim().startsWith('```')) {
 									inCodeBlock = !inCodeBlock;
-									output.push(inCodeBlock ? '<pre class="bg-gray-100 p-3 rounded-lg text-xs my-2 overflow-x-auto border border-gray-200"><code>' : '</code></pre>');
+									
+									if (inCodeBlock) {
+										// Ambil nama bahasa (misal: ```html -> HTML)
+										let lang = line.trim().substring(3).trim();
+										if(!lang) lang = "CODE"; // Default jika kosong
+										
+										output.push(`
+											<div class="my-3 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+												<div class="bg-gray-100 px-4 py-1.5 border-b border-gray-200 text-xs font-bold text-slate-600 uppercase tracking-wide flex items-center gap-2">
+													<span class="opacity-50">#</span> ${lang}
+												</div>
+												<pre class="bg-[#f8fafc] p-3 overflow-x-auto text-sm font-mono text-slate-800 leading-relaxed whitespace-pre"><code>`);
+									} else {
+										output.push('</code></pre></div>');
+									}
+									continue;
+								}
+								if(inCodeBlock) {
+									output.push(line + '\n');
 									continue;
 								}
 								if(inCodeBlock) {
