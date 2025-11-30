@@ -1170,7 +1170,7 @@
 				// Konfigurasi API
 				const model = document.getElementById('setting-model').value || 'gemini-2.5-flash';
 				const customPrompt = document.getElementById('setting-prompt')?.value || '';
-				const temperature = document.getElementById('setting-temp')?.value || 0.7;
+				const temperature = document.getElementById('setting-temp')?.value || 0.5;
 				const functionUrl = `${SUPABASE_URL}/functions/v1/call-gemini`;
 				const {
 					data: {
@@ -1188,6 +1188,7 @@
 						model: model,
 						payload: {
 							contents: payloadContents, // Kirim history + file lengkap
+							tools: [{ googleSearch: {} }],
 							generationConfig: {
 								temperature: parseFloat(temperature),
 								maxOutputTokens: 2048
