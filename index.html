@@ -1248,7 +1248,7 @@
 			}
 		}
 		/**
-		 * Append message to chat container - SHOWDOWN.JS ONLY VERSION
+		 * Append message to chat container - VERSI SEDERHANA
 		 */
 		function appendMessage(role, content, isLoading = false, isRawHtml = false) {
 			const div = document.createElement('div');
@@ -1266,7 +1266,7 @@
 				// Raw HTML langsung render (untuk file preview, gambar, YouTube)
 				htmlContent = content;
 			} else if(role === 'model') {
-				// ✅ GUNAKAN SHOWDOWN.JS MURNI untuk AI messages
+				// GUNAKAN SHOWDOWN.JS DEFAULT - TANPA KOMPLIKASI
 				try {
 					let rawHtml = converter.makeHtml(content);
 					// Hanya tambahkan wrapper untuk tabel jika diperlukan
@@ -1283,7 +1283,7 @@
 					});
 					htmlContent = tempDiv.innerHTML;
 				} catch (error) {
-					console.error("❌ Markdown conversion error:", error);
+					console.error("Markdown conversion error:", error);
 					// Fallback ke teks biasa jika konversi gagal
 					htmlContent = content.replace(/\n/g, '<br>');
 				}
@@ -1324,28 +1324,8 @@
 			});
 			return div;
 		}
-		// MARKDOWN CONVERTER - KONFIGURASI FINAL
-		const converter = new showdown.Converter({
-			tables: true,
-			tasklists: true,
-			strikethrough: true,
-			smoothLivePreview: true,
-			simplifiedAutoLink: true,
-			tablesHeaderId: false,
-			parseImgDimensions: true,
-			excludeTrailingPunctuationFromURLs: true,
-			literalMidWordUnderscores: true,
-			simpleLineBreaks: true,
-			openLinksInNewWindow: true,
-			emoji: true,
-			underline: true,
-			requireSpaceBeforeHeadingText: false,
-			ghCompatibleHeaderId: true,
-			ghCodeBlocks: true,
-			sanitize: false
-		});
-		// Gunakan flavor GitHub untuk kompatibilitas maksimal
-		converter.setFlavor('github');
+		// MARKDOWN CONVERTER - KONFIGURASI DEFAULT SEDERHANA
+		const converter = new showdown.Converter();
 		/**
 		 * Handle image generation
 		 */
