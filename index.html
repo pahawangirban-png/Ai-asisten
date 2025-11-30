@@ -15,7 +15,7 @@
 	<script src="https://cdn.tailwindcss.com"></script>
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
 	<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.7.0/mammoth.browser.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -628,15 +628,14 @@
 		} catch (e) {
 			console.error("Gagal inject PWA:", e);
 		}
-		// KONFIGURASI SHOWDOWN 1.9.1 (Stabil untuk iOS 15)
-        const converter = new showdown.Converter({
-            tables: true,             // Tabel tetap jalan
-            simplifiedAutoLink: true, // Link otomatis jalan
-            strikethrough: true,      // Coret teks (~~text~~) jalan
-            tasklists: true,          // Checkbox jalan
-            simpleLineBreaks: true,   // Enter = Baris baru (PENTING untuk surat)
-            openLinksInNewWindow: true
-        });
+		if (typeof marked !== 'undefined') {
+            marked.setOptions({
+                gfm: true,          // Format tabel & github style
+                breaks: true,       // Enter = Baris baru (PENTING untuk surat)
+                headerIds: false,   // Mematikan ID header (mencegah warning)
+                mangle: false       // Mencegah error email
+            });
+        }
 		let currentUser = null;
 		let uploadedFiles = [];
 		let chatHistory = [];
@@ -1260,25 +1259,28 @@
 		function appendMessage(role, content, isLoading = false, isRawHtml = false) {
 			const div = document.createElement('div');
 			div.className = 'w-full max-w-3xl mx-auto';
+			
 			const isUser = role === 'user';
 			const name = isUser ? 'ANDA' : 'ASISTEN';
 			const nameColorClass = isUser ?
 				'text-slate-500' :
 				'bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent';
 			const bubbleClass = isUser ? 'user-bubble' : 'ai-bubble cursor-pointer';
+			
 			let htmlContent;
+			
 			if(isLoading) {
 				htmlContent = `<div class="flex items-center h-6 pl-3 gap-1"><div class="dot-flashing"></div></div>`;
 			} else if(isRawHtml) {
-				// Raw HTML langsung render
 				htmlContent = content;
 			} else if(role === 'model') {
-				if(typeof converter === 'undefined') {
+				if (typeof marked === 'undefined') {
 					htmlContent = content.replace(/\n/g, '<br>');
 				} else {
-					let rawHtml = converter.makeHtml(content);
+					const rawHtml = marked.parse(content);
 					const tempDiv = document.createElement('div');
 					tempDiv.innerHTML = rawHtml;
+					
 					tempDiv.querySelectorAll('table').forEach(tbl => {
 						if(!tbl.parentElement.classList.contains('overflow-x-auto')) {
 							const wrapper = document.createElement('div');
@@ -1290,43 +1292,44 @@
 							th.style.backgroundColor = '#e5e7eb';
 						});
 					});
+					
 					htmlContent = tempDiv.innerHTML;
 				}
 			} else {
-				// User message - langsung render tanpa markdown
 				htmlContent = content.replace(/\n/g, '<br>');
 			}
-			// Tombol Copy
+			
 			const copyButtonHtml = role === 'model' && !isLoading && !isRawHtml ? `
-        <div class="copy-container hidden absolute bottom-1.5 left-4 select-none">
-            <button class="copy-btn text-slate-400 p-0 flex items-center transition-colors hover:text-slate-600" title="Salin">
-                <svg viewBox="0 0 1024 1024" width="14" height="14" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-                    <path d="M768 832a128 128 0 0 1-128 128H192A128 128 0 0 1 64 832V384a128 128 0 0 1 128-128v64a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64h64z"></path>
-                    <path d="M384 128a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64V192a64 64 0 0 0-64-64H384zm0-64h448a128 128 0 0 1 128 128v448a128 128 0 0 1-128 128H384a128 128 0 0 1-128-128V192A128 128 0 0 1 384 64z"></path>
-                </svg>
-            </button>
-        </div>` : '';
+			<div class="copy-container hidden absolute bottom-1.5 left-4 select-none">
+				<button class="copy-btn text-slate-400 p-0 flex items-center transition-colors hover:text-slate-600" title="Salin">
+					<svg viewBox="0 0 1024 1024" width="14" height="14" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+						<path d="M768 832a128 128 0 0 1-128 128H192A128 128 0 0 1 64 832V384a128 128 0 0 1 128-128v64a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64h64z"></path>
+						<path d="M384 128a64 64 0 0 0-64 64v448a64 64 0 0 0 64 64h448a64 64 0 0 0 64-64V192a64 64 0 0 0-64-64H384zm0-64h448a128 128 0 0 1 128 128v448a128 128 0 0 1-128 128H384a128 128 0 0 1-128-128V192A128 128 0 0 1 384 64z"></path>
+					</svg>
+				</button>
+			</div>` : '';
+
 			div.innerHTML = `
-        <div class="${bubbleClass} relative flex flex-col bg-gray-100 px-4 pt-3 pb-6 rounded-2xl shadow-sm mb-4">
-            <div class="flex justify-between items-center mb-1 border-b-[0.5px] border-gray-300 pb-1">
-                <span class="text-xs font-bold uppercase tracking-wide ${nameColorClass}">${name}</span>
-                <span class="text-[10px] text-slate-400 font-sans">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-            </div>
-            
-            <div class="text-sm md:text-base text-slate-700 font-medium leading-relaxed markdown-body mt-1 chat-content">${htmlContent}</div>
-            
-            ${copyButtonHtml}
-        </div>`;
-			// Pastikan margin konsisten
+			<div class="${bubbleClass} relative flex flex-col bg-gray-100 px-4 pt-3 pb-6 rounded-2xl shadow-sm mb-4">
+				<div class="flex justify-between items-center mb-1 border-b-[0.5px] border-gray-300 pb-1">
+					<span class="text-xs font-bold uppercase tracking-wide ${nameColorClass}">${name}</span>
+					<span class="text-[10px] text-slate-400 font-sans">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+				</div>
+				<div class="text-sm md:text-base text-slate-700 font-medium leading-relaxed markdown-body mt-1 chat-content">${htmlContent}</div>
+				${copyButtonHtml}
+			</div>`;
+			
 			const contentBody = div.querySelector('.markdown-body');
 			if(contentBody && contentBody.lastElementChild) {
 				contentBody.lastElementChild.style.marginBottom = '0';
 			}
+			
 			chatContainer.appendChild(div);
 			chatContainer.scrollTo({
 				top: chatContainer.scrollHeight,
 				behavior: 'auto'
 			});
+			
 			return div;
 		}
 		/**
