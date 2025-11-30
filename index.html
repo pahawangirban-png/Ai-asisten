@@ -15,7 +15,7 @@
 	<script src="https://cdn.tailwindcss.com"></script>
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
 	<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.7.0/mammoth.browser.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -629,14 +629,11 @@
 			console.error("Gagal inject PWA:", e);
 		}
 		const converter = new showdown.Converter({
-            tables: true,               // Aktifkan Tabel
-            simplifiedAutoLink: true,   // Link otomatis
-            strikethrough: true,        // Coret teks
-            tasklists: true,            // Checkbox list
-            ghCodeBlocks: true,         // <--- WAJIB: Agar error CodeBlock hilang
-            simpleLineBreaks: true,     // <--- WAJIB: Agar Enter jadi baris baru
-            smoothLivePreview: true,    // Mencegah crash saat rendering
-            openLinksInNewWindow: true  // Link buka di tab baru
+            tables: true,             // Aktifkan tabel
+            simplifiedAutoLink: true, // Link otomatis
+            strikethrough: true,      // Coret teks
+            tasklists: true,          // Checkbox list
+            simpleLineBreaks: true    // Enter = Baris baru
         });
 		let currentUser = null;
 		let uploadedFiles = [];
