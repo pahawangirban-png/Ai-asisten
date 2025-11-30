@@ -167,7 +167,7 @@
 			vertical-align: top;
 		}
 		.markdown-body th {
-			background-color: #f1f5f9;
+			background-color: #e5e7eb; /* Kode Hex untuk Gray 200 */
 			color: #0f172a;
 			font-weight: 700;
 		}
@@ -627,6 +627,13 @@
 		} catch (e) {
 			console.error("Gagal inject PWA:", e);
 		}
+		
+		const converter = new showdown.Converter({
+            tables: true,             // Aktifkan tabel
+            simplifiedAutoLink: true, // Aktifkan link otomatis
+            strikethrough: true,      // Aktifkan coret teks (~~text~~)
+            tasklists: true           // Aktifkan checkbox list
+        });
 		// ============================
 		// GLOBAL VARIABLES
 		// ============================
@@ -1332,44 +1339,6 @@
 			});
 			return div;
 		}
-		// MARKDOWN CONVERTER - KONFIGURASI LENGKAP DENGAN BOLD & UNDERLINE
-		const converter = new showdown.Converter({
-			// Fitur dasar
-			tables: true,
-			tasklists: true,
-			strikethrough: true,
-			smoothLivePreview: true,
-			simplifiedAutoLink: true,
-			// Konfigurasi header & ID
-			tablesHeaderId: false,
-			rawPrefixHeaderId: false,
-			rawHeaderId: false,
-			headerLevelStart: 1,
-			requireSpaceBeforeHeadingText: false,
-			ghCompatibleHeaderId: true,
-			// Formatting text - PASTIKAN INI AKTIF
-			simpleLineBreaks: true,
-			literalMidWordUnderscores: true,
-			parseImgDimensions: true,
-			excludeTrailingPunctuationFromURLs: true,
-			// FITUR FORMATTING TEKS - INI YANG PERLU DIPERBAIKI
-			bold: true, // PASTIKAN bold diaktifkan
-			italic: true, // PASTIKAN italic diaktifkan  
-			underline: true, // AKTIFKAN underline
-			emoji: true,
-			// Code & blocks
-			ghCodeBlocks: true,
-			ghMentions: false,
-			// Security
-			sanitize: false,
-			openLinksInNewWindow: true,
-			// Optimasi performa
-			splitAdjacentBlockquotes: false,
-			disableForced4SpacesIndentedSublists: true,
-			smartIndentationFix: false
-		});
-		// Set flavor untuk kompatibilitas maksimal
-		converter.setFlavor('github');
 		/**
 		 * Handle image generation
 		 */
@@ -2251,7 +2220,7 @@
 							// Styling Header (TH)
 							const headers = table.querySelectorAll('th');
 							headers.forEach(th => {
-								th.style.backgroundColor = '#f1f5f9'; // Abu Tipis
+								th.style.backgroundColor = '#e5e7eb';
 								th.style.color = '#000000';
 								th.style.fontWeight = 'bold';
 								th.style.border = '1px solid #cbd5e1';
