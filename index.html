@@ -2484,14 +2484,14 @@
 			}
 		})();
 		// ============
-		// PATCH IOS 15 (FINAL V12: SINGLE BOX - CLEANEST LOOK)
+		// PATCH IOS 15 (FINAL V13: TIGHT PADDING & CAPITALIZE TITLE)
 		// ============
 		(function() {
 			const ua = navigator.userAgent;
 			const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
 			
 			if(isIOS15) {
-				console.log("🛡️ iOS 15: Parser V12 (Single Box Clean)");
+				console.log("🛡️ iOS 15: Parser V13 (Tight & Capitalize)");
 				if(typeof converter !== 'undefined') {
 					converter.makeHtml = function(text) {
 						if(!text) return "";
@@ -2502,7 +2502,7 @@
 								.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
 								.replace(/\*(.*?)\*/g, '<i>$1</i>')
 								.replace(/^### (.*$)/gm, '<h3 class="text-lg font-bold text-gray-900 mt-5 mb-2">$1</h3>')
-								.replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold text-gray-900 mt-6 mb-3 border-b border-gray-300 pb-1">$1</h2>');
+								.replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold text-gray-600 mt-6 mb-3 border-b border-gray-200 pb-1">$1</h2>');
 
 							const lines = html.split('\n');
 							let output = [];
@@ -2513,23 +2513,30 @@
 							for(let i = 0; i < lines.length; i++) {
 								let line = lines[i];
 
-								// A. CODE BLOCK (SINGLE BOX FIX)
+								// A. CODE BLOCK
 								if(line.trim().startsWith('```')) {
 									inCodeBlock = !inCodeBlock;
 									
 									if (inCodeBlock) {
-										let lang = line.trim().substring(3).trim().toLowerCase();
-										if(!lang) lang = "code";
+										// 1. Ambil nama bahasa
+										let rawLang = line.trim().substring(3).trim();
+										let lang = "Code";
 										
-										// STRUKTUR 1 KOTAK:
-										// 1. Wrapper: Border Gray-300 (Garis Luar SATU-SATUNYA)
-										// 2. Pre: border-none (Hapus kotak dalam), p-4 (Padding lega)
+										// 2. LOGIKA CAPITALIZE (Huruf besar depan saja)
+										if(rawLang) {
+											lang = rawLang.charAt(0).toUpperCase() + rawLang.slice(1).toLowerCase();
+										}
+										
+										// 3. HTML STRUKTUR
+										// - py-1: Padding atas bawah tipis (sesuai request)
+										// - text-sm: Ukuran font 14px (sedikit lebih kecil)
+										// - font-bold: Judul tebal tapi tidak uppercase
 										output.push(`
-											<div class="my-4 border border-gray-300 rounded-lg overflow-hidden bg-gray-50 shadow-sm block">
-												<div class="bg-gray-200 border-b border-gray-300 px-4 py-2 text-xs font-bold text-slate-600 uppercase tracking-wider block">
+											<div class="my-3 border border-gray-300 rounded-lg overflow-hidden bg-gray-50 shadow-sm block">
+												<div class="bg-gray-200 border-b border-gray-300 px-4 py-1.5 text-xs font-bold text-slate-700 tracking-wide block">
 													${lang}
 												</div>
-												<pre class="m-0 p-4 w-full overflow-x-auto block border-none outline-none" style="border:none !important; outline:none !important;"><code class="font-mono text-base text-slate-800 whitespace-pre bg-transparent p-0 border-none block" style="font-size:16px !important; color:#1e293b !important; border:none !important;">`);
+												<pre class="m-0 px-4 py-1 w-full overflow-x-auto block border-none outline-none" style="border:none !important; outline:none !important;"><code class="font-mono text-sm text-slate-800 whitespace-pre bg-transparent p-0 border-none block" style="font-size:14px !important; color:#1e293b !important; border:none !important;">`);
 									} else {
 										output.push('</code></pre></div>');
 									}
@@ -2618,7 +2625,7 @@
 							}
 							return output.join('');
 						} catch (e) {
-							console.error("V12 Parser Error:", e);
+							console.error("V13 Parser Error:", e);
 							return text;
 						}
 					};
