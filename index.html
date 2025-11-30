@@ -2514,7 +2514,7 @@
 							for(let i = 0; i < lines.length; i++) {
 								let line = lines[i];
 
-								// A. CODE BLOCK (SUPER RAPAT & BERSIH)
+								// A. CODE BLOCK (ZERO GAP & PRESISI)
 								if(line.trim().startsWith('```')) {
 									inCodeBlock = !inCodeBlock;
 									
@@ -2523,12 +2523,13 @@
 										let lang = line.trim().substring(3).trim().toLowerCase();
 										if(!lang) lang = "code";
 										
+										// WRAPPER: Flex Column (Kunci agar menempel rapat) & Tanpa Border
 										output.push(`
-											<div class="my-2 rounded-lg overflow-hidden shadow-sm">
-												<div class="bg-gray-400 px-3 py-1 text-xs font-bold text-white block leading-none">
+											<div class="my-2 rounded-lg overflow-hidden flex flex-col shadow-sm">
+												<div class="bg-gray-400 px-3 py-1.5 text-xs font-bold text-white leading-none shrink-0">
 													${lang}
 												</div>
-												<pre class="m-0 bg-[#f8fafc] px-3 py-2 overflow-x-auto text-sm font-mono text-slate-800 leading-snug whitespace-pre"><code>`);
+												<pre class="m-0 px-3 py-2 bg-gray-50 overflow-x-auto text-sm font-mono text-slate-800 leading-snug whitespace-pre w-full grow-0"><code>`);
 									} else {
 										output.push('</code></pre></div>');
 									}
