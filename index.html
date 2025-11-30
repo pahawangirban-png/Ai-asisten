@@ -2484,14 +2484,14 @@
 			}
 		})();
 		// ============
-		// PATCH IOS 15 (FINAL V13: TIGHT PADDING & CAPITALIZE TITLE)
+		// PATCH IOS 15 (FINAL V14: UNIFORM FONT & TIGHT GAP)
 		// ============
 		(function() {
 			const ua = navigator.userAgent;
 			const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
 			
 			if(isIOS15) {
-				console.log("🛡️ iOS 15: Parser V13 (Tight & Capitalize)");
+				console.log("🛡️ iOS 15: Parser V14 (Tight Gap & Same Font)");
 				if(typeof converter !== 'undefined') {
 					converter.makeHtml = function(text) {
 						if(!text) return "";
@@ -2522,18 +2522,18 @@
 										let rawLang = line.trim().substring(3).trim();
 										let lang = "Code";
 										
-										// 2. LOGIKA CAPITALIZE (Huruf besar depan saja)
+										// 2. LOGIKA CAPITALIZE
 										if(rawLang) {
 											lang = rawLang.charAt(0).toUpperCase() + rawLang.slice(1).toLowerCase();
 										}
 										
-										// 3. HTML STRUKTUR
-										// - py-1: Padding atas bawah tipis (sesuai request)
-										// - text-sm: Ukuran font 14px (sedikit lebih kecil)
-										// - font-bold: Judul tebal tapi tidak uppercase
+										// 3. HTML STRUKTUR (PERBAIKAN PRESISI)
+										// - Header: text-sm (14px) agar SAMA dengan kode, py-1 (rapat)
+										// - Pre: py-1 (jarak atas bawah kode sangat minim/rapat)
+										// - Code: text-sm (14px)
 										output.push(`
 											<div class="my-3 border border-gray-300 rounded-lg overflow-hidden bg-gray-50 shadow-sm block">
-												<div class="bg-gray-200 border-b border-gray-300 px-4 py-1.5 text-xs font-bold text-slate-700 tracking-wide block">
+												<div class="bg-gray-200 border-b border-gray-300 px-4 py-1 text-sm font-bold text-slate-700 tracking-wide block">
 													${lang}
 												</div>
 												<pre class="m-0 px-4 py-1 w-full overflow-x-auto block border-none outline-none" style="border:none !important; outline:none !important;"><code class="font-mono text-sm text-slate-800 whitespace-pre bg-transparent p-0 border-none block" style="font-size:14px !important; color:#1e293b !important; border:none !important;">`);
@@ -2625,7 +2625,7 @@
 							}
 							return output.join('');
 						} catch (e) {
-							console.error("V13 Parser Error:", e);
+							console.error("V14 Parser Error:", e);
 							return text;
 						}
 					};
