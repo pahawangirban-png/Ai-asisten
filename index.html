@@ -185,43 +185,72 @@
 			margin: 1rem 0;
 		}
 		/* ========================================= */
-		/* 3. CODE BLOCK STYLE (FINAL & JELAS)       */
+		/* 3. CODE BLOCK STYLE (FINAL & RAPI)        */
 		/* ========================================= */
 		
-		/* A. BLOK KODE BESAR (Kotak Gelap) */
-		.markdown-body pre {
-			background-color: #1f2937; /* Abu Tua (Gray-800) */
-			color: #ffffff;            /* Teks Putih */
-			padding: 0.75rem;          /* Padding Pas */
-			border-radius: 0.5rem;
-			margin: 0.5rem 0;
-			overflow-x: auto;
-			border: none;
-			line-height: 1.4;          /* Jarak baris rapat presisi */
+		/* A. WRAPPER UTAMA (Wadah Solid) */
+		.code-block-wrapper {
+			background-color: #e5e7eb; /* Gray-200 (Warna Utama) */
+			border-radius: 0.75rem;    /* Sudut Membulat */
+			margin: 0.75rem 0;         /* Jarak Luar */
+			overflow: hidden;          /* Agar isi tidak keluar sudut */
+			border: none;              
 		}
 
-		/* Font di dalam Blok Kode */
-		.markdown-body pre code {
-			font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+		/* B. HEADER (Nama Bahasa) */
+		.code-header {
+			background-color: #e5e7eb; /* Gray-200 (Menyatu) */
+			color: #334155;            /* Teks Slate-700 (Gelap) */
+			padding: 0.5rem 1rem;      /* Spasi Rapat */
+			
+			font-family: 'Inter', sans-serif;
 			font-size: 13px;           
-			font-weight: 400;
+			font-weight: 800;          /* Header tetap tebal biar gagah */
+			text-transform: uppercase; /* HURUF BESAR (HTML, CSS) */
+			letter-spacing: 0.05em;    
+			
+			/* Garis Pemisah Halus */
+			border-bottom: 1px solid #d1d5db; 
+			
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			user-select: none;
+		}
+
+		/* C. AREA KODE (Pre) */
+		.markdown-body pre {
+			background-color: transparent !important; 
+			margin: 0 !important;
+			border: none !important;
+			border-radius: 0 !important;
+			padding: 0.75rem 1rem;     
+			overflow-x: auto;          
+			line-height: 1.4;          
+		}
+
+		/* D. ISI KODE */
+		.markdown-body pre code {
+			font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+			font-size: 13px;           
+			color: #334155;            /* Teks Gelap */
 			background-color: transparent;
-			color: inherit;
 			padding: 0;
 			border: none;
+			white-space: pre;
+			font-weight: 400;          /* Normal (Tidak Tebal) */
 		}
 
-		/* B. KODE INLINE / STABILO (Satu kata) */
-		/* Sekarang pakai Gray 200 biar kelihatan jelas */
+		/* E. KODE INLINE / STABILO (Perbaikan di sini) */
 		.markdown-body code:not(pre code) {
-			background-color: #e5e7eb; /* Gray 200 (Lebih Gelap drpd Gray 100) */
+			background-color: #e5e7eb; /* Gray-200 (Stabilo Abu) */
 			color: #0f172a;            /* Hitam Pekat */
-			padding: 0.1rem 0.3rem;    /* Rapat */
+			padding: 0.1rem 0.3rem;
 			border-radius: 0.25rem;
-			font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-			font-size: 0.9em;          
-			font-weight: 600;          
-			border: 1px solid #d1d5db; /* Border Gray 300 (biar makin tegas) */
+			font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+			font-size: 0.9em;
+			font-weight: 400;          /* UBAH JADI 400 (TIDAK TEBAL LAGI) */
+			border: 1px solid #d1d5db; /* Border tipis biar kotak terlihat */
 		}
 		/* ========================================= */
 		/* 4. RESPONSIVE SCALE (MEDIA QUERIES)       */
@@ -1293,13 +1322,49 @@
 				htmlContent = `<div class="flex items-center h-6 pl-3 gap-1"><div class="dot-flashing"></div></div>`;
 			} else if(isRawHtml) {
 				htmlContent = content;
-			} else if(role === 'model') {
-				if(typeof marked === 'undefined') {
+			} else if (role === 'model') {
+				if (typeof marked === 'undefined') {
 					htmlContent = content.replace(/\n/g, '<br>');
 				} else {
 					const rawHtml = marked.parse(content);
 					const tempDiv = document.createElement('div');
 					tempDiv.innerHTML = rawHtml;
+
+					// --- LOGIKA HEADER CODE BLOCK ---
+					tempDiv.querySelectorAll('pre').forEach(pre => {
+						// 1. Deteksi Bahasa (biasanya ada di class <code>, misal: language-html)
+						const code = pre.querySelector('code');
+						let lang = 'code'; // Default nama jika tidak terdeteksi
+						
+						if (code) {
+							// Cek semua class untuk mencari 'language-xxx'
+							code.classList.forEach(cls => {
+								if (cls.startsWith('language-')) {
+									lang = cls.replace('language-', ''); // Ambil nama bahasanya
+								}
+							});
+						}
+
+						// 2. Buat Wrapper Utama
+						const wrapper = document.createElement('div');
+						wrapper.className = 'code-block-wrapper';
+
+						// 3. Buat Header
+						const header = document.createElement('div');
+						header.className = 'code-header';
+						header.textContent = lang; // Isi nama bahasa (misal: html, css)
+
+						// 4. Susun Ulang Elemen
+						// Masukkan wrapper sebelum <pre>
+						pre.parentNode.insertBefore(wrapper, pre);
+						// Pindahkan header ke dalam wrapper
+						wrapper.appendChild(header);
+						// Pindahkan <pre> ke dalam wrapper
+						wrapper.appendChild(pre);
+					});
+					// ---------------------------------
+
+					// Logika Bungkus Tabel (Tetap)
 					tempDiv.querySelectorAll('table').forEach(tbl => {
 						if(!tbl.parentElement.classList.contains('overflow-x-auto')) {
 							const wrapper = document.createElement('div');
@@ -1311,6 +1376,7 @@
 							th.style.backgroundColor = '#e5e7eb';
 						});
 					});
+					
 					htmlContent = tempDiv.innerHTML;
 				}
 			} else {
