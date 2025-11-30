@@ -167,7 +167,8 @@
 			vertical-align: top;
 		}
 		.markdown-body th {
-			background-color: #e5e7eb; /* Kode Hex untuk Gray 200 */
+			background-color: #e5e7eb;
+			/* Kode Hex untuk Gray 200 */
 			color: #0f172a;
 			font-weight: 700;
 		}
@@ -627,16 +628,13 @@
 		} catch (e) {
 			console.error("Gagal inject PWA:", e);
 		}
-		
 		const converter = new showdown.Converter({
-            tables: true,             // Aktifkan tabel
-            simplifiedAutoLink: true, // Aktifkan link otomatis
-            strikethrough: true,      // Aktifkan coret teks (~~text~~)
-            tasklists: true           // Aktifkan checkbox list
-        });
-		// ============================
-		// GLOBAL VARIABLES
-		// ============================
+			tables: true,
+			simplifiedAutoLink: true,
+			strikethrough: true,
+			tasklists: true,
+			emoji: true
+		});
 		let currentUser = null;
 		let uploadedFiles = [];
 		let chatHistory = [];
@@ -1273,34 +1271,24 @@
 				// Raw HTML langsung render
 				htmlContent = content;
 			} else if(role === 'model') {
-				// SHOWDOWN.JS DENGAN FALLBACK UNTUK BOLD/ITALIC
-				try {
+				if(typeof converter === 'undefined') {
+					htmlContent = content.replace(/\n/g, '<br>');
+				} else {
 					let rawHtml = converter.makeHtml(content);
-					// ✅ FALLBACK: Jika masih ada markdown mentah, proses manual
-					if(rawHtml.includes('**') || rawHtml.includes('*') || rawHtml.includes('__')) {
-						console.warn("⚠️ Showdown.js left raw markdown, applying fallback");
-						rawHtml = rawHtml
-							.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-							.replace(/\*(.*?)\*/g, '<em>$1</em>')
-							.replace(/__(.*?)__/g, '<u>$1</u>');
-					}
-					// Hanya tambahkan wrapper untuk tabel jika diperlukan
 					const tempDiv = document.createElement('div');
 					tempDiv.innerHTML = rawHtml;
-					const tables = tempDiv.querySelectorAll('table');
-					tables.forEach(tbl => {
+					tempDiv.querySelectorAll('table').forEach(tbl => {
 						if(!tbl.parentElement.classList.contains('overflow-x-auto')) {
 							const wrapper = document.createElement('div');
 							wrapper.className = 'overflow-x-auto';
 							tbl.parentNode.insertBefore(wrapper, tbl);
 							wrapper.appendChild(tbl);
 						}
+						tbl.querySelectorAll('th').forEach(th => {
+							th.style.backgroundColor = '#e5e7eb';
+						});
 					});
 					htmlContent = tempDiv.innerHTML;
-				} catch (error) {
-					console.error("❌ Markdown conversion error:", error);
-					// Fallback ke teks biasa jika konversi gagal
-					htmlContent = content.replace(/\n/g, '<br>');
 				}
 			} else {
 				// User message - langsung render tanpa markdown
