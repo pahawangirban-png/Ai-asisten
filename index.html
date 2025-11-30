@@ -415,31 +415,45 @@
 			opacity: 0;
 			animation: fadeIn 0.3s forwards;
 		}
-		/* YouTube Embed */
+		/* ========================================= */
+		/* 6. YOUTUBE EMBED (MODERN ASPECT RATIO)    */
+		/* ========================================= */
+		
+		/* Grid Container (1 Kolom di HP, 2 di Tablet) */
 		.yt-embed-grid {
 			display: grid;
-			grid-template-columns: 1fr;
-			gap: 0.75rem;
-			margin-top: 0.5rem;
+			grid-template-columns: 1fr; /* Mobile: 1 Kolom Full */
+			gap: 1rem;
+			margin-top: 0.75rem;
 			width: 100%;
 		}
+
+		/* Wadah Video */
 		.yt-container {
 			position: relative;
 			width: 100%;
-			padding-bottom: 56.25%;
-			height: 0;
+			/* TEKNIK BARU: Paksa Rasio 16:9 (Anti Gepeng) */
+			aspect-ratio: 16 / 9; 
 			background-color: #000;
 			border-radius: 0.75rem;
 			overflow: hidden;
-			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+			box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+			z-index: 10; /* Pastikan di atas elemen lain */
 		}
+
+		/* Iframe YouTube */
 		.yt-container iframe {
-			position: absolute;
-			top: 0;
-			left: 0;
 			width: 100%;
 			height: 100%;
 			border: 0;
+			display: block; /* Menghilangkan celah baris kosong */
+		}
+
+		/* Tablet ke atas */
+		@media (min-width: 768px) {
+			.yt-embed-grid {
+				grid-template-columns: repeat(2, 1fr); /* 2 Kolom */
+			}
 		}
 	</style>
 </head>
