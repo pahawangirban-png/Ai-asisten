@@ -2484,27 +2484,24 @@
 			}
 		})();
 		// ============
-		// PATCH IOS 15 (FINAL: FONT SIZE 16PX + TABLE FIX)
-		// ============
-		// ============
-		// PATCH IOS 15 (FINAL FIX: BASE V6 + CODE BLOCK REPAIR)
+		// PATCH IOS 15 (FINAL V9: LOGIC FIX - CODE BLOCK PRIORITY)
 		// ============
 		(function() {
 			const ua = navigator.userAgent;
 			const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
 			
 			if(isIOS15) {
-				console.log("🛡️ iOS 15: Parser V6 Fixed (Code Color & Wrap)");
+				console.log("🛡️ iOS 15: Parser V9 (Fix Code Block Priority)");
 				if(typeof converter !== 'undefined') {
 					converter.makeHtml = function(text) {
 						if(!text) return "";
 						try {
-							// PRE-PROCESSING
+							// 1. PRE-PROCESSING (Hapus Inline Code Regex dari sini!)
+							// Kita hanya proses karakter spesial, bold, dan italic di sini.
 							let html = text
 								.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
 								.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
 								.replace(/\*(.*?)\*/g, '<i>$1</i>')
-								.replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-1 rounded text-red-600 font-mono text-sm border border-gray-200">$1</code>')
 								.replace(/^### (.*$)/gm, '<h3 class="text-lg font-bold text-gray-900 mt-5 mb-2">$1</h3>')
 								.replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold text-gray-900 mt-6 mb-3 border-b border-gray-300 pb-1">$1</h2>');
 
@@ -2517,21 +2514,17 @@
 							for(let i = 0; i < lines.length; i++) {
 								let line = lines[i];
 
-								// A. CODE BLOCK (PERBAIKAN UTAMA DISINI)
+								// A. CODE BLOCK (DETEKSI PRIORITAS PERTAMA)
 								if(line.trim().startsWith('```')) {
 									inCodeBlock = !inCodeBlock;
 									
 									if (inCodeBlock) {
-										// Format: Lowercase
 										let lang = line.trim().substring(3).trim().toLowerCase();
 										if(!lang) lang = "code";
 										
-										// FIX: 
-										// 1. Tambahkan 'whitespace-pre-wrap break-words' agar teks turun ke bawah
-										// 2. Tambahkan style color !important agar teks TIDAK MERAH
 										output.push(`
-											<div class="my-2 rounded-lg overflow-hidden flex flex-col shadow-sm">
-												<div class="bg-gray-400 px-3 py-1.5 text-xs font-bold text-white leading-none shrink-0">
+											<div class="my-3 rounded-lg overflow-hidden flex flex-col shadow-sm border border-gray-200">
+												<div class="bg-gray-200 px-3 py-1.5 text-xs font-bold text-slate-600 uppercase tracking-wide border-b border-gray-300">
 													${lang}
 												</div>
 												<pre class="m-0 px-3 py-2 bg-gray-50 w-full overflow-x-hidden"><code class="!text-slate-800 !bg-transparent !p-0 font-mono text-sm block whitespace-pre-wrap break-words" style="color: #1e293b !important;">`);
@@ -2540,6 +2533,7 @@
 									}
 									continue;
 								}
+								// Isinya Code Block (Jangan diproses apapun, biarkan raw)
 								if(inCodeBlock) {
 									output.push(line + '\n');
 									continue;
@@ -2547,16 +2541,16 @@
 
 								// B. HR (Garis)
 								if(line.trim().match(/^[-*_]{3,}$/)) {
-									output.push('<hr class="my-4 border-t border-gray-300">');
+									output.push('<hr class="my-2 border-t border-gray-300">');
 									continue;
 								}
 
-								// C. TABEL (Sesuai Kode V6 Anda: text-base)
+								// C. TABEL
 								if(line.trim().startsWith('|')) {
 									if(!inTable) {
 										inTable = true;
 										tableHeaderProcessed = false;
-										output.push('<div class="overflow-x-auto my-3"><table class="w-full text-base text-left border-collapse border-l border-t border-gray-300">'); 
+										output.push('<div class="overflow-x-auto my-2"><table class="w-full text-base text-left border-collapse border-l border-t border-gray-300">'); 
 									}
 									const cells = line.split('|').filter(cell => cell.trim() !== '');
 									const isSeparator = cells.every(c => c.trim().match(/^[-: ]+$/));
@@ -2583,12 +2577,16 @@
 									}
 								}
 
-								// D. LIST (Sesuai Kode V6 Anda: text-base)
+								// D. LIST
 								const listMatch = line.match(/^(\s*)([-*]|\d+\.)\s+(.*)$/);
 								if(listMatch) {
 									const indent = listMatch[1].length;
 									const symbol = listMatch[2];
-									const content = listMatch[3];
+									let content = listMatch[3];
+									
+                                    // PROSES INLINE CODE DI SINI (UNTUK LIST)
+                                    content = content.replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-1 rounded text-red-600 font-mono text-sm border border-gray-200">$1</code>');
+
 									let paddingClass = 'pl-0';
 									if(indent >= 2) paddingClass = 'pl-4';
 									if(indent >= 4) paddingClass = 'pl-8';
@@ -2599,19 +2597,22 @@
 									} else {
 										markerHtml = `<span class="mr-2 text-black text-lg leading-none mt-[-2px]">&bull;</span>`;
 									}
-
 									output.push(`
                                 <div class="flex items-start ${paddingClass} mb-1 leading-snug text-gray-900 text-base">
                                     ${markerHtml}
                                     <span class="flex-1">${content}</span>
                                 </div>`);
 								}
-								// E. TEXT BIASA (Sesuai Kode V6 Anda: text-base)
+								// E. TEXT BIASA
 								else {
 									if(line.trim() === '') {
 										output.push('<div class="h-2"></div>');
 									} else {
-										output.push(`<div class="mb-1 leading-relaxed text-gray-900 text-base">${line}</div>`);
+                                        // PROSES INLINE CODE DI SINI (UNTUK TEKS BIASA)
+                                        // Regex dipindahkan ke level baris, jadi aman tidak memakan ``` block
+                                        let formattedLine = line.replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-1 rounded text-red-600 font-mono text-sm border border-gray-200">$1</code>');
+                                        
+										output.push(`<div class="mb-1 leading-relaxed text-gray-900 text-base">${formattedLine}</div>`);
 									}
 								}
 							}
@@ -2620,7 +2621,7 @@
 							}
 							return output.join('');
 						} catch (e) {
-							console.error("V6 Fixed Parser Error:", e);
+							console.error("V9 Parser Error:", e);
 							return text;
 						}
 					};
