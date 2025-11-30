@@ -2514,21 +2514,21 @@
 							for(let i = 0; i < lines.length; i++) {
 								let line = lines[i];
 
-								// A. CODE BLOCK (STYLE BARU: GRAY-400, LOWERCASE, RAPI)
+								// A. CODE BLOCK (SUPER RAPAT & BERSIH)
 								if(line.trim().startsWith('```')) {
 									inCodeBlock = !inCodeBlock;
 									
 									if (inCodeBlock) {
-										// Format: Huruf kecil, tanpa default value "CODE" (biarkan kosong jika tidak ada)
+										// Format: Lowercase
 										let lang = line.trim().substring(3).trim().toLowerCase();
 										if(!lang) lang = "code";
 										
 										output.push(`
-											<div class="my-3 rounded-lg overflow-hidden shadow-sm">
-												<div class="bg-gray-400 px-4 py-1.5 text-xs font-bold text-white tracking-wide">
+											<div class="my-2 rounded-lg overflow-hidden shadow-sm">
+												<div class="bg-gray-400 px-3 py-1 text-xs font-bold text-white block leading-none">
 													${lang}
 												</div>
-												<pre class="m-0 bg-[#f8fafc] p-3 overflow-x-auto text-sm font-mono text-slate-800 leading-relaxed whitespace-pre border-x border-b border-gray-200 rounded-b-lg"><code>`);
+												<pre class="m-0 bg-[#f8fafc] px-3 py-2 overflow-x-auto text-sm font-mono text-slate-800 leading-snug whitespace-pre"><code>`);
 									} else {
 										output.push('</code></pre></div>');
 									}
