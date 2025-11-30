@@ -628,12 +628,14 @@
 		} catch (e) {
 			console.error("Gagal inject PWA:", e);
 		}
-		const converter = new showdown.Converter({
-            tables: true,             // Aktifkan tabel
-            simplifiedAutoLink: true, // Link otomatis
-            strikethrough: true,      // Coret teks
-            tasklists: true,          // Checkbox list
-            simpleLineBreaks: true    // Enter = Baris baru
+		// KONFIGURASI SHOWDOWN 1.9.1 (Stabil untuk iOS 15)
+        const converter = new showdown.Converter({
+            tables: true,             // Tabel tetap jalan
+            simplifiedAutoLink: true, // Link otomatis jalan
+            strikethrough: true,      // Coret teks (~~text~~) jalan
+            tasklists: true,          // Checkbox jalan
+            simpleLineBreaks: true,   // Enter = Baris baru (PENTING untuk surat)
+            openLinksInNewWindow: true
         });
 		let currentUser = null;
 		let uploadedFiles = [];
