@@ -1248,7 +1248,7 @@
 			}
 		}
 		/**
-		 * Append message to chat container - VERSI SEDERHANA
+		 * Append message to chat container - DENGAN FALLBACK UNTUK BOLD/ITALIC
 		 */
 		function appendMessage(role, content, isLoading = false, isRawHtml = false) {
 			const div = document.createElement('div');
@@ -1263,12 +1263,20 @@
 			if(isLoading) {
 				htmlContent = `<div class="flex items-center h-6 pl-3 gap-1"><div class="dot-flashing"></div></div>`;
 			} else if(isRawHtml) {
-				// Raw HTML langsung render (untuk file preview, gambar, YouTube)
+				// Raw HTML langsung render
 				htmlContent = content;
 			} else if(role === 'model') {
-				// GUNAKAN SHOWDOWN.JS DEFAULT - TANPA KOMPLIKASI
+				// SHOWDOWN.JS DENGAN FALLBACK UNTUK BOLD/ITALIC
 				try {
 					let rawHtml = converter.makeHtml(content);
+					// ✅ FALLBACK: Jika masih ada markdown mentah, proses manual
+					if(rawHtml.includes('**') || rawHtml.includes('*') || rawHtml.includes('__')) {
+						console.warn("⚠️ Showdown.js left raw markdown, applying fallback");
+						rawHtml = rawHtml
+							.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+							.replace(/\*(.*?)\*/g, '<em>$1</em>')
+							.replace(/__(.*?)__/g, '<u>$1</u>');
+					}
 					// Hanya tambahkan wrapper untuk tabel jika diperlukan
 					const tempDiv = document.createElement('div');
 					tempDiv.innerHTML = rawHtml;
@@ -1283,7 +1291,7 @@
 					});
 					htmlContent = tempDiv.innerHTML;
 				} catch (error) {
-					console.error("Markdown conversion error:", error);
+					console.error("❌ Markdown conversion error:", error);
 					// Fallback ke teks biasa jika konversi gagal
 					htmlContent = content.replace(/\n/g, '<br>');
 				}
@@ -1324,8 +1332,44 @@
 			});
 			return div;
 		}
-		// MARKDOWN CONVERTER - KONFIGURASI DEFAULT SEDERHANA
-		const converter = new showdown.Converter();
+		// MARKDOWN CONVERTER - KONFIGURASI LENGKAP DENGAN BOLD & UNDERLINE
+		const converter = new showdown.Converter({
+			// Fitur dasar
+			tables: true,
+			tasklists: true,
+			strikethrough: true,
+			smoothLivePreview: true,
+			simplifiedAutoLink: true,
+			// Konfigurasi header & ID
+			tablesHeaderId: false,
+			rawPrefixHeaderId: false,
+			rawHeaderId: false,
+			headerLevelStart: 1,
+			requireSpaceBeforeHeadingText: false,
+			ghCompatibleHeaderId: true,
+			// Formatting text - PASTIKAN INI AKTIF
+			simpleLineBreaks: true,
+			literalMidWordUnderscores: true,
+			parseImgDimensions: true,
+			excludeTrailingPunctuationFromURLs: true,
+			// FITUR FORMATTING TEKS - INI YANG PERLU DIPERBAIKI
+			bold: true, // PASTIKAN bold diaktifkan
+			italic: true, // PASTIKAN italic diaktifkan  
+			underline: true, // AKTIFKAN underline
+			emoji: true,
+			// Code & blocks
+			ghCodeBlocks: true,
+			ghMentions: false,
+			// Security
+			sanitize: false,
+			openLinksInNewWindow: true,
+			// Optimasi performa
+			splitAdjacentBlockquotes: false,
+			disableForced4SpacesIndentedSublists: true,
+			smartIndentationFix: false
+		});
+		// Set flavor untuk kompatibilitas maksimal
+		converter.setFlavor('github');
 		/**
 		 * Handle image generation
 		 */
