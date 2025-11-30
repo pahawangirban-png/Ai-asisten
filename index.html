@@ -37,7 +37,7 @@
 	</script>
 	
 	<style>
-		/* === CORE & IOS RESETS === */
+		/* === CORE & IOS RESETS (PENTING JANGAN HAPUS) === */
 		*, *::before, *::after {
 			touch-action: manipulation;
 		}
@@ -77,42 +77,48 @@
 		.safe-pb {
 			padding-bottom: env(safe-area-inset-bottom);
 		}
-		/* === MARKDOWN STYLES - UNIVERSAL COMPATIBILITY === */
+		/* ========================================= */
+		/* 1. TYPOGRAPHY (MOBILE FIRST - DEFAULT)    */
+		/* ========================================= */
+		/* Ukuran dasar untuk HP (Portrait) */
 		.markdown-body {
-			font-size: 1rem;
-			/* 16px */
+			font-size: 15px;
+			/* Ukuran standar HP yang nyaman */
 			line-height: 1.6;
+			/* Jarak antar baris */
 			color: #334155;
+			/* Warna teks utama (Slate 700) */
 			word-wrap: break-word;
+			font-family: 'Inter', sans-serif;
 		}
-		/* PAKU BETON UKURAN FONT (MOBILE) */
-		@media screen and (max-width: 768px) {
-			.markdown-body, .markdown-body div, .markdown-body p, .markdown-body td, .markdown-body th {
-				font-size: 16px !important;
-				/* Paksa 16px di HP */
-			}
-			input, textarea, .login-input {
-				font-size: 16px !important;
-				/* Mencegah Zoom di iPhone */
-			}
+		/* Judul (H1 - H6) di HP */
+		.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 {
+			color: #0f172a;
+			font-weight: 700;
+			margin-top: 1.25rem;
+			margin-bottom: 0.75rem;
+			line-height: 1.3;
 		}
+		.markdown-body h1 {
+			font-size: 1.25em;
+		}
+		/* ~19px */
+		.markdown-body h2 {
+			font-size: 1.15em;
+		}
+		/* ~17px */
+		/* Elemen Standar */
 		.markdown-body p {
 			margin-bottom: 0.75rem;
 			margin-top: 0;
 		}
-		.markdown-body h1,
-		.markdown-body h2,
-		.markdown-body h3,
-		.markdown-body h4 {
-			color: #0f172a;
-			font-weight: 700;
-			margin-top: 1.25rem;
-			margin-bottom: 0.5rem;
-			line-height: 1.3;
-		}
 		.markdown-body>*:first-child {
 			margin-top: 0 !important;
 		}
+		.markdown-body>*:last-child {
+			margin-bottom: 0 !important;
+		}
+		/* List */
 		.markdown-body ul {
 			list-style-type: disc;
 			margin: 0.5rem 0;
@@ -126,6 +132,7 @@
 		.markdown-body li {
 			margin-bottom: 0.25rem;
 		}
+		/* Lainnya */
 		.markdown-body hr {
 			border: 0;
 			border-top: 1px solid #e2e8f0;
@@ -150,18 +157,16 @@
 			font-weight: 700;
 			color: #1e293b;
 		}
-		.markdown-body>*:last-child {
-			margin-bottom: 0 !important;
-		}
-		/* === TABLE STYLES - UNIVERSAL COMPATIBLE === */
+		/* ========================================= */
+		/* 2. TABLE STYLES (HEADER GRAY 200)         */
+		/* ========================================= */
 		.markdown-body table {
 			width: 100%;
 			border-collapse: collapse;
 			margin: 1rem 0;
 			background-color: transparent;
 		}
-		.markdown-body th,
-		.markdown-body td {
+		.markdown-body th, .markdown-body td {
 			padding: 10px 12px;
 			border: 1px solid #cbd5e1;
 			text-align: left;
@@ -169,21 +174,25 @@
 		}
 		.markdown-body th {
 			background-color: #e5e7eb;
-			/* Kode Hex untuk Gray 200 */
+			/* Gray 200 */
 			color: #0f172a;
 			font-weight: 700;
 		}
-		/* Table wrapper for horizontal scroll */
 		.overflow-x-auto {
 			width: 100%;
 			overflow-x: auto;
 			-webkit-overflow-scrolling: touch;
 			margin: 1rem 0;
 		}
-		/* === CODE BLOCK: DARK GRAY & WHITE TEXT === */
+		/* ========================================= */
+		/* 3. CODE BLOCK STYLE (RESPONSIVE)          */
+		/* ========================================= */
+		/* Container Blok Kode (Dark Theme) */
 		.markdown-body pre {
-			background-color: #1f2937; /* Abu Tua (Gray-800) */
-			color: #ffffff;            /* Teks Putih Bersih */
+			background-color: #1f2937;
+			/* Abu Tua (Gray-800) */
+			color: #ffffff;
+			/* Teks Putih */
 			padding: 1rem;
 			border-radius: 0.5rem;
 			margin: 1rem 0;
@@ -191,19 +200,18 @@
 			border: none;
 			line-height: 1.5;
 		}
-
+		/* Font Koding (Monospace) - Ukuran Mobile */
 		.markdown-body pre code {
-			/* Kembali ke Font Koding Asli (Monospace) */
 			font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-			font-size: 14px;
-			font-weight: 400;          /* Normal (Tidak Bold) */
+			font-size: 13px;
+			/* Ukuran Code di HP (biar muat) */
+			font-weight: 400;
+			/* Normal (Tidak Bold) */
 			background-color: transparent;
-			color: inherit;            /* Ikut Putih */
+			color: inherit;
 			padding: 0;
 			border: none;
-			text-decoration: none;
 		}
-
 		/* Kode Inline (Satu kata) */
 		.markdown-body code:not(pre code) {
 			background-color: #f1f5f9;
@@ -213,9 +221,47 @@
 			font-family: monospace;
 			font-size: 0.9em;
 			font-weight: 600;
-			border: none;
+			border: 1px solid #e2e8f0;
 		}
-		/* === UI COMPONENTS & ANIMATIONS === */
+		/* ========================================= */
+		/* 4. RESPONSIVE SCALE (MEDIA QUERIES)       */
+		/* ========================================= */
+		/* Tablet & iPad (Layar > 768px) */
+		@media (min-width: 768px) {
+			.markdown-body {
+				font-size: 16px;
+				/* Sedikit lebih besar di Tablet */
+			}
+			.markdown-body h1 {
+				font-size: 1.5em;
+			}
+			.markdown-body h2 {
+				font-size: 1.3em;
+			}
+			/* Code block membesar dikit */
+			.markdown-body pre code {
+				font-size: 14px;
+			}
+			/* Youtube Grid jadi 2 kolom */
+			.yt-embed-grid {
+				grid-template-columns: repeat(2, 1fr);
+				gap: 1rem;
+			}
+		}
+		/* Laptop & Desktop (Layar > 1024px) */
+		@media (min-width: 1024px) {
+			.markdown-body {
+				font-size: 17px;
+				/* Lebih besar lagi di Monitor PC */
+			}
+			/* Code block lebih jelas di layar lebar */
+			.markdown-body pre code {
+				font-size: 15px;
+			}
+		}
+		/* ========================================= */
+		/* 5. UI COMPONENTS & ANIMATIONS (JANGAN HAPUS) */
+		/* ========================================= */
 		/* Loading Animation */
 		.dot-flashing {
 			position: relative;
@@ -292,7 +338,7 @@
 			border-radius: 4px;
 			margin-top: -1px;
 		}
-		/* Dropdown Animations */
+		/* Dropdown & Animations */
 		.dropdown-open {
 			opacity: 1;
 			transform: scale(100%);
@@ -306,7 +352,7 @@
 		.rotate-180 {
 			transform: rotate(180deg);
 		}
-		/* Typying Dots Animation */
+		/* Typing Dots */
 		.typing-dots::after {
 			content: ' .';
 			animation: dots 1.5s steps(5, end) infinite;
@@ -340,19 +386,13 @@
 			opacity: 0;
 			animation: fadeIn 0.3s forwards;
 		}
-		/* === YOUTUBE EMBED STYLE (RESPONSIF PENUH) === */
+		/* YouTube Embed */
 		.yt-embed-grid {
 			display: grid;
 			grid-template-columns: 1fr;
 			gap: 0.75rem;
 			margin-top: 0.5rem;
 			width: 100%;
-		}
-		@media (min-width: 768px) {
-			.yt-embed-grid {
-				grid-template-columns: repeat(2, 1fr);
-				gap: 1rem;
-			}
 		}
 		.yt-container {
 			position: relative;
@@ -601,7 +641,6 @@
 		const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkcnFhdXd4dndvb29qdWZ6bmR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1MDQyNDgsImV4cCI6MjA3ODA4MDI0OH0.mH7MEeAggksdAlandZpwuyGPYo08SuuWkXoMXVvwSiI';
 		// Initialize Supabase client
 		const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-		
 		if(typeof marked !== 'undefined') {
 			marked.setOptions({
 				gfm: true, // Format tabel & github style
@@ -1171,7 +1210,9 @@
 						payload: {
 							contents: payloadContents,
 							// LOGIKA 1 BARIS: Kalau minta koding, matikan Google (biar ga error). Kalau ngobrol biasa, nyalakan Google.
-                            tools: /html|css|js|script|kode|php/i.test(text) ? [] : [{ googleSearch: {} }],
+							tools: /html|css|js|script|kode|php/i.test(text) ? [] : [{
+								googleSearch: {}
+							}],
 							generationConfig: {
 								temperature: parseFloat(temperature),
 								maxOutputTokens: 2048
@@ -1281,14 +1322,18 @@
 				</button>
 			</div>` : '';
 			div.innerHTML = `
-			<div class="${bubbleClass} relative flex flex-col bg-gray-100 px-4 pt-3 pb-6 rounded-2xl shadow-sm mb-4">
-				<div class="flex justify-between items-center mb-1 border-b-[0.5px] border-gray-300 pb-1">
-					<span class="text-xs font-bold uppercase tracking-wide ${nameColorClass}">${name}</span>
-					<span class="text-[10px] text-slate-400 font-sans">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-				</div>
-				<div class="text-sm md:text-base text-slate-700 font-medium leading-relaxed markdown-body mt-1 chat-content">${htmlContent}</div>
-				${copyButtonHtml}
-			</div>`;
+    <div class="${bubbleClass} relative flex flex-col bg-gray-100 px-4 pt-3 pb-6 rounded-2xl shadow-sm mb-4">
+        <div class="flex justify-between items-center mb-1 border-b-[0.5px] border-gray-300 pb-1">
+            <span class="text-xs font-bold uppercase tracking-wide ${nameColorClass}">${name}</span>
+            <span class="text-[10px] text-slate-400 font-sans">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        </div>
+        
+        <div class="markdown-body mt-1 chat-content font-medium">
+            ${htmlContent}
+        </div>
+        
+        ${copyButtonHtml}
+    </div>`;
 			const contentBody = div.querySelector('.markdown-body');
 			if(contentBody && contentBody.lastElementChild) {
 				contentBody.lastElementChild.style.marginBottom = '0';
@@ -2300,13 +2345,13 @@
 		// Check session on app start
 		checkSession();
 		// --- TAMBAHKAN INI UNTUK REGISTER PWA ---
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then((reg) => console.log('Service Worker OK:', reg.scope))
-                    .catch((err) => console.log('Service Worker Gagal:', err));
-            });
-        }
+		if('serviceWorker' in navigator) {
+			window.addEventListener('load', () => {
+				navigator.serviceWorker.register('./sw.js')
+					.then((reg) => console.log('Service Worker OK:', reg.scope))
+					.catch((err) => console.log('Service Worker Gagal:', err));
+			});
+		}
 	</script>
 	<script>
 		// ============
