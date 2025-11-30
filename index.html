@@ -78,20 +78,23 @@
 		}
 		/* === MARKDOWN STYLES - UNIVERSAL COMPATIBILITY === */
 		.markdown-body {
-			font-size: 1rem; /* 16px */
+			font-size: 1rem;
+			/* 16px */
 			line-height: 1.6;
 			color: #334155;
 			word-wrap: break-word;
 		}
-        /* PAKU BETON UKURAN FONT (MOBILE) */
-        @media screen and (max-width: 768px) {
-            .markdown-body, .markdown-body div, .markdown-body p, .markdown-body td, .markdown-body th {
-                font-size: 16px !important; /* Paksa 16px di HP */
-            }
-            input, textarea, .login-input {
-                font-size: 16px !important; /* Mencegah Zoom di iPhone */
-            }
-        }
+		/* PAKU BETON UKURAN FONT (MOBILE) */
+		@media screen and (max-width: 768px) {
+			.markdown-body, .markdown-body div, .markdown-body p, .markdown-body td, .markdown-body th {
+				font-size: 16px !important;
+				/* Paksa 16px di HP */
+			}
+			input, textarea, .login-input {
+				font-size: 16px !important;
+				/* Mencegah Zoom di iPhone */
+			}
+		}
 		.markdown-body p {
 			margin-bottom: 0.75rem;
 			margin-top: 0;
@@ -1188,7 +1191,9 @@
 						model: model,
 						payload: {
 							contents: payloadContents, // Kirim history + file lengkap
-							tools: [{ googleSearch: {} }],
+							tools: [{
+								googleSearch: {}
+							}],
 							generationConfig: {
 								temperature: parseFloat(temperature),
 								maxOutputTokens: 2048
@@ -1261,15 +1266,13 @@
 				// Raw HTML langsung render
 				htmlContent = content;
 			} else if(role === 'model') {
-				// PROSES MARKDOWN DENGAN KONFIGURASI TABEL YANG BENAR
+				// GUNAKAN SHOWDOWN.JS MURNI - tanpa processing manual
 				let rawHtml = converter.makeHtml(content);
-				// Pastikan tabel mendapatkan wrapper untuk scroll horizontal
+				// Hanya tambahkan wrapper untuk tabel jika diperlukan
 				const tempDiv = document.createElement('div');
 				tempDiv.innerHTML = rawHtml;
-				// Proses semua tabel dan berikan wrapper
 				const tables = tempDiv.querySelectorAll('table');
 				tables.forEach(tbl => {
-					// Cek apakah tabel sudah punya wrapper
 					if(!tbl.parentElement.classList.contains('overflow-x-auto')) {
 						const wrapper = document.createElement('div');
 						wrapper.className = 'overflow-x-auto';
@@ -1315,20 +1318,24 @@
 			});
 			return div;
 		}
-		// MARKDOWN CONVERTER - DENGAN KONFIGURASI TABEL YANG BENAR
+		// KONFIGURASI SHOWDOWN.JS YANG OPTIMAL
 		const converter = new showdown.Converter({
 			tables: true,
 			tasklists: true,
 			strikethrough: true,
 			smoothLivePreview: true,
 			simplifiedAutoLink: true,
-			tablesHeaderId: true,
+			tablesHeaderId: false, // Nonaktifkan untuk kompatibilitas lebih baik
 			parseImgDimensions: true,
-			simplifiedAutoLink: true,
 			excludeTrailingPunctuationFromURLs: true,
 			literalMidWordUnderscores: true,
-			strikethrough: true
+			simpleLineBreaks: true, // Tambahkan ini
+			openLinksInNewWindow: true, // Tambahkan ini
+			emoji: true, // Tambahkan ini untuk support emoji
+			underline: false // Nonaktifkan underline untuk kompatibilitas
 		});
+		// Tambahkan extension untuk memastikan tabel kompatibel
+		converter.setFlavor('github'); // Gunakan flavor GitHub untuk kompatibilitas terbaik
 		/**
 		 * Handle image generation
 		 */
@@ -2324,30 +2331,28 @@
 		(function() {
 			const ua = navigator.userAgent;
 			const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
-			
 			if(isIOS15) {
 				console.log("🚀 iOS 15: Mode Smooth Push Up...");
-				
 				const viewport = window.visualViewport;
 				const chatPage = document.getElementById('chat-page');
 				const chatContainer = document.getElementById('chat-container');
 				const sidebarContent = document.getElementById('sidebar-content');
 				const header = document.querySelector('header');
 				const inputField = document.getElementById('user-input');
-				
 				// Simpan tinggi layar asli
 				const originalScreenHeight = window.innerHeight;
-
 				// FUNGSI SCROLL
 				const jumpToBottom = () => {
 					if(chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
 				};
 				const smoothScrollToBottom = () => {
 					if(chatContainer) {
-						chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+						chatContainer.scrollTo({
+							top: chatContainer.scrollHeight,
+							behavior: 'smooth'
+						});
 					}
 				};
-				
 				// 1. INJEKSI CSS DENGAN TRANSISI HALUS
 				const style = document.createElement('style');
 				style.innerHTML = `
@@ -2394,14 +2399,11 @@
 	                }
 	            `;
 				document.head.appendChild(style);
-				
 				// 2. LOGIKA HITUNG TINGGI (TETAP SAMA KARENA SUDAH SEMPURNA)
 				const handleResize = () => {
 					if(!viewport || !chatPage) return;
-
 					const currentKeyboardHeight = Math.max(0, originalScreenHeight - viewport.height);
 					const isKeyboardOpen = currentKeyboardHeight > 150;
-
 					if(inputField === document.activeElement && isKeyboardOpen) {
 						// Dorong ke atas (Smooth karena ada CSS transition)
 						chatPage.style.top = `-${currentKeyboardHeight}px`;
@@ -2412,7 +2414,6 @@
 					}
 					window.scrollTo(0, 0);
 				};
-				
 				// 3. PASANG LISTENER
 				if(viewport) {
 					viewport.addEventListener('resize', handleResize);
@@ -2421,23 +2422,20 @@
 						if(inputField === document.activeElement) window.scrollTo(0, 0);
 					}, 500);
 				}
-				
 				// 4. LOGIKA FOKUS
 				if(inputField) {
 					inputField.addEventListener('focus', () => {
 						setTimeout(handleResize, 50);
 						// Panggil lagi saat animasi keyboard iOS selesai (sekitar 300ms)
 						// untuk memastikan posisi akhir presisi
-						setTimeout(handleResize, 300); 
+						setTimeout(handleResize, 300);
 						setTimeout(jumpToBottom, 350);
 					});
-
 					inputField.addEventListener('blur', () => {
 						chatPage.style.top = '0px';
 						window.scrollTo(0, 0);
 					});
 				}
-				
 				// 5. SATPAM SCROLL & BLOKIR SENTUHAN LUAR (FITUR LAMA)
 				const preventRubberBand = (element) => {
 					if(!element) return;
@@ -2448,23 +2446,36 @@
 						const height = el.clientHeight;
 						const deltaY = e.touches[0].pageY - (el.lastY || e.touches[0].pageY);
 						el.lastY = e.touches[0].pageY;
-						if(scrollHeight <= height) { e.preventDefault(); return; }
-						if(scrollTop <= 0 && deltaY > 0) { e.preventDefault(); }
-						if(scrollTop + height >= scrollHeight && deltaY < 0) { e.preventDefault(); }
-					}, { passive: false });
+						if(scrollHeight <= height) {
+							e.preventDefault();
+							return;
+						}
+						if(scrollTop <= 0 && deltaY > 0) {
+							e.preventDefault();
+						}
+						if(scrollTop + height >= scrollHeight && deltaY < 0) {
+							e.preventDefault();
+						}
+					}, {
+						passive: false
+					});
 					element.addEventListener('touchstart', function(e) {
 						this.lastY = e.touches[0].pageY;
-					}, { passive: true });
+					}, {
+						passive: true
+					});
 				};
 				if(chatContainer) preventRubberBand(chatContainer);
 				if(sidebarContent) preventRubberBand(sidebarContent);
-				
 				document.addEventListener('touchmove', function(e) {
 					const isChat = e.target.closest('#chat-container');
 					const isSidebar = e.target.closest('#sidebar-content');
-					if(!isChat && !isSidebar) { e.preventDefault(); }
-				}, { passive: false });
-				
+					if(!isChat && !isSidebar) {
+						e.preventDefault();
+					}
+				}, {
+					passive: false
+				});
 				// 6. AUTO SCROLL & ANTI DOUBLE TAP
 				if(chatContainer) {
 					const observer = new MutationObserver((mutations) => {
@@ -2473,164 +2484,21 @@
 							setTimeout(smoothScrollToBottom, 100);
 						}
 					});
-					observer.observe(chatContainer, { childList: true, subtree: false });
+					observer.observe(chatContainer, {
+						childList: true,
+						subtree: false
+					});
 				}
-				
 				let lastTouchEnd = 0;
 				document.addEventListener('touchend', function(event) {
 					const now = (new Date()).getTime();
-					if(now - lastTouchEnd <= 300) { event.preventDefault(); }
+					if(now - lastTouchEnd <= 300) {
+						event.preventDefault();
+					}
 					lastTouchEnd = now;
-				}, { passive: false });
-			}
-		})();
-		// ============
-		// PATCH IOS 15 (FINAL V14: UNIFORM FONT & TIGHT GAP)
-		// ============
-		(function() {
-			const ua = navigator.userAgent;
-			const isIOS15 = /iPhone/.test(ua) && /OS 15_/.test(ua);
-			
-			if(isIOS15) {
-				console.log("🛡️ iOS 15: Parser V14 (Tight Gap & Same Font)");
-				if(typeof converter !== 'undefined') {
-					converter.makeHtml = function(text) {
-						if(!text) return "";
-						try {
-							// 1. PRE-PROCESSING
-							let html = text
-								.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-								.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-								.replace(/\*(.*?)\*/g, '<i>$1</i>')
-								.replace(/^### (.*$)/gm, '<h3 class="text-lg font-bold text-gray-900 mt-5 mb-2">$1</h3>')
-								.replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold text-gray-600 mt-6 mb-3 border-b border-gray-200 pb-1">$1</h2>');
-
-							const lines = html.split('\n');
-							let output = [];
-							let inCodeBlock = false;
-							let inTable = false;
-							let tableHeaderProcessed = false;
-
-							for(let i = 0; i < lines.length; i++) {
-								let line = lines[i];
-
-								// A. CODE BLOCK
-								if(line.trim().startsWith('```')) {
-									inCodeBlock = !inCodeBlock;
-									
-									if (inCodeBlock) {
-										// 1. Ambil nama bahasa
-										let rawLang = line.trim().substring(3).trim();
-										let lang = "Code";
-										
-										// 2. LOGIKA CAPITALIZE
-										if(rawLang) {
-											lang = rawLang.charAt(0).toUpperCase() + rawLang.slice(1).toLowerCase();
-										}
-										
-										// 3. HTML STRUKTUR (PERBAIKAN PRESISI)
-										// - Header: text-sm (14px) agar SAMA dengan kode, py-1 (rapat)
-										// - Pre: py-1 (jarak atas bawah kode sangat minim/rapat)
-										// - Code: text-sm (14px)
-										output.push(`
-											<div class="my-3 border border-gray-300 rounded-lg overflow-hidden bg-gray-50 shadow-sm block">
-												<div class="bg-gray-200 border-b border-gray-300 px-4 py-1 text-sm font-bold text-slate-700 tracking-wide block">
-													${lang}
-												</div>
-												<pre class="m-0 px-4 py-1 w-full overflow-x-auto block border-none outline-none" style="border:none !important; outline:none !important;"><code class="font-mono text-sm text-slate-800 whitespace-pre bg-transparent p-0 border-none block" style="font-size:14px !important; color:#1e293b !important; border:none !important;">`);
-									} else {
-										output.push('</code></pre></div>');
-									}
-									continue;
-								}
-								if(inCodeBlock) {
-									output.push(line + '\n');
-									continue;
-								}
-
-								// B. HR
-								if(line.trim().match(/^[-*_]{3,}$/)) {
-									output.push('<hr class="my-2 border-t border-gray-300">');
-									continue;
-								}
-
-								// C. TABEL
-								if(line.trim().startsWith('|')) {
-									if(!inTable) {
-										inTable = true;
-										tableHeaderProcessed = false;
-										output.push('<div class="overflow-x-auto my-2"><table class="w-full text-base text-left border-collapse border-l border-t border-gray-300">'); 
-									}
-									const cells = line.split('|').filter(cell => cell.trim() !== '');
-									const isSeparator = cells.every(c => c.trim().match(/^[-: ]+$/));
-									if(isSeparator) {
-										tableHeaderProcessed = true;
-										continue;
-									}
-									output.push('<tr>');
-									const isHeaderRow = !tableHeaderProcessed;
-									cells.forEach(cell => {
-										const content = cell.trim();
-										if(isHeaderRow) {
-											output.push(`<th class="bg-gray-200 px-4 py-2 border-b border-r border-gray-300 font-bold text-black whitespace-nowrap">${content}</th>`);
-										} else {
-											output.push(`<td class="px-4 py-2 border-b border-r border-gray-200 text-gray-900 min-w-[100px]">${content}</td>`);
-										}
-									});
-									output.push('</tr>');
-									continue;
-								} else {
-									if(inTable) {
-										output.push('</table></div>');
-										inTable = false;
-									}
-								}
-
-								// D. LIST & INLINE CODE
-								const listMatch = line.match(/^(\s*)([-*]|\d+\.)\s+(.*)$/);
-								if(listMatch) {
-									const indent = listMatch[1].length;
-									const symbol = listMatch[2];
-									let content = listMatch[3];
-                                    
-                                    content = content.replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-1.5 py-0.5 rounded text-red-600 font-mono text-base border border-gray-200" style="font-size: 15px !important;">$1</code>');
-
-									let paddingClass = 'pl-0';
-									if(indent >= 2) paddingClass = 'pl-4';
-									if(indent >= 4) paddingClass = 'pl-8';
-									
-                                    let markerHtml = '';
-									if(symbol.includes('.') || !isNaN(parseInt(symbol))) {
-										markerHtml = `<span class="mr-2 font-bold text-black min-w-[1.2rem] text-right">${symbol}</span>`;
-									} else {
-										markerHtml = `<span class="mr-2 text-black text-lg leading-none mt-[-2px]">&bull;</span>`;
-									}
-									output.push(`
-                                <div class="flex items-start ${paddingClass} mb-1 leading-snug text-gray-900 text-base">
-                                    ${markerHtml}
-                                    <span class="flex-1">${content}</span>
-                                </div>`);
-								}
-								// E. TEXT BIASA
-								else {
-									if(line.trim() === '') {
-										output.push('<div class="h-2"></div>');
-									} else {
-                                        let formattedLine = line.replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-1.5 py-0.5 rounded text-red-600 font-mono text-base border border-gray-200" style="font-size: 15px !important;">$1</code>');
-										output.push(`<div class="mb-1 leading-relaxed text-gray-900 text-base">${formattedLine}</div>`);
-									}
-								}
-							}
-							if(inTable) {
-								output.push('</table></div>');
-							}
-							return output.join('');
-						} catch (e) {
-							console.error("V14 Parser Error:", e);
-							return text;
-						}
-					};
-				}
+				}, {
+					passive: false
+				});
 			}
 		})();
 	</script>
