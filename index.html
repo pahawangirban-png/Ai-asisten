@@ -185,43 +185,43 @@
 			margin: 1rem 0;
 		}
 		/* ========================================= */
-		/* 3. CODE BLOCK STYLE (RESPONSIVE)          */
+		/* 3. CODE BLOCK STYLE (FINAL & JELAS)       */
 		/* ========================================= */
-		/* Container Blok Kode (Dark Theme) */
+		
+		/* A. BLOK KODE BESAR (Kotak Gelap) */
 		.markdown-body pre {
-			background-color: #1f2937;
-			/* Abu Tua (Gray-800) */
-			color: #ffffff;
-			/* Teks Putih */
-			padding: 1rem;
+			background-color: #1f2937; /* Abu Tua (Gray-800) */
+			color: #ffffff;            /* Teks Putih */
+			padding: 0.75rem;          /* Padding Pas */
 			border-radius: 0.5rem;
-			margin: 1rem 0;
+			margin: 0.5rem 0;
 			overflow-x: auto;
 			border: none;
-			line-height: 1.5;
+			line-height: 1.4;          /* Jarak baris rapat presisi */
 		}
-		/* Font Koding (Monospace) - Ukuran Mobile */
+
+		/* Font di dalam Blok Kode */
 		.markdown-body pre code {
 			font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-			font-size: 13px;
-			/* Ukuran Code di HP (biar muat) */
+			font-size: 13px;           
 			font-weight: 400;
-			/* Normal (Tidak Bold) */
 			background-color: transparent;
 			color: inherit;
 			padding: 0;
 			border: none;
 		}
-		/* Kode Inline (Satu kata) */
+
+		/* B. KODE INLINE / STABILO (Satu kata) */
+		/* Sekarang pakai Gray 200 biar kelihatan jelas */
 		.markdown-body code:not(pre code) {
-			background-color: #f1f5f9;
-			color: #ef4444;
-			padding: 0.2rem 0.4rem;
+			background-color: #e5e7eb; /* Gray 200 (Lebih Gelap drpd Gray 100) */
+			color: #0f172a;            /* Hitam Pekat */
+			padding: 0.1rem 0.3rem;    /* Rapat */
 			border-radius: 0.25rem;
-			font-family: monospace;
-			font-size: 0.9em;
-			font-weight: 600;
-			border: 1px solid #e2e8f0;
+			font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+			font-size: 0.9em;          
+			font-weight: 600;          
+			border: 1px solid #d1d5db; /* Border Gray 300 (biar makin tegas) */
 		}
 		/* ========================================= */
 		/* 4. RESPONSIVE SCALE (MEDIA QUERIES)       */
@@ -450,8 +450,11 @@
 			</div>
 			<form id="login-form" class="w-full space-y-3" onsubmit="handleLogin(event)">
 				<input type="email" id="email-input" placeholder="Email" required class="login-input w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-slate-300 transition-all">
+				
 				<input type="password" id="password-input" placeholder="Password" required class="login-input w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-slate-300 transition-all">
+				
 				<p id="login-error" class="text-red-500 text-xs text-center hidden"></p>
+				
 				<button type="submit" id="login-btn" class="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm tracking-wide rounded-xl shadow-sm transition-transform active:scale-95 uppercase mt-2">Masuk</button>
 			</form>
 		</div>
@@ -535,15 +538,17 @@
 		</header>
 		<main id="settings-content" class="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-6">
 			<div class="max-w-3xl mx-auto space-y-6 pb-12 mt-2">
-				<!-- AI Configuration -->
+				
 				<fieldset class="bg-white rounded-2xl border border-gray-300 p-6 shadow-sm mt-6">
 					<legend class="px-2 text-sm md:text-base font-black text-slate-500 uppercase tracking-wide">KONFIGURASI AI</legend>
+					
 					<div class="mb-4 relative" id="dropdown-wrapper">
 						<label class="block text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">Model Gemini</label>
 						<button type="button" onclick="toggleDropdown()" id="dropdown-trigger" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl flex justify-between items-center transition-all duration-200 hover:bg-gray-100 active:scale-[0.99]">
 							<span id="selected-model-text" class="text-sm md:text-base font-medium text-slate-700">Gemini 2.5 Flash (Cepat)</span>
 							<i id="dropdown-arrow" class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-300"></i>
 						</button>
+						
 						<div id="dropdown-menu" class="dropdown-closed absolute left-0 right-0 top-full mt-2 bg-white border border-gray-100 rounded-xl shadow-[0_10px_30px_-10px_rgba(0,0,0,0.1)] z-30 overflow-hidden transition-all duration-200 origin-top">
 							<div onclick="selectOption('gemini-2.5-flash', 'Gemini 2.5 Flash (Cepat)')" class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center justify-between group border-b border-gray-50 last:border-0">
 								<span class="text-sm md:text-base text-slate-600 group-hover:text-blue-700 font-medium">Gemini 2.5 Flash (Cepat)</span>
@@ -561,12 +566,14 @@
 							<option value="gemini-3-pro-preview">Gemini 3 Pro (Preview)</option>
 						</select>
 					</div>
+
 					<div class="mb-4">
 						<label class="block text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">System Instruction</label>
 						<div class="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
 							<textarea id="setting-prompt" rows="3" class="w-full bg-transparent border-none focus:ring-0 p-0 text-sm md:text-base text-slate-700 resize-none placeholder:text-slate-400" placeholder="Contoh: Kamu adalah asisten yang ramah..."></textarea>
 						</div>
 					</div>
+
 					<div class="mb-2">
 						<div class="flex justify-between mb-1 ml-1"><label class="text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wide">Kreativitas</label></div>
 						<div class="relative w-full h-10 flex items-center mt-1">
@@ -577,39 +584,36 @@
 					</div>
 				</fieldset>
 				
-				<!-- User Management -->
 				<fieldset class="bg-white rounded-2xl border border-gray-300 p-6 shadow-sm mt-6">
 					<legend class="px-2 text-sm md:text-base font-black text-slate-500 uppercase tracking-wide">MANAJEMEN USER</legend>
+					
 					<div class="mb-4">
 						<label class="block text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">Email Baru</label>
 						<div class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
 							<input type="email" id="create-email" placeholder="user@email.com" class="w-full bg-transparent border-none focus:ring-0 p-0 text-sm md:text-base text-slate-700 placeholder:text-slate-400 h-5">
 						</div>
 					</div>
+					
 					<div class="mb-6">
 						<label class="block text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">Password</label>
 						<div class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
 							<input type="password" id="create-password" placeholder="Minimal 6 karakter" class="w-full bg-transparent border-none focus:ring-0 p-0 text-sm md:text-base text-slate-700 placeholder:text-slate-400 h-5">
 						</div>
 					</div>
+
 					<button onclick="handleAddUser()" id="btn-add-user" class="w-full py-3.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm md:text-base rounded-xl transition-all active:scale-95 shadow-md flex items-center justify-center gap-2 group mb-8">
 						<i class="fa-solid fa-user-plus text-slate-300 group-hover:text-white transition-colors"></i><span>TAMBAH USER</span>
 					</button>
+					
 					<div class="border-t border-gray-200 mb-6"></div>
+					
 					<div class="flex justify-between items-center mb-4 ml-1">
 						<h4 class="text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wide">Daftar Pengguna</h4>
 						<button onclick="loadUsers()" class="w-8 h-8 flex items-center justify-center rounded-lg text-green-600 hover:text-green-800 hover:bg-green-50 transition-colors" title="Refresh Data">
-							<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-								<g stroke-width="0"></g>
-								<g stroke-linecap="round" stroke-linejoin="round"></g>
-								<g>
-									<path d="M7.37756 11.6296H6.62756H7.37756ZM7.37756 12.5556L6.81609 13.0528C6.95137 13.2056 7.14306 13.2966 7.34695 13.3049C7.55084 13.3133 7.74932 13.2382 7.89662 13.0969L7.37756 12.5556ZM9.51905 11.5414C9.81805 11.2547 9.82804 10.7799 9.54137 10.4809C9.2547 10.182 8.77994 10.172 8.48095 10.4586L9.51905 11.5414ZM6.56148 10.5028C6.28686 10.1927 5.81286 10.1639 5.50277 10.4385C5.19267 10.7131 5.16391 11.1871 5.43852 11.4972L6.56148 10.5028ZM14.9317 9.0093C15.213 9.31337 15.6875 9.33184 15.9915 9.05055C16.2956 8.76927 16.3141 8.29476 16.0328 7.9907L14.9317 9.0093ZM12.0437 6.25C9.05802 6.25 6.62756 8.653 6.62756 11.6296H8.12756C8.12756 9.49251 9.87531 7.75 12.0437 7.75V6.25ZM6.62756 11.6296L6.62756 12.5556H8.12756L8.12756 11.6296H6.62756ZM7.89662 13.0969L9.51905 11.5414L8.48095 10.4586L6.85851 12.0142L7.89662 13.0969ZM7.93904 12.0583L6.56148 10.5028L5.43852 11.4972L6.81609 13.0528L7.93904 12.0583ZM16.0328 7.9907C15.0431 6.9209 13.6212 6.25 12.0437 6.25V7.75C13.1879 7.75 14.2154 8.23504 14.9317 9.0093L16.0328 7.9907Z" fill="currentColor"></path>
-									<path d="M16.6188 11.4443L17.1795 10.9462C17.044 10.7937 16.8523 10.703 16.6485 10.6949C16.4447 10.6868 16.2464 10.7621 16.0993 10.9034L16.6188 11.4443ZM14.4805 12.4581C14.1817 12.745 14.1722 13.2198 14.4591 13.5185C14.746 13.8173 15.2208 13.8269 15.5195 13.54L14.4805 12.4581ZM17.4393 13.4972C17.7144 13.8068 18.1885 13.8348 18.4981 13.5597C18.8078 13.2846 18.8358 12.8106 18.5607 12.5009L17.4393 13.4972ZM9.04688 15.0047C8.76342 14.7027 8.28879 14.6876 7.98675 14.9711C7.68472 15.2545 7.66966 15.7292 7.95312 16.0312L9.04688 15.0047ZM11.9348 17.7499C14.9276 17.7499 17.3688 15.3496 17.3688 12.3703H15.8688C15.8688 14.5047 14.1158 16.2499 11.9348 16.2499V17.7499ZM17.3688 12.3703V11.4443H15.8688V12.3703H17.3688ZM16.0993 10.9034L14.4805 12.4581L15.5195 13.54L17.1383 11.9853L16.0993 10.9034ZM16.0581 11.9425L17.4393 13.4972L18.5607 12.5009L17.1795 10.9462L16.0581 11.9425ZM7.95312 16.0312C8.94543 17.0885 10.3635 17.7499 11.9348 17.7499V16.2499C10.792 16.2499 9.76546 15.7704 9.04688 15.0047L7.95312 16.0312Z" fill="currentColor"></path>
-									<path d="M7 3.33782C8.47087 2.48697 10.1786 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 10.1786 2.48697 8.47087 3.33782 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-								</g>
-							</svg>
+							<i class="fa-solid fa-arrows-rotate"></i>
 						</button>
 					</div>
+					
 					<div id="user-list-container" class="space-y-3">
 						<p class="text-xs md:text-sm text-slate-400 text-center py-4 italic">Memuat data pengguna...</p>
 					</div>
