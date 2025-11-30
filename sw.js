@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ai-asisten-ios-v3'; // Saya ganti versi biar iPad refresh cache
+const CACHE_NAME = 'ai-asisten-ios-v4'; // Saya ganti versi biar iPad refresh cache
 const ASSETS = [
   './',
   './index.html',
