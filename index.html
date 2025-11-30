@@ -9,6 +9,7 @@
 	<meta name="apple-mobile-web-app-title" content="AI ASISTEN">
 	<link rel="apple-touch-icon" href="./icon-512.png">
 	<link rel="icon" type="image/png" href="./icon-512.png">
+	<link rel="manifest" href="./manifest.json">
 	<title>AI ASISTEN</title>
 	
 	<!-- External Libraries -->
@@ -179,31 +180,40 @@
 			-webkit-overflow-scrolling: touch;
 			margin: 1rem 0;
 		}
-		/* === CODE STYLES - SIMPLE & COMPATIBLE === */
+		/* === CODE BLOCK: DARK GRAY & WHITE TEXT === */
 		.markdown-body pre {
-			background-color: #f8fafc;
-			color: #334155;
+			background-color: #1f2937; /* Abu Tua (Gray-800) */
+			color: #ffffff;            /* Teks Putih Bersih */
 			padding: 1rem;
 			border-radius: 0.5rem;
 			margin: 1rem 0;
 			overflow-x: auto;
-			border: 1px solid #e2e8f0;
-			font-family: monospace;
-			font-size: 0.85rem;
+			border: none;
+			line-height: 1.5;
 		}
+
 		.markdown-body pre code {
+			/* Kembali ke Font Koding Asli (Monospace) */
+			font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+			font-size: 14px;
+			font-weight: 400;          /* Normal (Tidak Bold) */
 			background-color: transparent;
-			color: inherit;
+			color: inherit;            /* Ikut Putih */
 			padding: 0;
+			border: none;
+			text-decoration: none;
 		}
-		.markdown-body code {
+
+		/* Kode Inline (Satu kata) */
+		.markdown-body code:not(pre code) {
 			background-color: #f1f5f9;
 			color: #ef4444;
 			padding: 0.2rem 0.4rem;
 			border-radius: 0.25rem;
 			font-family: monospace;
-			font-size: 0.875em;
-			border: 1px solid #e2e8f0;
+			font-size: 0.9em;
+			font-weight: 600;
+			border: none;
 		}
 		/* === UI COMPONENTS & ANIMATIONS === */
 		/* Loading Animation */
@@ -591,51 +601,15 @@
 		const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkcnFhdXd4dndvb29qdWZ6bmR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1MDQyNDgsImV4cCI6MjA3ODA4MDI0OH0.mH7MEeAggksdAlandZpwuyGPYo08SuuWkXoMXVvwSiI';
 		// Initialize Supabase client
 		const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-		// PWA Manifest
-		const pwaManifest = {
-			"name": "AI ASISTEN",
-			"short_name": "AI ASISTEN",
-			"description": "Aplikasi Asisten AI Cerdas",
-			"start_url": window.location.href,
-			"display": "standalone",
-			"background_color": "#ffffff",
-			"theme_color": "#ffffff",
-			"orientation": "portrait-primary",
-			"icons": [{
-					"src": "./icon-192.png",
-					"sizes": "192x192",
-					"type": "image/png"
-				},
-				{
-					"src": "./icon-512.png",
-					"sizes": "512x512",
-					"type": "image/png"
-				}
-			]
-		};
-		// Inject PWA Manifest
-		try {
-			const stringManifest = JSON.stringify(pwaManifest);
-			const blob = new Blob([stringManifest], {
-				type: 'application/json'
+		
+		if(typeof marked !== 'undefined') {
+			marked.setOptions({
+				gfm: true, // Format tabel & github style
+				breaks: true, // Enter = Baris baru (PENTING untuk surat)
+				headerIds: false, // Mematikan ID header (mencegah warning)
+				mangle: false // Mencegah error email
 			});
-			const manifestURL = URL.createObjectURL(blob);
-			const link = document.createElement('link');
-			link.rel = 'manifest';
-			link.href = manifestURL;
-			document.head.appendChild(link);
-			console.log("PWA Manifest berhasil di-inject (Root Icon).");
-		} catch (e) {
-			console.error("Gagal inject PWA:", e);
 		}
-		if (typeof marked !== 'undefined') {
-            marked.setOptions({
-                gfm: true,          // Format tabel & github style
-                breaks: true,       // Enter = Baris baru (PENTING untuk surat)
-                headerIds: false,   // Mematikan ID header (mencegah warning)
-                mangle: false       // Mencegah error email
-            });
-        }
 		let currentUser = null;
 		let uploadedFiles = [];
 		let chatHistory = [];
@@ -1196,9 +1170,8 @@
 						model: model,
 						payload: {
 							contents: payloadContents,
-							tools: [{
-								googleSearch: {}
-							}],
+							// LOGIKA 1 BARIS: Kalau minta koding, matikan Google (biar ga error). Kalau ngobrol biasa, nyalakan Google.
+                            tools: /html|css|js|script|kode|php/i.test(text) ? [] : [{ googleSearch: {} }],
 							generationConfig: {
 								temperature: parseFloat(temperature),
 								maxOutputTokens: 2048
@@ -1212,7 +1185,12 @@
 						}
 					}),
 				});
-				if(!response.ok) throw new Error("Gagal terhubung ke AI.");
+				if(!response.ok) {
+					// Coba baca pesan error dari server jika ada
+					const errData = await response.json().catch(() => null);
+					const serverMsg = errData?.error || "Gagal terhubung ke AI.";
+					throw new Error(serverMsg);
+				}
 				const data = await response.json();
 				const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, tidak ada jawaban.";
 				loadingMsg.remove();
@@ -1245,7 +1223,7 @@
 				console.error("Chat Error:", error);
 				const errorHtml = `<div class="bg-red-50 p-3 rounded-lg text-red-600 text-sm border border-red-100 flex items-center gap-2">
             <i class="fa-solid fa-triangle-exclamation"></i> 
-            <span>Gagal memproses. Coba kurangi jumlah file atau kirim ulang.</span>
+            <span>${error.message || "Terjadi kesalahan sistem."}</span>
         </div>`;
 				appendMessage('model', errorHtml, false, true);
 				userInput.value = originalText;
@@ -1259,28 +1237,24 @@
 		function appendMessage(role, content, isLoading = false, isRawHtml = false) {
 			const div = document.createElement('div');
 			div.className = 'w-full max-w-3xl mx-auto';
-			
 			const isUser = role === 'user';
 			const name = isUser ? 'ANDA' : 'ASISTEN';
 			const nameColorClass = isUser ?
 				'text-slate-500' :
 				'bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent';
 			const bubbleClass = isUser ? 'user-bubble' : 'ai-bubble cursor-pointer';
-			
 			let htmlContent;
-			
 			if(isLoading) {
 				htmlContent = `<div class="flex items-center h-6 pl-3 gap-1"><div class="dot-flashing"></div></div>`;
 			} else if(isRawHtml) {
 				htmlContent = content;
 			} else if(role === 'model') {
-				if (typeof marked === 'undefined') {
+				if(typeof marked === 'undefined') {
 					htmlContent = content.replace(/\n/g, '<br>');
 				} else {
 					const rawHtml = marked.parse(content);
 					const tempDiv = document.createElement('div');
 					tempDiv.innerHTML = rawHtml;
-					
 					tempDiv.querySelectorAll('table').forEach(tbl => {
 						if(!tbl.parentElement.classList.contains('overflow-x-auto')) {
 							const wrapper = document.createElement('div');
@@ -1292,13 +1266,11 @@
 							th.style.backgroundColor = '#e5e7eb';
 						});
 					});
-					
 					htmlContent = tempDiv.innerHTML;
 				}
 			} else {
 				htmlContent = content.replace(/\n/g, '<br>');
 			}
-			
 			const copyButtonHtml = role === 'model' && !isLoading && !isRawHtml ? `
 			<div class="copy-container hidden absolute bottom-1.5 left-4 select-none">
 				<button class="copy-btn text-slate-400 p-0 flex items-center transition-colors hover:text-slate-600" title="Salin">
@@ -1308,7 +1280,6 @@
 					</svg>
 				</button>
 			</div>` : '';
-
 			div.innerHTML = `
 			<div class="${bubbleClass} relative flex flex-col bg-gray-100 px-4 pt-3 pb-6 rounded-2xl shadow-sm mb-4">
 				<div class="flex justify-between items-center mb-1 border-b-[0.5px] border-gray-300 pb-1">
@@ -1318,18 +1289,15 @@
 				<div class="text-sm md:text-base text-slate-700 font-medium leading-relaxed markdown-body mt-1 chat-content">${htmlContent}</div>
 				${copyButtonHtml}
 			</div>`;
-			
 			const contentBody = div.querySelector('.markdown-body');
 			if(contentBody && contentBody.lastElementChild) {
 				contentBody.lastElementChild.style.marginBottom = '0';
 			}
-			
 			chatContainer.appendChild(div);
 			chatContainer.scrollTo({
 				top: chatContainer.scrollHeight,
 				behavior: 'auto'
 			});
-			
 			return div;
 		}
 		/**
@@ -2331,6 +2299,14 @@
 		// ============================
 		// Check session on app start
 		checkSession();
+		// --- TAMBAHKAN INI UNTUK REGISTER PWA ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((reg) => console.log('Service Worker OK:', reg.scope))
+                    .catch((err) => console.log('Service Worker Gagal:', err));
+            });
+        }
 	</script>
 	<script>
 		// ============
