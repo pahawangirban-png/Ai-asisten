@@ -37,9 +37,7 @@
 	</script>
 	
 	<style>
-		/* ================================================================== */
-		/* 1. PONDASI UTAMA (CORE & RESET)                                    */
-		/* ================================================================== */
+		/* === 1. CORE RESETS & IOS FIXES (WAJIB ADA) === */
 		*, *::before, *::after {
 			touch-action: manipulation;
 		}
@@ -48,254 +46,22 @@
 			height: 100%;
 			overflow: hidden;
 			background-color: #ffffff;
-			/* ANTI KARET iOS (Wajib Ada) */
+			/* FITUR ANTI KARET (OVERSCROLL) - Agar tidak membal di iPhone */
 			overscroll-behavior: none;
 			-webkit-overflow-scrolling: touch;
 			-webkit-user-select: none;
 			user-select: none;
 			-webkit-tap-highlight-color: transparent;
-			/* PONDASI FONT: 16px MUTLAK untuk semua device */
-			/* Ini memastikan input tidak zoom di iPhone & ukuran konsisten */
+			/* Kita set default 16px di root agar rem tailwind bekerja benar */
+			/* Tapi ukuran elemen selanjutnya ikut class HTML (text-base, text-lg, dll) */
 			font-size: 16px;
 			font-family: 'Inter', sans-serif;
-			color: #334155;
 		}
-		/* Wariskan font size ke form elements */
+		/* Input mewarisi font dari parent (Tailwind) */
 		input, textarea, button, select {
 			font-size: inherit;
 		}
-		/* ================================================================== */
-		/* 2. HEADER & JUDUL (UKURAN LEBIH PROPORSIONAL)                      */
-		/* ================================================================== */
-		
-		/* Judul Besar (AI ASISTEN) */
-		/* Turun dari 24px (1.5rem) ke 20px (1.25rem) */
-		header h2 {
-			font-size: 1.25rem !important; 
-			line-height: 1.2; 
-			letter-spacing: -0.01em;
-		}
-		
-		/* Subtitle Kecil (ARTIFICIAL INTELLIGENCE) */
-		header p {
-			font-size: 0.625rem !important; /* 10px */
-			font-weight: 700; letter-spacing: 0.05em;
-			opacity: 0.8; text-transform: uppercase;
-			margin-top: 2px !important;
-		}
-
-		/* Judul Konfirmasi / Alert (Tetap 16px sesuai request sebelumnya) */
-		#confirm-title { 
-			font-size: 1.2rem !important; 
-			margin-bottom: 0.5rem; 
-			font-weight: 700;
-			text-transform: capitalize;
-		} 
-		
-		#confirm-message { 
-			font-size: 1rem !important; 
-			color: #64748b; 
-		}
-		/* ================================================================== */
-		/* 3. SIDEBAR & CHAT LIST (LAYOUT)                                    */
-		/* ================================================================== */
-		/* List History Chat (DEFAULT HP) */
-		#chat-history-list span {
-			font-size: 0.9375rem !important;
-			/* 15px (Standar HP) */
-			line-height: 1.4;
-		}
-		/* Tombol Sidebar */
-		#sidebar button {
-			font-size: 0.9375rem !important;
-		}
-		/* ================================================================== */
-		/* 4. CHAT AREA (KENYAMANAN BACA)                                     */
-		/* ================================================================== */
-		/* ISI PESAN (Markdown Body) - DEFAULT HP */
-		.markdown-body {
-			font-size: 1rem !important;
-			/* 16px (Di HP sudah sangat jelas) */
-			line-height: 1.6;
-		}
-		/* Nama Pengirim & Jam */
-		.user-bubble span:first-child, .ai-bubble span:first-child {
-			font-size: 0.75rem !important;
-			/* 12px */
-		}
-		.user-bubble span:last-child, .ai-bubble span:last-child {
-			font-size: 0.65rem !important;
-			/* 10px */
-		}
-		/* Heading dalam Chat */
-		.markdown-body h1 {
-			font-size: 1.3em !important;
-			font-weight: 700;
-			margin-top: 1.2em;
-		}
-		.markdown-body h2 {
-			font-size: 1.2em !important;
-			font-weight: 700;
-			margin-top: 1.1em;
-		}
-		/* Elemen Markdown Lainnya */
-		.markdown-body p {
-			margin-bottom: 0.75rem;
-		}
-		.markdown-body ul {
-			list-style: disc;
-			padding-left: 1.5rem;
-			margin: 0.5rem 0;
-		}
-		.markdown-body ol {
-			list-style: decimal;
-			padding-left: 1.5rem;
-			margin: 0.5rem 0;
-		}
-		.markdown-body blockquote {
-			border-left: 3px solid #cbd5e1;
-			padding-left: 1rem;
-			color: #64748b;
-			margin: 1rem 0;
-			font-style: italic;
-		}
-		.markdown-body a {
-			color: #2563eb;
-			text-decoration: none;
-			font-weight: 500;
-		}
-		/* ================================================================== */
-		/* 5. SETTINGS PAGE (HIERARKI RAPI)                                   */
-		/* ================================================================== */
-		legend {
-			font-size: 0.75rem !important;
-			letter-spacing: 0.05em;
-		}
-		/* 12px */
-		#settings-content label {
-			font-size: 0.875rem !important;
-			color: #475569;
-		}
-		/* 14px */
-		/* Input tetap 16px (Inherit dari body) */
-		/* List User: Email Besar, Status Kecil */
-		#user-list-container p:first-child {
-			font-size: 0.9375rem !important;
-		}
-		/* 15px */
-		#user-list-container p:last-child {
-			font-size: 0.65rem !important;
-			font-weight: 800;
-			letter-spacing: 0.05em;
-			margin-top: 2px;
-		}
-		/* ================================================================== */
-		/* 6. CODE BLOCK STYLE (UKURAN SAMA DENGAN CHAT)                      */
-		/* ================================================================== */
-		
-		/* Wrapper Luar */
-		.code-block-wrapper {
-			background-color: #e5e7eb; border-radius: 0.75rem; margin: 0.75rem 0;
-			overflow: hidden; border: none;
-		}
-
-		/* Header (Nama Bahasa) - Ukuran Sedikit Lebih Kecil Biar Rapi */
-		.code-header {
-			background-color: #e5e7eb; color: #334155; padding: 0.5rem 1rem;
-			font-family: 'Inter', sans-serif; 
-			font-size: 0.85em !important; /* 85% dari ukuran chat (sedikit lebih kecil untuk label) */
-			font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;
-			border-bottom: 1px solid #d1d5db; display: flex;
-			align-items: center; justify-content: space-between; user-select: none;
-		}
-
-		/* Kontainer Kode */
-		.markdown-body pre {
-			background-color: transparent !important; margin: 0 !important;
-			border: none !important; border-radius: 0 !important;
-			padding: 0.75rem 1rem; overflow-x: auto; line-height: 1.25;
-		}
-
-		/* ISI KODE (FONDASI DIPERBAIKI) */
-		.markdown-body pre code {
-			font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-			
-			/* PERUBAHAN UTAMA: 1em = 100% Sama dengan ukuran Chat */
-			/* Jika Chat 16px, Kode jadi 16px. Jika Chat 17px, Kode jadi 17px. */
-			font-size: 0.9em !important; 
-			
-			color: #334155; background-color: transparent;
-			padding: 0; border: none; white-space: pre; font-weight: 400;
-		}
-
-		/* Inline Code (Stabilo) */
-		.markdown-body code:not(pre code) {
-			background-color: #e5e7eb; color: #0f172a; padding: 0.1rem 0.3rem;
-			border-radius: 0.25rem; font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-			
-			/* Sama dengan chat, kurangi dikit biar gak terlalu tebal visualnya */
-			font-size: 0.95em !important; 
-			
-			font-weight: 400; border: 1px solid #d1d5db;
-		}
-		/* Table Styles */
-		.markdown-body table {
-			width: 100%;
-			border-collapse: collapse;
-			margin: 1rem 0;
-		}
-		.markdown-body th, .markdown-body td {
-			padding: 10px 12px;
-			border: 1px solid #cbd5e1;
-		}
-		.markdown-body th {
-			background-color: #e5e7eb;
-			color: #0f172a;
-			font-weight: 700;
-		}
-		.overflow-x-auto {
-			width: 100%;
-			overflow-x: auto;
-			margin: 1rem 0;
-		}
-		/* ================================================================== */
-		/* 7. RESPONSIVE MEDIA QUERIES (KHUSUS IPAD MINI & TABLET)            */
-		/* ================================================================== */
-		/* IPAD MINI & TABLET (740px ke atas) 
-		   Di sini kita BESARKAN font-nya, bukan dikecilkan.
-		*/
-		@media (min-width: 740px) {
-			/* 1. Chat diperbesar jadi 17px (Sangat Jelas di iPad Mini) */
-			.markdown-body {
-				font-size: 1.0625rem !important;
-				/* ~17px */
-			}
-			/* 2. List History diperbesar jadi 16px (Biar enak dipencet) */
-			#chat-history-list span {
-				font-size: 1rem !important;
-				/* 16px */
-			}
-			/* 3. Input Chat juga ikut besar biar imbang */
-			#user-input {
-				font-size: 1.0625rem !important;
-				/* 17px */
-			}
-			/* 4. Grid Youtube 2 Kolom */
-			.yt-embed-grid {
-				grid-template-columns: repeat(2, 1fr);
-				gap: 1rem;
-			}
-		}
-		/* DESKTOP (1200px ke atas) - Tetap besar 17px */
-		@media (min-width: 1200px) {
-			/* Chat tetap 17px, tapi Code Block bisa lebih besar dikit */
-			.markdown-body pre code {
-				font-size: 14px !important;
-			}
-		}
-		/* ================================================================== */
-		/* 8. UTILITY & ANIMATIONS (JANGAN HAPUS)                             */
-		/* ================================================================== */
+		/* Utility Scrollbar (Hilang tapi bisa scroll) */
 		#chat-container, #settings-content {
 			-webkit-overflow-scrolling: touch;
 			overscroll-behavior-y: contain;
@@ -307,26 +73,170 @@
 			-ms-overflow-style: none;
 			scrollbar-width: none;
 		}
+		/* Safe Area iPhone X+ */
 		.safe-pt {
 			padding-top: env(safe-area-inset-top);
 		}
 		.safe-pb {
 			padding-bottom: env(safe-area-inset-bottom);
 		}
+		/* Input Focus Reset */
 		*:focus {
 			outline: none;
 			box-shadow: none;
 		}
-		@keyframes fadeIn {
-			from {
-				opacity: 0;
-				transform: translateY(10px);
-			}
-			to {
-				opacity: 1;
-				transform: translateY(0);
-			}
+		#chat-container, #settings-content, input, textarea, select {
+			-webkit-user-select: text;
+			user-select: text;
 		}
+		/* === 2. MARKDOWN STYLES (ISI CHAT) === */
+		/* HANYA MENGATUR JARAK & WARNA. UKURAN FONT IKUT TAILWIND DI HTML. */
+		.markdown-body {
+			line-height: 1.6;
+			color: #334155;
+			word-wrap: break-word;
+		}
+		/* Judul relative (em) terhadap font induk */
+		.markdown-body h1 {
+			font-size: 1.5em;
+			font-weight: 700;
+			margin: 1.2em 0 0.7em 0;
+			line-height: 1.2;
+			color: #0f172a;
+		}
+		.markdown-body h2 {
+			font-size: 1.25em;
+			font-weight: 700;
+			margin: 1.1em 0 0.6em 0;
+			line-height: 1.3;
+			color: #0f172a;
+		}
+		.markdown-body h3 {
+			font-size: 1.1em;
+			font-weight: 700;
+			margin: 1em 0 0.5em 0;
+			color: #0f172a;
+		}
+		.markdown-body p {
+			margin-bottom: 0.75em;
+		}
+		.markdown-body ul {
+			list-style: disc;
+			margin: 0.5em 0;
+			padding-left: 1.5em;
+		}
+		.markdown-body ol {
+			list-style: decimal;
+			margin: 0.5em 0;
+			padding-left: 1.5em;
+		}
+		.markdown-body li {
+			margin-bottom: 0.25em;
+		}
+		.markdown-body blockquote {
+			border-left: 3px solid #cbd5e1;
+			padding-left: 1em;
+			color: #64748b;
+			margin: 1em 0;
+			font-style: italic;
+		}
+		.markdown-body a {
+			color: #2563eb;
+			text-decoration: none;
+			font-weight: 600;
+		}
+		.markdown-body hr {
+			border: 0;
+			border-top: 1px solid #e2e8f0;
+			margin: 1.5em 0;
+		}
+		/* === 3. TABLE STYLES === */
+		.markdown-body table {
+			width: 100%;
+			border-collapse: collapse;
+			margin: 1em 0;
+			background-color: transparent;
+		}
+		.markdown-body th, .markdown-body td {
+			padding: 0.5em 0.75em;
+			border: 1px solid #cbd5e1;
+			text-align: left;
+			vertical-align: top;
+		}
+		.markdown-body th {
+			background-color: #e5e7eb;
+			color: #0f172a;
+			font-weight: 700;
+		}
+		.overflow-x-auto {
+			width: 100%;
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
+			margin: 1rem 0;
+		}
+		/* === 4. CODE BLOCK STYLE (SOLID GRAY 200) === */
+		/* Font size dihapus, ikut parent Tailwind */
+		/* Wrapper Luar */
+		.code-block-wrapper {
+			background-color: #e5e7eb;
+			/* Warna solid */
+			border-radius: 0.75rem;
+			margin: 0.75rem 0;
+			overflow: hidden;
+			border: none;
+		}
+		/* Header (HTML, CSS, JS) */
+		.code-header {
+			background-color: #e5e7eb;
+			color: #334155;
+			padding: 0.5em 1em;
+			font-family: 'Inter', sans-serif;
+			font-size: 0.85em;
+			/* Sedikit lebih kecil dari teks chat */
+			font-weight: 800;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+			border-bottom: 1px solid #d1d5db;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			user-select: none;
+		}
+		/* Kontainer Pre */
+		.markdown-body pre {
+			background-color: transparent !important;
+			margin: 0 !important;
+			border: none !important;
+			border-radius: 0 !important;
+			padding: 0.75em 1em;
+			overflow-x: auto;
+			line-height: 1.4;
+		}
+		/* Isi Kode (Font Monospace) */
+		.markdown-body pre code {
+			font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+			font-size: 1em;
+			/* Ikut ukuran chat (100%) */
+			color: #334155;
+			background-color: transparent;
+			padding: 0;
+			border: none;
+			white-space: pre;
+			font-weight: 400;
+		}
+		/* Inline Code (Stabilo) */
+		.markdown-body code:not(pre code) {
+			background-color: #e5e7eb;
+			color: #0f172a;
+			padding: 0.1em 0.3em;
+			border-radius: 0.25rem;
+			font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+			font-size: 0.9em;
+			font-weight: 400;
+			border: 1px solid #d1d5db;
+		}
+		/* === 5. UI COMPONENTS & ANIMATIONS (JANGAN HAPUS) === */
+		/* Loading Dots */
 		.dot-flashing {
 			position: relative;
 			width: 6px;
@@ -363,6 +273,18 @@
 				background-color: #cbd5e1;
 			}
 		}
+		/* Fade In */
+		@keyframes fadeIn {
+			from {
+				opacity: 0;
+				transform: translateY(10px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+		/* Slider Input */
 		.custom-range {
 			-webkit-appearance: none;
 			appearance: none;
@@ -391,6 +313,7 @@
 			border-radius: 4px;
 			margin-top: -1px;
 		}
+		/* Dropdown & Typing */
 		.dropdown-open {
 			opacity: 1;
 			transform: scale(100%);
@@ -436,6 +359,7 @@
 			opacity: 0;
 			animation: fadeIn 0.3s forwards;
 		}
+		/* Youtube Embed (Aspect Ratio Fix) */
 		.yt-embed-grid {
 			display: grid;
 			grid-template-columns: 1fr;
@@ -458,6 +382,12 @@
 			height: 100%;
 			border: 0;
 			display: block;
+		}
+		/* Grid 2 kolom di tablet (MD Tailwind breakpoint ~768px) */
+		@media (min-width: 768px) {
+			.yt-embed-grid {
+				grid-template-columns: repeat(2, 1fr);
+			}
 		}
 	</style>
 </head>
@@ -493,7 +423,7 @@
 		<div class="bg-white w-full max-w-sm p-8 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-center gap-6">
 			<div class="flex flex-col items-center justify-center text-center">
 				<img src="logo.png" alt="AI Logo" class="w-24 h-24 object-contain -mt-2 mb-0 drop-shadow-sm">
-				<h1 class="font-orbitron text-base font-extrabold text-slate-800 tracking-wide">AI ASISTEN</h1>
+				<h1 class="font-orbitron text-xl md:text-2xl font-extrabold text-slate-800 tracking-wide">AI ASISTEN</h1>
 			</div>
 			<form id="login-form" class="w-full space-y-3" onsubmit="handleLogin(event)">
 				<input type="email" id="email-input" placeholder="Email" required class="login-input w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl text-base text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-slate-300 transition-all">
@@ -513,8 +443,8 @@
 			<div class="flex items-center gap-0 h-full -ml-2">
 				<img src="logo.png" alt="AI Icon" class="w-16 h-16 object-contain drop-shadow-sm">
 				<div>
-					<h2 class="font-orbitron font-extrabold text-base text-slate-800 tracking-wide leading-tight">AI ASISTEN</h2>
-					<p class="text-base text-slate-500 font-medium font-sans leading-tight">ARTIFICIAL INTELLIGENCE</p>
+					<h2 class="font-orbitron font-extrabold text-lg text-slate-800 tracking-wide leading-tight">AI ASISTEN</h2>
+					<p class="text-[10px] md:text-xs text-slate-500 font-medium font-sans leading-tight">ARTIFICIAL INTELLIGENCE</p>
 				</div>
 			</div>
 			<div class="flex items-center gap-1">
@@ -570,7 +500,7 @@
 				</svg>
 			</button>
 			<div class="absolute inset-0 safe-pt flex items-center justify-center pointer-events-none z-20">
-				<h2 class="font-sans font-bold text-base text-slate-800 tracking-wide whitespace-nowrap">ADMIN MENU</h2>
+				<h2 class="font-sans font-bold text-lg text-slate-800 tracking-wide whitespace-nowrap">ADMIN MENU</h2>
 			</div>
 			<button onclick="saveSettings()" class="w-10 h-10 flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-gray-100 rounded-full transition-colors relative z-30">
 				<svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -584,27 +514,28 @@
 			</button>
 		</header>
 		<main id="settings-content" class="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-6">
-			<div class="max-w-3xl mx-auto space-y-6 pb-12 mt-2">
+			<div class="max-w-3xl mx-auto space-y-6 pb-12 mt-1">
 				
-				<fieldset class="bg-white rounded-2xl border border-gray-300 p-6 shadow-sm mt-6">
-					<legend class="px-2 text-base md:text-base font-black text-slate-500 uppercase tracking-wide">KONFIGURASI AI</legend>
+				<fieldset class="bg-white rounded-xl border border-gray-300 p-5 shadow-sm mt-4">
+					<legend class="px-2 text-sm font-black text-slate-500 uppercase tracking-wide">KONFIGURASI AI</legend>
 					
-					<div class="mb-4 relative" id="dropdown-wrapper">
-						<label class="block text-base md:text-base font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">Model Gemini</label>
-						<button type="button" onclick="toggleDropdown()" id="dropdown-trigger" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl flex justify-between items-center transition-all duration-200 hover:bg-gray-100 active:scale-[0.99]">
-							<span id="selected-model-text" class="text-base md:text-base font-medium text-slate-700">Gemini 2.5 Flash (Cepat)</span>
-							<i id="dropdown-arrow" class="fa-solid fa-chevron-down text-slate-400 text-base transition-transform duration-300"></i>
+					<div class="mb-5 relative" id="dropdown-wrapper">
+						<label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">Model Gemini</label>
+						
+						<button type="button" onclick="toggleDropdown()" id="dropdown-trigger" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg flex justify-between items-center transition-all duration-200 hover:bg-gray-100 active:scale-[0.99]">
+							<span id="selected-model-text" class="text-base font-medium text-slate-700">Gemini 2.5 Flash (Cepat)</span>
+							<i id="dropdown-arrow" class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-300"></i>
 						</button>
 						
-						<div id="dropdown-menu" class="dropdown-closed absolute left-0 right-0 top-full mt-2 bg-white border border-gray-100 rounded-xl shadow-[0_10px_30px_-10px_rgba(0,0,0,0.1)] z-30 overflow-hidden transition-all duration-200 origin-top">
+						<div id="dropdown-menu" class="dropdown-closed absolute left-0 right-0 top-full mt-1 bg-white border border-gray-100 rounded-lg shadow-lg z-30 overflow-hidden transition-all duration-200 origin-top">
 							<div onclick="selectOption('gemini-2.5-flash', 'Gemini 2.5 Flash (Cepat)')" class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center justify-between group border-b border-gray-50 last:border-0">
-								<span class="text-base md:text-base text-slate-600 group-hover:text-blue-700 font-medium">Gemini 2.5 Flash (Cepat)</span>
+								<span class="text-base text-slate-600 group-hover:text-blue-700 font-medium">Gemini 2.5 Flash (Cepat)</span>
 							</div>
 							<div onclick="selectOption('gemini-2.5-pro', 'Gemini 2.5 Pro (Pintar)')" class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center justify-between group border-b border-gray-50 last:border-0">
-								<span class="text-base md:text-base text-slate-600 group-hover:text-blue-700 font-medium">Gemini 2.5 Pro (Pintar)</span>
+								<span class="text-base text-slate-600 group-hover:text-blue-700 font-medium">Gemini 2.5 Pro (Pintar)</span>
 							</div>
 							<div onclick="selectOption('gemini-3-pro-preview', 'Gemini 3 Pro (Preview)')" class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center justify-between group border-b border-gray-50 last:border-0">
-								<span class="text-base md:text-base text-slate-600 group-hover:text-blue-700 font-medium">Gemini 3 Pro (Preview)</span>
+								<span class="text-base text-slate-600 group-hover:text-blue-700 font-medium">Gemini 3 Pro (Preview)</span>
 							</div>
 						</div>
 						<select id="setting-model" class="hidden">
@@ -614,55 +545,57 @@
 						</select>
 					</div>
 					
-					<div class="mb-4">
-						<label class="block text-base md:text-base font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">System Instruction</label>
-						<div class="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
-							<textarea id="setting-prompt" rows="3" class="w-full bg-transparent border-none focus:ring-0 p-0 text-base md:text-base text-slate-700 resize-none placeholder:text-slate-400" placeholder="Contoh: Kamu adalah asisten yang ramah..."></textarea>
+					<div class="mb-5">
+						<label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">System Instruction</label>
+						<div class="w-full rounded-lg border border-gray-200 bg-gray-50 p-3 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
+							<textarea id="setting-prompt" rows="3" class="w-full bg-transparent border-none focus:ring-0 p-0 text-base text-slate-700 resize-none placeholder:text-slate-400 leading-snug" placeholder="Contoh: Kamu adalah asisten yang ramah..."></textarea>
 						</div>
 					</div>
 					
 					<div class="mb-2">
-						<div class="flex justify-between mb-1 ml-1"><label class="text-base md:text-base font-bold text-slate-500 uppercase tracking-wide">Kreativitas</label></div>
+						<div class="flex justify-between mb-1 ml-1">
+							<label class="text-xs font-bold text-slate-500 uppercase tracking-wide">Kreativitas</label>
+						</div>
 						<div class="relative w-full h-10 flex items-center mt-1">
-							<span id="temp-label" class="absolute left-1/2 -translate-x-1/2 text-base md:text-base font-mono font-bold text-slate-500 z-30 pointer-events-none select-none">0.7</span>
+							<span id="temp-label" class="absolute left-1/2 -translate-x-1/2 text-xs font-mono font-bold text-slate-500 z-30 pointer-events-none select-none">0.7</span>
 							<input type="range" id="setting-temp" min="0" max="1" step="0.1" value="0.7" class="custom-range w-full" oninput="updateTempLabel(this.value)">
 						</div>
-						<div class="flex justify-between text-base md:text-base text-slate-400 mt-2 px-1 font-medium"><span>Fokus (0.0)</span><span>Kreatif (1.0)</span></div>
+						<div class="flex justify-between text-[10px] text-slate-400 mt-2 px-1 font-medium"><span>Fokus (0.0)</span><span>Kreatif (1.0)</span></div>
 					</div>
 				</fieldset>
 				
-				<fieldset class="bg-white rounded-2xl border border-gray-300 p-6 shadow-sm mt-6">
-					<legend class="px-2 text-base md:text-base font-black text-slate-500 uppercase tracking-wide">MANAJEMEN USER</legend>
+				<fieldset class="bg-white rounded-xl border border-gray-300 p-5 shadow-sm mt-6">
+					<legend class="px-2 text-sm font-black text-slate-500 uppercase tracking-wide">MANAJEMEN USER</legend>
 					
 					<div class="mb-4">
-						<label class="block text-base md:text-base font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">Email Baru</label>
-						<div class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
-							<input type="email" id="create-email" placeholder="user@email.com" class="w-full bg-transparent border-none focus:ring-0 p-0 text-base md:text-base text-slate-700 placeholder:text-slate-400 h-5">
+						<label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">Email Baru</label>
+						<div class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-0 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all h-12 flex items-center">
+							<input type="email" id="create-email" placeholder="user@email.com" class="w-full bg-transparent border-none focus:ring-0 p-0 text-base text-slate-700 placeholder:text-slate-400 h-full">
 						</div>
 					</div>
 					
 					<div class="mb-6">
-						<label class="block text-base md:text-base font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">Password</label>
-						<div class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
-							<input type="password" id="create-password" placeholder="Minimal 6 karakter" class="w-full bg-transparent border-none focus:ring-0 p-0 text-base md:text-base text-slate-700 placeholder:text-slate-400 h-5">
+						<label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 ml-1">Password</label>
+						<div class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-0 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all h-12 flex items-center">
+							<input type="password" id="create-password" placeholder="Minimal 6 karakter" class="w-full bg-transparent border-none focus:ring-0 p-0 text-base text-slate-700 placeholder:text-slate-400 h-full">
 						</div>
 					</div>
 					
-					<button onclick="handleAddUser()" id="btn-add-user" class="w-full py-3.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-base md:text-base rounded-xl transition-all active:scale-95 shadow-md flex items-center justify-center gap-2 group mb-8">
+					<button onclick="handleAddUser()" id="btn-add-user" class="w-full h-12 bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm rounded-lg transition-all active:scale-95 shadow-sm flex items-center justify-center gap-2 group mb-6">
 						<i class="fa-solid fa-user-plus text-slate-300 group-hover:text-white transition-colors"></i><span>TAMBAH USER</span>
 					</button>
 					
-					<div class="border-t border-gray-200 mb-6"></div>
+					<div class="border-t border-gray-200 mb-5"></div>
 					
-					<div class="flex justify-between items-center mb-4 ml-1">
-						<h4 class="text-base md:text-base font-bold text-slate-500 uppercase tracking-wide">Daftar Pengguna</h4>
-						<button onclick="loadUsers()" class="w-8 h-8 flex items-center justify-center rounded-lg text-green-600 hover:text-green-800 hover:bg-green-50 transition-colors" title="Refresh Data">
-							<i class="fa-solid fa-arrows-rotate"></i>
+					<div class="flex justify-between items-center mb-3 ml-1">
+						<h4 class="text-xs font-bold text-slate-500 uppercase tracking-wide">Daftar Pengguna</h4>
+						<button onclick="loadUsers()" class="w-8 h-8 flex items-center justify-center rounded text-green-600 hover:text-green-800 hover:bg-green-50 transition-colors" title="Refresh Data">
+							<i class="fa-solid fa-arrows-rotate text-sm"></i>
 						</button>
 					</div>
 					
-					<div id="user-list-container" class="space-y-3">
-						<p class="text-base md:text-base text-slate-400 text-center py-4 italic">Memuat data pengguna...</p>
+					<div id="user-list-container" class="space-y-2">
+						<p class="text-xs text-slate-400 text-center py-4 italic">Memuat data pengguna...</p>
 					</div>
 				</fieldset>
 			</div>
@@ -674,7 +607,7 @@
 		<div class="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity"></div>
 		<div class="relative bg-gray-50 w-full max-w-[18rem] rounded-2xl shadow-2xl overflow-hidden transform scale-100 transition-all">
 			<div class="p-4 text-center">
-				<h2 id="confirm-title" class="text-base font-bold text-slate-800 mb-0.5 tracking-wide">KONFIRMASI</h2>
+				<h2 id="confirm-title" class="text-lg font-bold text-slate-800 mb-0.5 tracking-wide">KONFIRMASI</h2>
 				<p id="confirm-message" class="text-base text-slate-500 leading-tight px-1">...</p>
 			</div>
 			<div class="border-t border-gray-200 flex bg-gray-50">
@@ -790,9 +723,10 @@
                     </div>
                     
                     <div class="overflow-hidden min-w-0 flex-1 flex flex-col justify-center">
-                        <div class="text-base font-medium text-slate-700 truncate leading-tight">${file.name}</div>
-                        <div class="text-base font-medium text-slate-500 uppercase leading-none mt-0.5">${formatFileSize(file.size)}</div>
-                    </div>
+					    <div class="text-sm font-medium text-slate-700 truncate leading-tight">${file.name}</div>
+					    
+					    <div class="text-xs font-medium text-slate-500 uppercase leading-none mt-1">${formatFileSize(file.size)}</div>
+					</div>
 
                     <button onclick="removeFile(${index})" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-300 text-grey-400 rounded-full flex items-center justify-center shadow-sm transition-transform active:scale-90 z-20 cursor-pointer">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
@@ -1172,9 +1106,10 @@
                 <div class="relative flex items-center p-2 bg-gray-200 rounded-xl select-none overflow-hidden h-16">
                     <div class="w-10 h-10 mr-3 shrink-0 rounded-lg overflow-hidden flex items-center justify-center">${iconHtml}</div>
                     <div class="overflow-hidden min-w-0 flex-1 flex flex-col justify-center">
-                        <div class="text-base font-medium text-slate-700 truncate leading-tight">${f.name}</div>
-                        <div class="text-base font-medium text-slate-500 uppercase leading-none mt-0.5">${formatFileSize(f.size)}</div>
-                    </div>
+    <div class="text-sm font-medium text-slate-700 truncate leading-tight">${f.name}</div>
+    
+    <div class="text-xs font-medium text-slate-500 uppercase leading-none mt-0.5">${formatFileSize(f.size)}</div>
+</div>
                 </div>`;
 				});
 				fileDisplayHtml += '</div>';
@@ -1403,18 +1338,18 @@
 				</button>
 			</div>` : '';
 			div.innerHTML = `
-    <div class="${bubbleClass} relative flex flex-col bg-gray-100 px-4 pt-3 pb-6 rounded-2xl shadow-sm mb-4">
-        <div class="flex justify-between items-center mb-1 border-b-[0.5px] border-gray-300 pb-1">
-            <span class="text-base font-bold uppercase tracking-wide ${nameColorClass}">${name}</span>
-            <span class="text-base text-slate-400 font-sans">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-        </div>
-        
-        <div class="markdown-body mt-1 chat-content font-medium">
-            ${htmlContent}
-        </div>
-        
-        ${copyButtonHtml}
-    </div>`;
+		    <div class="${bubbleClass} relative flex flex-col bg-gray-100 px-4 pt-3 pb-6 rounded-2xl shadow-sm mb-4">
+		        <div class="flex justify-between items-center mb-1 border-b-[0.5px] border-gray-300 pb-1">
+		            <span class="text-[12px] font-bold uppercase tracking-wide ${nameColorClass}">${name}</span>
+		            <span class="text-[12px] text-slate-400 font-sans">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+		        </div>
+		        
+		        <div class="markdown-body mt-1 chat-content font-medium text-sm md:text-base">
+		            ${htmlContent}
+		        </div>
+		        
+		        ${copyButtonHtml}
+		    </div>`;
 			const contentBody = div.querySelector('.markdown-body');
 			if(contentBody && contentBody.lastElementChild) {
 				contentBody.lastElementChild.style.marginBottom = '0';
@@ -1751,7 +1686,7 @@
 					div.className = `relative flex items-center justify-between py-2 px-3 rounded-xl cursor-pointer transition-all duration-200 group ${containerStyle}`;
 					div.onclick = () => loadMessages(chat.id);
 					div.innerHTML = `
-                        <span class="${textClass} text-base md:text-base truncate flex-1 mr-2 select-none transition-colors">${chat.title}</span>
+                        <span class="${textClass} text-sm md:text-base truncate flex-1 mr-2 select-none transition-colors">${chat.title}</span>
                         <button onclick="confirmDeleteChat(event, '${chat.id}')" class="text-slate-400 hover:text-red-500 transition-all p-1 rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible">
                             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M4 7.00005L10.2 11.65C11.2667 12.45 12.7333 12.45 13.8 11.65L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -1951,47 +1886,55 @@
 		 */
 		async function loadUsers() {
 			const container = document.getElementById('user-list-container');
-			container.innerHTML = '<p class="text-base text-slate-400 text-center py-4"><i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Memuat data...</p>';
+			container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4"><i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Memuat data...</p>';
 			try {
 				const users = await callAdminFunction('list_users');
-				const {
-					data: {
-						user: currentUser
-					}
-				} = await supabase.auth.getUser();
+				const { data: { user: currentUser } } = await supabase.auth.getUser();
+				
 				container.innerHTML = '';
 				if(!users || users.length === 0) {
-					container.innerHTML = '<p class="text-base text-slate-400 text-center">Tidak ada pengguna lain.</p>';
+					container.innerHTML = '<p class="text-xs text-slate-400 text-center">Tidak ada pengguna lain.</p>';
 					return;
 				}
+				
 				users.forEach(user => {
 					const isSelf = user.id === currentUser?.id;
 					const isFrozen = user.banned_until && (new Date(user.banned_until) > new Date());
+					
 					const div = document.createElement('div');
 					div.className = `flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-xl ${isFrozen ? 'opacity-60' : ''}`;
+					
 					div.innerHTML = `
                         <div class="overflow-hidden mr-2">
-                            <p class="text-base md:text-base font-bold text-slate-700 truncate">${user.email}</p>
-                            <p class="text-base md:text-base text-slate-400 uppercase font-bold tracking-wider mt-0.5">${isFrozen ? '<span class="text-red-500">DIBEKUKAN</span>' : 'AKTIF'} ${isSelf ? '(ANDA)' : ''}</p>
+                            <p class="text-sm font-bold text-slate-700 truncate">${user.email}</p>
+                            <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">${isFrozen ? '<span class="text-red-500">DIBEKUKAN</span>' : 'AKTIF'} ${isSelf ? '(ANDA)' : ''}</p>
                         </div>
                         <div class="flex items-center gap-2 shrink-0">
                             <button onclick="toggleFreeze('${user.id}', ${isFrozen})" ${isSelf ? 'disabled' : ''} 
                                 class="w-8 h-8 flex items-center justify-center rounded-lg transition-colors bg-blue-100 text-blue-600 hover:bg-blue-200 disabled:opacity-30" 
                                 title="${isFrozen ? 'Buka Akun' : 'Bekukan Akun'}">
                                 
-                                <svg class="w-5 h-5" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-                                   <g stroke-width="0"></g><g stroke-linecap="round" stroke-linejoin="round"></g><g><defs><style>.a{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;}</style></defs><path class="a" d="M29.535,33.5623l-5.5344-1.8331-5.5345,1.8331L17.29,27.8649l-4.3588-3.8643L17.29,20.1363l1.1757-5.6973,5.5345,1.833,5.5344-1.833,1.1757,5.6973L35.07,24.0006l-4.3588,3.8643Z"></path><path class="a" d="M24.0006,31.7292l0-29.2292"></path><path class="a" d="M17.6613,7.151l6.3392,3.0277"></path><path class="a" d="M30.34,7.151l-6.3392,3.0277"></path><path class="a" d="M24.0006,31.7292V45.5013"></path><path class="a" d="M30.34,40.85l-6.3392-3.0277"></path><path class="a" d="M17.6613,40.85l6.3392-3.0277"></path><path class="a" d="M17.29,27.8649,42.668,13.25"></path><path class="a" d="M35.46,10.1l.5409,6.99"></path><path class="a" d="M41.8,21.0519,36.0011,17.09"></path><path class="a" d="M17.29,27.8649,5.3331,34.751"></path><path class="a" d="M12.5409,37.9015,12,30.9116"></path><path class="a" d="M6.2016,26.9494,12,30.9116"></path><path class="a" d="M30.7107,27.8649,42.668,34.751"></path><path class="a" d="M41.8,26.9494l-5.7984,3.9622"></path><path class="a" d="M35.46,37.9015l.5409-6.99"></path><path class="a" d="M30.7107,27.8649,5.3331,13.25"></path><path class="a" d="M6.2016,21.0519,12,17.09"></path><path class="a" d="M12.5409,10.1,12,17.09"></path></g>
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 3v18"></path>
+                                    <path d="M3 12h18"></path>
+                                    <path d="m5.5 5.5 13 13"></path>
+                                    <path d="m18.5 5.5-13 13"></path>
                                 </svg>
                             </button>
+                            
                             <button onclick="deleteUser('${user.id}', '${user.email}')" ${isSelf ? 'disabled' : ''} class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors disabled:opacity-30">
-                                <i class="fa-solid fa-trash text-base"></i>
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 6h18"></path>
+                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                                </svg>
                             </button>
                         </div>
                     `;
 					container.appendChild(div);
 				});
 			} catch (error) {
-				container.innerHTML = `<p class="text-base text-red-400 text-center">Error: ${error.message}</p>`;
+				container.innerHTML = `<p class="text-xs text-red-400 text-center">Error: ${error.message}</p>`;
 			}
 		}
 		/**
